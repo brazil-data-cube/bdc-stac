@@ -1,0 +1,26 @@
+version: '3'
+networks:
+  ds_net:
+volumes:
+  data:
+services:
+  ds_db:
+    image: mysql:5.7
+    volumes:
+      - ./ds_db.sql:/docker-entrypoint-initdb.d/ds_db.sql
+    ports:
+      - "3311:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+    networks:
+      - ds_net
+
+  ds_admin:
+    image: phpmyadmin/phpmyadmin:latest
+    ports:
+      - 81:80
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=ds_db
+    networks:
+      - ds_net

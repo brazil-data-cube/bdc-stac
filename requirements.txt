@@ -1,0 +1,6 @@
+Flask
+geojson
+flasgger
+sqlalchemy
+mysqlclient
+python-dotenv
