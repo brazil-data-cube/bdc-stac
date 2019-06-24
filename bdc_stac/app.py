@@ -36,10 +36,10 @@ def index():
 
 @app.route("/conformance", methods=["GET"])
 def conformance():
-    conforms = [{"conformsTo": ["http://www.opengis.net/spec/wfs-1/3.0/req/core",
-                             "http://www.opengis.net/spec/wfs-1/3.0/req/oas30",
-                             "http://www.opengis.net/spec/wfs-1/3.0/req/html",
-                             "http://www.opengis.net/spec/wfs-1/3.0/req/geojson"]}]
+    conforms = {"conformsTo": ["http://www.opengis.net/spec/wfs-1/3.0/req/core",
+                               "http://www.opengis.net/spec/wfs-1/3.0/req/oas30",
+                               "http://www.opengis.net/spec/wfs-1/3.0/req/html",
+                               "http://www.opengis.net/spec/wfs-1/3.0/req/geojson"]}
     return jsonify(conforms)
 
 
