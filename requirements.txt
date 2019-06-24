@@ -1,5 +1,4 @@
 Flask
-geojson
 flasgger
 sqlalchemy
 mysqlclient
