@@ -7,7 +7,7 @@ services:
   ds_db:
     image: mysql:5.7
     volumes:
-      - ./ds_db.sql:/docker-entrypoint-initdb.d/ds_db.sql
+      - ./data-model/ds_db.sql:/docker-entrypoint-initdb.d/ds_db.sql
     ports:
       - "3311:3306"
     environment:
