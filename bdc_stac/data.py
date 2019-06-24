@@ -69,7 +69,6 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
 def get_collection(collection_id):
     sql = f"SELECT `datacube` AS id, start, end, bands, satsen from `datacubes` WHERE `datacube` LIKE '{collection_id}'"
 
-
     extent = do_query(f"SELECT CONCAT_WS(',', MIN(BL_Latitude),MIN(BL_Longitude),MAX(TR_Longitude),"
                       f"MAX(TR_Latitude)) AS extent FROM `products` WHERE `datacube` LIKE '{collection_id}'")
 
