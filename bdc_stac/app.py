@@ -47,6 +47,7 @@ def conformance():
 def collections_id(collection_id):
     collection = data.get_collection(collection_id)
     links = [{"href": f"{request.url_root}collections/{collection_id}", "rel": "self"},
+             {"href": f"{request.url_root}collections/{collection_id}/items", "rel": "items"},
              {"href": f"{request.url_root}collections", "rel": "parent"},
              {"href": f"{request.url_root}collections", "rel": "root"},
              {"href": f"{request.url_root}stac", "rel": "root"}]
@@ -66,8 +67,8 @@ def collection_items(collection_id):
              {"href": f"{request.url_root}collections/", "rel": "collection"},
              {"href": f"{request.url_root}stac", "rel": "root"}]
 
-    gjson = data.make_geojson(items, links, page=int(request.args.get('start', 1)),
-                              limit=int(request.args.get('count', 10)))
+    gjson = data.make_geojson(items, links, page=int(request.args.get('page', 1)),
+                              limit=int(request.args.get('limit', 10)))
 
     return jsonify(gjson)
 
@@ -106,7 +107,7 @@ def stac():
 
 @app.route("/stac/search", methods=["GET", "POST"])
 def stac_search():
-    bbox, time, ids, collections = None, None, None, None
+    bbox, time, ids, collections, page, limit = None, None, None, None, None, None
     if request.method == "POST":
         if request.is_json:
             request_json = request.get_json()
@@ -123,6 +124,9 @@ def stac_search():
             collections = request_json.get('collections', None)
             if collections is not None:
                 collections = ",".join([x for x in collections])
+
+            page = int(request_json.get('page', 1))
+            limit = int(request_json.get('limit', 10))
         else:
             abort(400, "POST Request must be an application/json")
 
@@ -131,6 +135,8 @@ def stac_search():
         time = request.args.get('time', None)
         ids = request.args.get('ids', None)
         collections = request.args.get('collections', None)
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 10))
 
     items = data.get_collection_items(collections=collections, bbox=bbox, time=time, ids=ids)
 
@@ -139,8 +145,7 @@ def stac_search():
              {"href": f"{request.url_root}collections/", "rel": "collection"},
              {"href": f"{request.url_root}stac", "rel": "root"}]
 
-    gjson = data.make_geojson(items, links=links, page=int(request.args.get('start', 1)),
-                              limit=int(request.args.get('count', 10)))
+    gjson = data.make_geojson(items, links=links, page=page, limit=limit)
 
     return jsonify(gjson)
 
