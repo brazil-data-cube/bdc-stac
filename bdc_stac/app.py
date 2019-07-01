@@ -15,7 +15,7 @@ app.config["SWAGGER"] = {
     "title": "Brazil Data Cubes Catalog"
 }
 
-swagger = Swagger(app, template_file="../spec/api/v0.7/STAC.yaml")
+swagger = Swagger(app, template_file="./spec/api/v0.7/STAC.yaml")
 
 
 @app.after_request
@@ -117,6 +117,7 @@ def stac_search():
                 bbox = ",".join([str(x) for x in bbox])
 
             time = request_json.get('time', None)
+
             ids = request_json.get('ids', None)
             if ids is not None:
                 ids = ",".join([x for x in ids])

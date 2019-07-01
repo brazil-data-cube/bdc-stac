@@ -48,10 +48,10 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
             if "/" in time:
                 time_start, end = time.split("/")
                 time_end = datetime.fromisoformat(end)
-                where.append(f"`end` < '{time_end}'")
+                where.append(f"p.`end` < '{time_end}'")
             else:
                 time_start = datetime.fromisoformat(time)
-            where.append(f"`start` > '{time_start}'")
+            where.append(f"p.`start` > '{time_start}'")
 
     where = " AND ".join(where)
 
@@ -155,7 +155,7 @@ def make_geojson(items, links, page=1, limit=10):
     p = (page - 1) * limit + limit
     min, max = (page - 1) * limit, \
                len(features) if p > len(features) else p
-
+#TODO rever estratégia de page, limit
     gjson['features'] = features[min:max]
 
     return gjson

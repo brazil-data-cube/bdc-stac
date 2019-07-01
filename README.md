@@ -15,8 +15,17 @@ To use the same data-model you will need Docker and Docker-compose and run the f
 ```bash
 docker compose up
 ```
+An .env file is needed to configure the application, the needed variables are:
+```.env
+DB_HOST=
+DB_USER=
+DB_PASS=
+DB_NAME=
+FILE_ROOT=
+API_VERSION=
+```
 
 To launch the Flask server:
 ```bash
-FLASK_APP=bdc-stac/indexy flask run
+FLASK_APP=bdc-stac/app.py flask run
 ``` 
