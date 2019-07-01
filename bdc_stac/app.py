@@ -30,7 +30,8 @@ def index():
              {"href": f"{request.url_root}docs", "rel": "service"},
              {"href": f"{request.url_root}conformance", "rel": "conformance"},
              {"href": f"{request.url_root}collections", "rel": "data"},
-             {"href": f"{request.url_root}stac", "rel": "data"}]
+             {"href": f"{request.url_root}stac", "rel": "data"},
+             {"href": f"{request.url_root}stac/search", "rel": "search"}]
     return jsonify(links)
 
 
