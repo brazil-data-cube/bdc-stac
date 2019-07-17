@@ -52,7 +52,7 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
             else:
                 time_start = datetime.fromisoformat(time)
             where.append(f"p.`start` > '{time_start}'")
-
+    where.append("p.type LIKE 'MEDIAN'")
     where = " AND ".join(where)
 
     group = f" GROUP by  p.`datacube`, p.`tileid`, p.`start`, p.`end`, p.`type`, p.`sceneid`, p.`band`, p.`cloud`, " \
