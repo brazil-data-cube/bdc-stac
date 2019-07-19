@@ -23,7 +23,9 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
         if collections is not None:
             where.append(f"FIND_IN_SET(p.`datacube`, '{collections}')")
         elif collection_id is not None:
+            collection_id, type = collection_id.split(':')
             where.append(f"p.`datacube` LIKE '{collection_id}'")
+            where.append(f"p.type LIKE '{type}'")
 
         if bbox is not None:
             try:
@@ -52,7 +54,7 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
             else:
                 time_start = datetime.fromisoformat(time)
             where.append(f"p.`start` > '{time_start}'")
-    where.append("p.type LIKE 'MEDIAN'")
+
     where = " AND ".join(where)
 
     group = f" GROUP by  p.`datacube`, p.`tileid`, p.`start`, p.`end`, p.`type`, p.`sceneid`, p.`band`, p.`cloud`, " \
@@ -67,13 +69,14 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
 
 
 def get_collection(collection_id):
-    sql = f"SELECT `datacube` AS id, start, end, bands, satsen from `datacubes` WHERE `datacube` LIKE '{collection_id}'"
+    id, _ = collection_id.split(':')
+    sql = f"SELECT `datacube` AS id, start, end, bands, satsen from `datacubes` WHERE `datacube` LIKE '{id}'"
 
     extent = do_query(f"SELECT CONCAT_WS(',', MIN(BL_Latitude),MIN(BL_Longitude),MAX(TR_Longitude),"
-                      f"MAX(TR_Latitude)) AS extent FROM `products` WHERE `datacube` LIKE '{collection_id}'")
+                      f"MAX(TR_Latitude)) AS extent FROM `products` WHERE `datacube` LIKE '{id}'")
 
     collection = do_query(sql)
-
+    collection['id'] = collection_id
     start = datetime.fromisoformat(str(collection['start'])).astimezone().isoformat()
     end = None if collection['end'] is None else datetime.fromisoformat(str(collection['end'])).astimezone().isoformat()
 
@@ -96,8 +99,14 @@ def get_collection(collection_id):
 def get_collections():
     sql = "SELECT  datacube FROM  `datacubes`"
     datacubes = do_query(sql)
-
-    return datacubes
+    collections = list()
+    for datacube in datacubes:
+        sql = f"SELECT `type` from `products` WHERE `datacube` LIKE '{datacube['datacube']}' GROUP BY `type`"
+        types = do_query(sql)
+        if types is not None:
+            for type in types:
+                collections.append(f"{datacube['datacube']}:{type['type']}")
+    return collections
 
 
 def make_geojson(items, links, page=1, limit=10):
@@ -134,7 +143,6 @@ def make_geojson(items, links, page=1, limit=10):
             end = "null" if i['end'] is None else datetime.fromisoformat(str(i['end'])).astimezone().isoformat()
 
             properties['datetime'] = f"{start}/{end}"
-
             feature['properties'] = properties
 
             assets = OrderedDict()
@@ -171,7 +179,12 @@ def do_query(sql):
     result = result.fetchall()
     engine.dispose()
     result = [dict(row) for row in result]
-    return result if len(result) > 1 else result[0]
+    if len(result) > 1:
+        return result
+    elif len(result) == 1:
+        return result[0]
+    else:
+        return None
 
 
 def bbox(coord_list):

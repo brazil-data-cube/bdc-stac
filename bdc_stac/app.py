@@ -99,7 +99,7 @@ def stac():
     links.append({"href": request.url, "rel": "self"})
 
     for datacube in datacubes:
-        links.append({"href": f"{request.url_root}collections/{datacube['datacube']}", "rel": "child"})
+        links.append({"href": f"{request.url_root}collections/{datacube}", "rel": "child"})
 
     catalog["links"] = links
 
