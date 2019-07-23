@@ -124,8 +124,6 @@ def stac_search():
                 ids = ",".join([x for x in ids])
 
             collections = request_json.get('collections', None)
-            if collections is not None:
-                collections = ",".join([x for x in collections])
 
             page = int(request_json.get('page', 1))
             limit = int(request_json.get('limit', 10))

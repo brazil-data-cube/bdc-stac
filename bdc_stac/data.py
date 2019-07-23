@@ -21,7 +21,14 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
         where.append(f"p.`sceneid` LIKE '{item_id}'")
     else:
         if collections is not None:
-            where.append(f"FIND_IN_SET(p.`datacube`, '{collections}')")
+            collection_type = list()
+            if not isinstance(collections, list):
+                collections = collections.split(',')
+            for collection in collections:
+                collection, type = collection.split(':')
+                collection_type.append(f"(p.`datacube` LIKE '{collection}' AND p.`type` LIKE '{type}')")
+            collection_type = " OR ".join(collection_type)
+            where.append(f"({collection_type})")
         elif collection_id is not None:
             collection_id, type = collection_id.split(':')
             where.append(f"p.`datacube` LIKE '{collection_id}'")
