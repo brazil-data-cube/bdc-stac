@@ -61,7 +61,8 @@ def collections_id(collection_id):
 @app.route("/collections/<collection_id>/items", methods=["GET"])
 def collection_items(collection_id):
     items = data.get_collection_items(collection_id=collection_id, bbox=request.args.get('bbox', None),
-                                      time=request.args.get('time', None))
+                                      time=request.args.get('time', None), type=request.args.get('type', None),
+                                      bands=request.args.get('bands', None))
 
     links = [{"href": f"{request.url_root}collections/", "rel": "self"},
              {"href": f"{request.url_root}collections/", "rel": "parent"},
@@ -99,7 +100,7 @@ def stac():
     links.append({"href": request.url, "rel": "self"})
 
     for datacube in datacubes:
-        links.append({"href": f"{request.url_root}collections/{datacube}", "rel": "child"})
+        links.append({"href": f"{request.url_root}collections/{datacube['datacube']}", "rel": "child", "title": datacube['datacube']})
 
     catalog["links"] = links
 

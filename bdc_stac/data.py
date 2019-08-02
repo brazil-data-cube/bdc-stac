@@ -5,7 +5,8 @@ from datetime import datetime
 from copy import deepcopy
 
 
-def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None, ids=None, collections=None):
+def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None, type=None, ids=None, bands=None,
+                         collections=None):
     sql = f"SELECT p.`datacube`, p.`tileid`, p.`start`, p.`end`, p.`type`, p.`sceneid`, p.`band`, p.`cloud`, " \
         f"p.`processingdate`, p.`TL_Latitude`, p.`TL_Longitude`, p.`BR_Latitude`, p.`BR_Longitude`, p.`TR_Latitude`, " \
         f"p.`TR_Longitude`, p.`BL_Latitude`, p.`BL_Longitude`, p.`filename`, q.`qlookfile` FROM `products`" \
@@ -14,7 +15,8 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
     where = list()
 
     where.append(f"p.`sceneid` = q.`sceneid`")
-
+    if bands is not None:
+        where.append(f"FIND_IN_SET(p.`band`, '{bands}')")
     if ids is not None:
         where.append(f"FIND_IN_SET(p.`sceneid`, '{ids}')")
     elif item_id is not None:
@@ -25,14 +27,9 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
             if not isinstance(collections, list):
                 collections = collections.split(',')
             for collection in collections:
-                collection, type = collection.split(':')
-                collection_type.append(f"(p.`datacube` LIKE '{collection}' AND p.`type` LIKE '{type}')")
-            collection_type = " OR ".join(collection_type)
-            where.append(f"({collection_type})")
+                where.append(f"(p.`datacube` LIKE '{collection}'")
         elif collection_id is not None:
-            collection_id, type = collection_id.split(':')
             where.append(f"p.`datacube` LIKE '{collection_id}'")
-            where.append(f"p.type LIKE '{type}'")
 
         if bbox is not None:
             try:
@@ -61,13 +58,15 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
             else:
                 time_start = datetime.fromisoformat(time)
             where.append(f"p.`start` > '{time_start}'")
+    if type is not None:
+        where.append(f"`type` LIKE '{type}'")
 
     where = " AND ".join(where)
 
     group = f" GROUP by  p.`datacube`, p.`tileid`, p.`start`, p.`end`, p.`type`, p.`sceneid`, p.`band`, p.`cloud`, " \
         f"p.`processingdate`, p.`TL_Latitude`, p.`TL_Longitude`, p.`BR_Latitude`, p.`BR_Longitude`, p.`TR_Latitude`, " \
         f"p.`TR_Longitude`, p.`BL_Latitude`, p.`BL_Longitude`, p.`filename`, q.`qlookfile` " \
-        f"ORDER by p.`sceneid`"
+        f"ORDER BY p.`sceneid`, p.`start` ASC"
 
     sql += where + group
     items = do_query(sql)
@@ -76,16 +75,15 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
 
 
 def get_collection(collection_id):
-    id, _ = collection_id.split(':')
-    sql = f"SELECT `datacube` AS id, start, end, bands, satsen from `datacubes` WHERE `datacube` LIKE '{id}'"
+    sql = f"SELECT `datacube` AS id, start, end, bands, satsen from `datacubes` WHERE `datacube` LIKE '{collection_id}'"
 
     extent = do_query(f"SELECT CONCAT_WS(',', MIN(BL_Latitude),MIN(BL_Longitude),MAX(TR_Longitude),"
-                      f"MAX(TR_Latitude)) AS extent FROM `products` WHERE `datacube` LIKE '{id}'")
+                      f"MAX(TR_Latitude)) AS extent FROM `products` WHERE `datacube` LIKE '{collection_id}'")
 
     collection = do_query(sql)
     collection['id'] = collection_id
-    start = datetime.fromisoformat(str(collection['start'])).astimezone().isoformat()
-    end = None if collection['end'] is None else datetime.fromisoformat(str(collection['end'])).astimezone().isoformat()
+    start = datetime.fromisoformat(str(collection['start'])).isoformat()
+    end = None if collection['end'] is None else datetime.fromisoformat(str(collection['end'])).isoformat()
 
     collection["stac_version"] = os.getenv("API_VERSION")
     collection["description"] = f"{collection_id} datacube with products from" \
@@ -94,7 +92,11 @@ def get_collection(collection_id):
     collection["license"] = None
     # collection["properties"] = {}
     collection["extent"] = {"spatial": extent["extent"].split(','), "time": [start, end]}
+    collection["properties"] = OrderedDict()
 
+    types = do_query(f"SELECT `type` FROM `products` WHERE `datacube` LIKE '{collection_id}' GROUP BY `type`")
+    collection["properties"]["bdc:time_aggregations"] = [{"name": t['type'], "description":None} for t in types]
+    collection["properties"]["bdc:bands"] = collection['bands'].split(',')
     collection.pop('bands')
     collection.pop('satsen')
     collection.pop('start')
@@ -105,14 +107,8 @@ def get_collection(collection_id):
 
 def get_collections():
     sql = "SELECT  datacube FROM  `datacubes`"
-    datacubes = do_query(sql)
-    collections = list()
-    for datacube in datacubes:
-        sql = f"SELECT `type` from `products` WHERE `datacube` LIKE '{datacube['datacube']}' GROUP BY `type`"
-        types = do_query(sql)
-        if types is not None:
-            for type in types:
-                collections.append(f"{datacube['datacube']}:{type['type']}")
+    collections = do_query(sql)
+
     return collections
 
 
@@ -146,10 +142,11 @@ def make_geojson(items, links, page=1, limit=10):
 
             properties = OrderedDict()
 
-            start = datetime.fromisoformat(str(i['start'])).astimezone().isoformat()
-            end = "null" if i['end'] is None else datetime.fromisoformat(str(i['end'])).astimezone().isoformat()
-
-            properties['datetime'] = f"{start}/{end}"
+            start = datetime.fromisoformat(str(i['start'])).isoformat()
+            end = "null" if i['end'] is None else datetime.fromisoformat(str(i['end'])).isoformat()
+            properties['bdc:time_aggregation'] = i['type']
+            properties['bdc:tile'] = i['tileid']
+            properties['datetime'] = f"{start}"
             feature['properties'] = properties
 
             assets = OrderedDict()
