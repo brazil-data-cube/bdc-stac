@@ -96,6 +96,8 @@ def get_collection(collection_id):
 
     types = do_query(f"SELECT `type` FROM `products` WHERE `datacube` LIKE '{collection_id}' GROUP BY `type`")
     collection["properties"]["bdc:time_aggregations"] = [{"name": t['type'], "description":None} for t in types]
+    tiles = do_query(f"SELECT `tileid` FROM `products` WHERE `datacube` LIKE '{collection_id}' GROUP BY `tileid`")
+    collection["properties"]["bdc:tiles"] = [t['tileid'] for t in tiles]
     collection["properties"]["bdc:bands"] = collection['bands'].split(',')
     collection.pop('bands')
     collection.pop('satsen')
