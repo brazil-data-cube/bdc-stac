@@ -116,6 +116,12 @@ def make_geojson(items, links, page=1, limit=10):
     last = ''
     feature = None
 
+    gjson = OrderedDict()
+    gjson['type'] = 'FeatureCollection'
+    if len(features) == 0:
+        gjson['features'] = features
+        return gjson
+
     for i in items:
         if last != i['sceneid']:
             last = i['sceneid']
@@ -159,12 +165,6 @@ def make_geojson(items, links, page=1, limit=10):
     if len(features) == 1:
         return features[0]
 
-    gjson = OrderedDict()
-    gjson['type'] = 'FeatureCollection'
-
-    if len(features) == 0:
-        gjson['features'] = features
-        return gjson
 
     p = (page - 1) * limit + limit
     min, max = (page - 1) * limit, \
