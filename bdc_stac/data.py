@@ -23,11 +23,7 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
         where.append(f"p.`sceneid` LIKE '{item_id}'")
     else:
         if collections is not None:
-            collection_type = list()
-            if not isinstance(collections, list):
-                collections = collections.split(',')
-            for collection in collections:
-                where.append(f"(p.`datacube` LIKE '{collection}'")
+            where.append(f"FIND_IN_SET(p.`datacube`, '{collections}')")
         elif collection_id is not None:
             where.append(f"p.`datacube` LIKE '{collection_id}'")
 
@@ -165,6 +161,10 @@ def make_geojson(items, links, page=1, limit=10):
 
     gjson = OrderedDict()
     gjson['type'] = 'FeatureCollection'
+
+    if len(features) == 0:
+        gjson['features'] = features
+        return gjson
 
     p = (page - 1) * limit + limit
     min, max = (page - 1) * limit, \
