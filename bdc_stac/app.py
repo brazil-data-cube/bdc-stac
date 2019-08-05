@@ -128,6 +128,8 @@ def stac_search():
 
             page = int(request_json.get('page', 1))
             limit = int(request_json.get('limit', 10))
+            type = request_json.get('type', None)
+            bands = request_json.get('bands', None)
         else:
             abort(400, "POST Request must be an application/json")
 
@@ -138,8 +140,10 @@ def stac_search():
         collections = request.args.get('collections', None)
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
+        type = request.args.get('type', None)
+        bands = request.args.get('bands', None)
 
-    items = data.get_collection_items(collections=collections, bbox=bbox, time=time, ids=ids)
+    items = data.get_collection_items(collections=collections, bbox=bbox, time=time, ids=ids, type=type, bands=bands)
 
     links = [{"href": f"{request.url_root}collections/", "rel": "self"},
              {"href": f"{request.url_root}collections/", "rel": "parent"},
