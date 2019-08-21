@@ -50,10 +50,10 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
             if "/" in time:
                 time_start, end = time.split("/")
                 time_end = datetime.fromisoformat(end)
-                where.append(f"p.`end` < '{time_end}'")
+                where.append(f"p.`end` <= '{time_end}'")
             else:
                 time_start = datetime.fromisoformat(time)
-            where.append(f"p.`start` > '{time_start}'")
+            where.append(f"p.`start` >= '{time_start}'")
     if type is not None:
         where.append(f"`type` LIKE '{type}'")
 
@@ -71,7 +71,7 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
 
 
 def get_collection(collection_id):
-    sql = f"SELECT `datacube` AS id, start, end, bands, satsen from `datacubes` WHERE `datacube` LIKE '{collection_id}'"
+    sql = f"SELECT `datacube` AS id, start, end, bands, satsen, wrs, tschema, step from `datacubes` WHERE `datacube` LIKE '{collection_id}'"
 
     extent = do_query(f"SELECT CONCAT_WS(',', MIN(BL_Latitude),MIN(BL_Longitude),MAX(TR_Longitude),"
                       f"MAX(TR_Latitude)) AS extent FROM `products` WHERE `datacube` LIKE '{collection_id}'")
@@ -95,9 +95,15 @@ def get_collection(collection_id):
     tiles = do_query(f"SELECT `tileid` FROM `products` WHERE `datacube` LIKE '{collection_id}' GROUP BY `tileid`")
     collection["properties"]["bdc:tiles"] = [t['tileid'] for t in tiles]
     collection["properties"]["bdc:bands"] = collection['bands'].split(',')
+    collection["properties"]["bdc:tschema"] = collection['tschema']
+    collection["properties"]["bdc:tstep"] = collection['step']
+    collection["properties"]["bdc:wrs"] = collection['wrs']
     collection.pop('bands')
     collection.pop('satsen')
     collection.pop('start')
+    collection.pop('step')
+    collection.pop('tschema')
+    collection.pop('wrs')
     collection.pop('end')
 
     return collection
