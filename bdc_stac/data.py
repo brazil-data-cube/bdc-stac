@@ -124,6 +124,7 @@ def make_geojson(items, links, page=1, limit=10):
 
     gjson = OrderedDict()
     gjson['type'] = 'FeatureCollection'
+
     if len(items) == 0:
         gjson['features'] = features
         return gjson
