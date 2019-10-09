@@ -76,7 +76,7 @@ def get_collection(collection_id):
     extent = do_query(f"SELECT CONCAT_WS(',', MIN(BL_Latitude),MIN(BL_Longitude),MAX(TR_Longitude),"
                       f"MAX(TR_Latitude)) AS extent FROM `products` WHERE `datacube` LIKE '{collection_id}'")[0]
 
-    collection = do_query(sql)
+    collection = do_query(sql)[0]
     collection['id'] = collection_id
     start = datetime.fromisoformat(str(collection['start'])).isoformat()
     end = None if collection['end'] is None else datetime.fromisoformat(str(collection['end'])).isoformat()
