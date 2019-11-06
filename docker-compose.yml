@@ -4,6 +4,19 @@ networks:
 volumes:
   data:
 services:
+  bdc-stac:
+    build: ./
+    volumes:
+      - ./bdc_stac:/bdc_stac
+    ports:
+      - 5050:5000
+    environment:
+      - DB_HOST=ds_db:3311
+      - DB_USER=root
+      - DB_PASS=password
+      - DB_NAME=datastorm
+      - FILE_ROOT=http://www.dpi.inpe.br/datastore
+      - API_VERSION=0.7
   ds_db:
     image: mysql:5.7
     volumes:

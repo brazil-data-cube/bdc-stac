@@ -15,7 +15,7 @@ app.config["SWAGGER"] = {
     "title": "Brazil Data Cubes Catalog"
 }
 
-swagger = Swagger(app, template_file="../spec/api/v0.7/STAC.yaml")
+swagger = Swagger(app, template_file="./spec/api/v0.7/STAC.yaml")
 
 
 @app.after_request
@@ -30,7 +30,8 @@ def index():
              {"href": f"{request.url_root}docs", "rel": "service"},
              {"href": f"{request.url_root}conformance", "rel": "conformance"},
              {"href": f"{request.url_root}collections", "rel": "data"},
-             {"href": f"{request.url_root}stac", "rel": "data"}]
+             {"href": f"{request.url_root}stac", "rel": "data"},
+             {"href": f"{request.url_root}stac/search", "rel": "search"}]
     return jsonify(links)
 
 
@@ -60,7 +61,8 @@ def collections_id(collection_id):
 @app.route("/collections/<collection_id>/items", methods=["GET"])
 def collection_items(collection_id):
     items = data.get_collection_items(collection_id=collection_id, bbox=request.args.get('bbox', None),
-                                      time=request.args.get('time', None))
+                                      time=request.args.get('time', None), type=request.args.get('type', None),
+                                      bands=request.args.get('bands', None))
 
     links = [{"href": f"{request.url_root}collections/", "rel": "self"},
              {"href": f"{request.url_root}collections/", "rel": "parent"},
@@ -98,7 +100,7 @@ def stac():
     links.append({"href": request.url, "rel": "self"})
 
     for datacube in datacubes:
-        links.append({"href": f"{request.url_root}collections/{datacube['datacube']}", "rel": "child"})
+        links.append({"href": f"{request.url_root}collections/{datacube['datacube']}", "rel": "child", "title": datacube['datacube']})
 
     catalog["links"] = links
 
@@ -117,16 +119,17 @@ def stac_search():
                 bbox = ",".join([str(x) for x in bbox])
 
             time = request_json.get('time', None)
+
             ids = request_json.get('ids', None)
             if ids is not None:
                 ids = ",".join([x for x in ids])
 
             collections = request_json.get('collections', None)
-            if collections is not None:
-                collections = ",".join([x for x in collections])
 
             page = int(request_json.get('page', 1))
             limit = int(request_json.get('limit', 10))
+            type = request_json.get('type', None)
+            bands = request_json.get('bands', None)
         else:
             abort(400, "POST Request must be an application/json")
 
@@ -137,8 +140,10 @@ def stac_search():
         collections = request.args.get('collections', None)
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
+        type = request.args.get('type', None)
+        bands = request.args.get('bands', None)
 
-    items = data.get_collection_items(collections=collections, bbox=bbox, time=time, ids=ids)
+    items = data.get_collection_items(collections=collections, bbox=bbox, time=time, ids=ids, type=type, bands=bands)
 
     links = [{"href": f"{request.url_root}collections/", "rel": "self"},
              {"href": f"{request.url_root}collections/", "rel": "parent"},
