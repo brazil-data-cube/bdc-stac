@@ -1,10 +1,8 @@
 from flask import Flask, jsonify, request, abort
 from flasgger import Swagger
-from dotenv import load_dotenv, find_dotenv
 import os
 from bdc_stac import data
 
-load_dotenv(find_dotenv())
 
 app = Flask(__name__)
 
@@ -62,7 +60,7 @@ def collections_id(collection_id):
 def collection_items(collection_id):
     items = data.get_collection_items(collection_id=collection_id, bbox=request.args.get('bbox', None),
                                       time=request.args.get('time', None), type=request.args.get('type', None),
-                                      bands=request.args.get('bands', None))
+                                     )
 
     links = [{"href": f"{request.url_root}collections/", "rel": "self"},
              {"href": f"{request.url_root}collections/", "rel": "parent"},
@@ -70,7 +68,7 @@ def collection_items(collection_id):
              {"href": f"{request.url_root}stac", "rel": "root"}]
 
     gjson = data.make_geojson(items, links, page=int(request.args.get('page', 1)),
-                              limit=int(request.args.get('limit', 10)))
+                              limit=int(request.args.get('limit', 10)),  bands=request.args.get('bands', None))
 
     return jsonify(gjson)
 
@@ -91,7 +89,7 @@ def items_id(collection_id, item_id):
 @app.route("/collections", methods=["GET"])
 @app.route("/stac", methods=["GET"])
 def stac():
-    datacubes = data.get_collections()
+    cube_collections = data.get_collections()
     catalog = dict()
     catalog["description"] = "Brazil Data Cubes Catalog"
     catalog["id"] = "bdc"
@@ -99,8 +97,8 @@ def stac():
     links = list()
     links.append({"href": request.url, "rel": "self"})
 
-    for datacube in datacubes:
-        links.append({"href": f"{request.url_root}collections/{datacube['datacube']}", "rel": "child", "title": datacube['datacube']})
+    for cube_collection in cube_collections:
+        links.append({"href": f"{request.url_root}collections/{cube_collection['id']}", "rel": "child", "title": cube_collection['id']})
 
     catalog["links"] = links
 
@@ -202,3 +200,7 @@ def handle_exception(e):
     resp.status_code = 500
 
     return resp
+
+
+if __name__ == '__main__':
+    app.run(debug=True)

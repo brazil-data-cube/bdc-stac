@@ -1,11 +1,11 @@
-FROM python:3-alpine
-MAINTAINER Matheus Zaglia <mzaglia@gmail.com.br>
-
-# Install dependencies
-RUN apk update
-RUN apk add --no-cache gcc musl-dev mariadb-dev
+FROM python:3.7-slim-buster
 
 # Prepare work directory
+
+RUN apt-get update -y \
+    && apt-get install -y libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN mkdir -p /bdc_stac
 WORKDIR /bdc_stac
 
@@ -13,10 +13,6 @@ WORKDIR /bdc_stac
 COPY requirements.txt /bdc_stac
 RUN pip install -r requirements.txt
 
-# Setting environment variables
-ENV PYTHONUNBUFFERED 1
-ENV FLASK_APP __init__
-ENV FLASK_DEBUG True
 # Expose the Flask port
 EXPOSE 5000
 

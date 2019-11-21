@@ -1,5 +1,4 @@
 Flask
 flasgger
 sqlalchemy
-mysqlclient
-python-dotenv
+psycopg2-binary

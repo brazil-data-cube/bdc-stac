@@ -1,8 +1,5 @@
 version: '3'
-networks:
-  ds_net:
-volumes:
-  data:
+
 services:
   bdc-stac:
     build: ./
@@ -11,29 +8,9 @@ services:
     ports:
       - 5050:5000
     environment:
-      - DB_HOST=ds_db:3311
-      - DB_USER=root
-      - DB_PASS=password
-      - DB_NAME=datastorm
+      - DB_HOST=localhost:5432
+      - DB_USER=postgres
+      - DB_PASS=datacube_2019
+      - DB_NAME=bdc
       - FILE_ROOT=http://www.dpi.inpe.br/datastore
       - API_VERSION=0.7
-  ds_db:
-    image: mysql:5.7
-    volumes:
-      - ./data-model/ds_db.sql:/docker-entrypoint-initdb.d/ds_db.sql
-    ports:
-      - "3311:3306"
-    environment:
-      - MYSQL_ROOT_PASSWORD=password
-    networks:
-      - ds_net
-
-  ds_admin:
-    image: phpmyadmin/phpmyadmin:latest
-    ports:
-      - 81:80
-    environment:
-      - PMA_ARBITRARY=1
-      - PMA_HOST=ds_db
-    networks:
-      - ds_net
