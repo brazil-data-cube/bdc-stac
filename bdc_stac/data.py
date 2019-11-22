@@ -12,9 +12,9 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
           f"c.id as tileid, ST_AsGeoJson(c.geom_wgs84) as geom, e.id as type, " \
           f"(SELECT json_build_object('thumbnail', json_build_object('href', concat('{os.getenv('FILE_ROOT')}', b.quicklook)))::jsonb ||" \
           f"(SELECT json_object_agg(x.band, x.url)" \
-          f"FROM (SELECT band, json_build_object('href', concat('{os.getenv('FILE_ROOT')}', url)) as url " \
-          f"FROM assets " \
-          f"WHERE cube_item = b.id) x)::jsonb) as assets " \
+          f"FROM (SELECT y.common_name as band, json_build_object('href', concat('{os.getenv('FILE_ROOT')}', url)) as url " \
+          f"FROM assets x, bands y " \
+          f"WHERE cube_item = b.id and x.band = y.id) x)::jsonb) as assets " \
           f"FROM cube_collections a, cube_items b, tiles c, composite_functions e " \
           f"WHERE "
 
@@ -63,78 +63,6 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
     return items
 
 
-def get_items_json(collection_id=None, item_id=None, bbox=None, time=None, type=None, ids=None, bands=None,
-                   collections=None, links=[], page=1, limit=10):
-    sql = f"SELECT json_build_object('type','feature','id', b.id,'collection',a.id,'geometry', ST_AsGeoJson(c.geom_wgs84)," \
-          f" 'properties',json_build_object('datetime', b.composite_start,'bdc:time_agreggation', e.id,'bdc:tileid', c.id)," \
-          f" 'assets', (SELECT json_build_object('thumbnail', b.quicklook)::jsonb ||" \
-          f"(SELECT json_object_agg(x.band, x.url)" \
-          f"FROM (SELECT band, json_build_object('href',url) as url " \
-          f"FROM assets a " \
-          f"WHERE cube_item = b.id) x)::jsonb)) " \
-          f"FROM cube_collections a, cube_items b, tiles c, composite_functions e " \
-          f"WHERE "
-
-
-    where = list()
-    where.append(f"a.id = b.cube_collection and b.tile = c.id and b.composite_function = e.id")
-
-    if ids is not None:
-        where.append(f"FIND_IN_SET(b.id, '{ids}')")
-    elif item_id is not None:
-        where.append(f"b.id LIKE '{item_id}'")
-    else:
-        if collections is not None:
-            where.append(f"FIND_IN_SET(a.id, '{collections}')")
-        elif collection_id is not None:
-            where.append(f"a.id LIKE '{collection_id}'")
-        if bbox is not None:
-            try:
-                bbox = bbox.split(',')
-                for x in bbox:
-                    float(x)
-
-                where.append(
-                    f"ST_Intersects(ST_MakeEnvelope({bbox[0]}, {bbox[1]}, {bbox[2]}, {bbox[3]}, ST_SRID(c.geom_wgs84)), c.geom_wgs84)")
-            except:
-                raise (InvalidBoundingBoxError())
-
-        if time is not None:
-            if "/" in time:
-                time_start, end = time.split("/")
-                time_end = datetime.fromisoformat(end)
-                where.append(f"b.composite_end <= '{time_end}'")
-            else:
-                time_start = datetime.fromisoformat(time)
-            where.append(f"b.composite_start >= '{time_start}'")
-    if type is not None:
-        where.append(f"`type` LIKE '{type}'")
-    where.append(f"e.id != 'SCENE'")
-
-    where = " AND ".join(where)
-    group = f" GROUP BY a.id, b.id, b.composite_start, b.composite_end, b.quicklook, c.id, c.geom_wgs84, e.id " \
-            f"ORDER BY b.composite_start DESC"
-
-    sql += where + group
-    items = do_query(sql)
-
-    gjson = OrderedDict()
-    gjson['type'] = 'FeatureCollection'
-    gjson['features'] = []
-
-    if len(items) == 0:
-        return gjson
-
-    p = (page - 1) * limit + limit
-    min, max = (page - 1) * limit, \
-               len(items) if p > len(items) else p
-
-    for i in items[min:max]:
-        gjson['features'].append(i)
-
-    return gjson
-
-
 def get_collection(collection_id):
     extent = do_query(f"select ST_EXTENT(d.geom_wgs84)as extent FROM cube_collections a, cube_items c, tiles d "
                       f"WHERE '{collection_id}' = a.id AND c.tile = d.id GROUP BY a.id;")[0]['extent']
@@ -170,10 +98,10 @@ def get_collection(collection_id):
 
     collection["properties"]["bdc:tiles"] = [t['tile'] for t in tiles]
 
-    bands = do_query(f"SELECT b.id as band "
+    bands = do_query(f"SELECT b.common_name as band "
                      f"FROM cube_collections a, bands b "
                      f"WHERE '{collection_id}' = a.id and a.id = b.cube_collection "
-                     f"GROUP BY b.id")
+                     f"GROUP BY b.common_name")
 
     collection["properties"]["bdc:bands"] = [b['band'] for b in bands]
 
