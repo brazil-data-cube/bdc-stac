@@ -13,4 +13,4 @@ services:
       - DB_PASS=datacube_2019
       - DB_NAME=bdc
       - FILE_ROOT=http://www.dpi.inpe.br/datastore
-      - API_VERSION=0.7
+      - API_VERSION=0.7.0
