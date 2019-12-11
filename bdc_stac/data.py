@@ -1,48 +1,68 @@
-import sqlalchemy
 import os
+import json
+from copy import deepcopy
 from collections import OrderedDict
 from datetime import datetime
-from copy import deepcopy
+from sqlalchemy import create_engine, func, cast, select, text, and_
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.dialects.postgresql import JSONB
+from geoalchemy2.functions import GenericFunction
+from bdc_db.models import Collection, CollectionItem, Tile, Band, TemporalCompositionSchema, GrsSchema, Asset
+
+import stac
+
+connection = 'postgres://{}:{}@{}/{}'.format(os.environ.get('DB_USER'),
+                                             os.environ.get('DB_PASS'),
+                                             os.environ.get('DB_HOST'),
+                                             os.environ.get('DB_NAME'))
+db_engine = create_engine(connection, echo=True)
+
+Session = sessionmaker(bind=db_engine)
+session = Session()
+
+
+class ST_Extent(GenericFunction):
+    name = 'ST_Extent'
+    type = None
 
 
 def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None, type=None, ids=None, bands=None,
                          collections=None):
-    sql = f"SELECT p.`datacube`, p.`tileid`, p.`start`, p.`end`, p.`type`, p.`sceneid`, p.`band`, p.`cloud`, " \
-        f"p.`processingdate`, p.`TL_Latitude`, p.`TL_Longitude`, p.`BR_Latitude`, p.`BR_Longitude`, p.`TR_Latitude`, " \
-        f"p.`TR_Longitude`, p.`BL_Latitude`, p.`BL_Longitude`, p.`filename`, q.`qlookfile` FROM `products`" \
-        f" AS p, `qlook` AS q WHERE "
+    x = session.query(CollectionItem.id.label('item_id'), Band.common_name.label('band'),
+                      func.json_build_object('href', func.concat(os.getenv('FILE_ROOT'), Asset.url)).label('url')). \
+        filter(Asset.collection_item_id == CollectionItem.id, Asset.band_id == Band.id).subquery('a')
 
-    where = list()
+    assets = session.query(x.c.item_id, cast(func.json_object_agg(x.c.band, x.c.url), JSONB).op('||')(
+        cast(func.json_build_object('thumbnail', func.json_build_object('href', func.concat(os.getenv('FILE_ROOT'),
+                                                                                            CollectionItem.quicklook))),
+             JSONB)).label('asset')).filter(CollectionItem.id == x.c.item_id).group_by(x.c.item_id,
+                                                                                       CollectionItem.quicklook) \
+        .subquery('b')
 
-    where.append(f"p.`sceneid` = q.`sceneid`")
-    if bands is not None:
-        where.append(f"FIND_IN_SET(p.`band`, '{bands}')")
+    columns = [Collection.id.label('collection_id'), CollectionItem.id.label('item'),
+               CollectionItem.composite_start.label('start'),
+               CollectionItem.composite_end.label('end'), Tile.id.label('tile'),
+               func.ST_AsGeoJson(Tile.geom_wgs84).label('geom'), assets.c.asset]
+    where = [Collection.id == CollectionItem.collection_id, CollectionItem.tile_id == Tile.id,
+             assets.c.item_id == CollectionItem.id]
+
     if ids is not None:
-        where.append(f"FIND_IN_SET(p.`sceneid`, '{ids}')")
+        where += [CollectionItem.id.in_(ids)]
     elif item_id is not None:
-        where.append(f"p.`sceneid` LIKE '{item_id}'")
+        where += [CollectionItem.id.like(item_id)]
     else:
         if collections is not None:
-            where.append(f"FIND_IN_SET(p.`datacube`, '{collections}')")
+            where += [Collection.id.in_(collections)]
         elif collection_id is not None:
-            where.append(f"p.`datacube` LIKE '{collection_id}'")
-
+            where += [Collection.id.like(collection_id)]
         if bbox is not None:
             try:
-                for x in bbox.split(','):
+                bbox = bbox.split(',')
+                for x in bbox:
                     float(x)
-                min_x, min_y, max_x, max_y = bbox.split(',')
-
-                bbox = ""
-                bbox += "(({} <= p.`TR_Longitude` and {} <= p.`TR_Latitude`)".format(min_x, min_y)
-                bbox += " or "
-                bbox += "({} <= p.`BR_Longitude` and {} <= p.`TL_Latitude`))".format(min_x, min_y)
-                bbox += " and "
-                bbox += "(({} >= p.`BL_Longitude` and {} >= p.`BL_Latitude`)".format(max_x, max_y)
-                bbox += " or "
-                bbox += "({} >= p.`TL_Longitude` and {} >= p.`BR_Latitude`))".format(max_x, max_y)
-
-                where.append("(" + bbox + ")")
+                where += [func.ST_Intersects(
+                    func.ST_MakeEnvelope(bbox[0], bbox[1], bbox[2], bbox[3], func.ST_SRID(Tile.geom_wgs84)),
+                    Tile.geom_wgs84)]
             except:
                 raise (InvalidBoundingBoxError())
 
@@ -50,77 +70,84 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
             if "/" in time:
                 time_start, end = time.split("/")
                 time_end = datetime.fromisoformat(end)
-                where.append(f"p.`end` <= '{time_end}'")
+                where += [CollectionItem.composite_end <= time_end]
             else:
                 time_start = datetime.fromisoformat(time)
-            where.append(f"p.`start` >= '{time_start}'")
-    if type is not None:
-        where.append(f"`type` LIKE '{type}'")
+            where += [CollectionItem.composite_start >= time_start]
+    group_by = [Collection.id, CollectionItem.id, CollectionItem.composite_start, CollectionItem.composite_end,
+                Tile.id, Tile.geom_wgs84, assets.c.asset]
 
-    where = " AND ".join(where)
-
-    group = f" GROUP by  p.`datacube`, p.`tileid`, p.`start`, p.`end`, p.`type`, p.`sceneid`, p.`band`, p.`cloud`, " \
-        f"p.`processingdate`, p.`TL_Latitude`, p.`TL_Longitude`, p.`BR_Latitude`, p.`BR_Longitude`, p.`TR_Latitude`, " \
-        f"p.`TR_Longitude`, p.`BL_Latitude`, p.`BL_Longitude`, p.`filename`, q.`qlookfile` " \
-        f"ORDER BY p.`sceneid`, p.`start` ASC"
-
-    sql += where + group
-    items = do_query(sql)
-
-    return items
+    sql = session.query(*columns).filter(*where).group_by(*group_by).order_by(
+        CollectionItem.composite_start.desc())
+    result = sql.all()
+    return result
 
 
 def get_collection(collection_id):
-    sql = f"SELECT `datacube` AS id, start, end, bands, satsen, wrs, tschema, step from `datacubes` WHERE `datacube` LIKE '{collection_id}'"
+    is_cube = session.query(Collection.is_cube).filter(Collection.id == collection_id).one().is_cube
+    columns = [GrsSchema.id.label('grs_schema'),
+               ST_Extent(Tile.geom_wgs84).label('bbox'),
+               func.min(CollectionItem.composite_start).label('start'),
+               func.max(CollectionItem.composite_end).label('end')]
+    where = [Collection.id == CollectionItem.collection_id,
+             CollectionItem.tile_id == Tile.id,
+             Collection.grs_schema_id == GrsSchema.id,
+             Collection.id == collection_id]
+    group_by = [GrsSchema.id]
 
-    extent = do_query(f"SELECT CONCAT_WS(',', MIN(BL_Latitude),MIN(BL_Longitude),MAX(TR_Longitude),"
-                      f"MAX(TR_Latitude)) AS extent FROM `products` WHERE `datacube` LIKE '{collection_id}'")[0]
+    if is_cube:
+        columns += [TemporalCompositionSchema.temporal_schema.label('temporal_schema'),
+                    TemporalCompositionSchema.temporal_composite_t.label('temporal_composite_t'),
+                    TemporalCompositionSchema.temporal_composite_unit.label('temporal_composite_unit')]
+        where += [Collection.temporal_composition_schema_id == TemporalCompositionSchema.id]
 
-    collection = do_query(sql)[0]
+        group_by += [TemporalCompositionSchema.temporal_schema,
+                     TemporalCompositionSchema.temporal_composite_t,
+                     TemporalCompositionSchema.temporal_composite_unit]
+    result = session.query(*columns) \
+        .filter(*where).group_by(*group_by).one()
+    bbox = result.bbox[result.bbox.find("(") + 1:result.bbox.find(")")].replace(' ', ',')
+
+    collection = {}
     collection['id'] = collection_id
-    start = datetime.fromisoformat(str(collection['start'])).isoformat()
-    end = None if collection['end'] is None else datetime.fromisoformat(str(collection['end'])).isoformat()
+    start = result.start.isoformat()
+    end = result.end.isoformat()
 
     collection["stac_version"] = os.getenv("API_VERSION")
-    collection["description"] = f"{collection_id} datacube with products from" \
-        f" {collection['satsen']}(Sattelite/Sensor) with {collection['bands']} bands."
+    collection["description"] = ""
 
-    collection["license"] = None
-    # collection["properties"] = {}
-    collection["extent"] = {"spatial": extent["extent"].split(','), "time": [start, end]}
+    collection["license"] = ""
+    collection["properties"] = {}
+    collection["extent"] = {"spatial": [float(coord) for coord in bbox.split(',')], "temporal": [start, end]}
     collection["properties"] = OrderedDict()
 
-    types = do_query(f"SELECT `type` FROM `products` WHERE `datacube` LIKE '{collection_id}' GROUP BY `type`")
-    collection["properties"]["bdc:time_aggregations"] = [{"name": t['type'], "description":None} for t in types]
-    tiles = do_query(f"SELECT `tileid` FROM `products` WHERE `datacube` LIKE '{collection_id}' GROUP BY `tileid`")
-    collection["properties"]["bdc:tiles"] = [t['tileid'] for t in tiles]
-    collection["properties"]["bdc:bands"] = collection['bands'].split(',')
-    collection["properties"]["bdc:tschema"] = collection['tschema']
-    collection["properties"]["bdc:tstep"] = collection['step']
-    collection["properties"]["bdc:wrs"] = collection['wrs']
-    collection.pop('bands')
-    collection.pop('satsen')
-    collection.pop('start')
-    collection.pop('step')
-    collection.pop('tschema')
-    collection.pop('wrs')
-    collection.pop('end')
+    tiles = session.query(CollectionItem.tile_id).filter(CollectionItem.collection_id == collection_id) \
+        .group_by(CollectionItem.tile_id).all()
+    collection
+    collection["properties"]["bdc:tiles"] = [t.tile_id for t in tiles]
+
+    bands = session.query(Band.common_name).filter(Band.collection_id == collection_id).all()
+
+    collection["properties"]["bdc:bands"] = [b.common_name for b in bands]
+    collection["properties"]["bdc:cube"] = is_cube
+
+    if is_cube:
+        collection["properties"]["bdc:tschema"] = result.temporal_schema
+        collection["properties"]["bdc:tstep"] = result.temporal_composite_t
+        collection["properties"]["bdc:tunit"] = result.temporal_composite_unit
+
+    collection["properties"]["bdc:wrs"] = result.grs_schema
 
     return collection
 
 
 def get_collections():
-    sql = "SELECT  datacube FROM  `datacubes`"
-    collections = do_query(sql)
-
+    collections = session.query(Collection.id).all()
     return collections
 
 
-def make_geojson(items, links, page=1, limit=10):
+def make_geojson(items, links, page=1, limit=10, bands=None):
     features = []
-
-    last = ''
-    feature = None
 
     gjson = OrderedDict()
     gjson['type'] = 'FeatureCollection'
@@ -129,70 +156,55 @@ def make_geojson(items, links, page=1, limit=10):
         gjson['features'] = features
         return gjson
 
-    for i in items:
-        if last != i['sceneid']:
-            last = i['sceneid']
+    p = (page - 1) * limit + limit
+    min, max = (page - 1) * limit, \
+               len(items) if p > len(items) else p
 
-            feature = OrderedDict()
+    for i in items[min:max]:
+        feature = OrderedDict()
 
-            feature['type'] = 'Feature'
-            feature['id'] = i['sceneid']
-            feature['collection'] = i['datacube']
+        feature['type'] = 'Feature'
+        feature['id'] = i.item
+        feature['collection'] = i.collection_id
 
-            geometry = OrderedDict()
-            geometry['type'] = 'Polygon'
-            geometry['coordinates'] = [
-                [[i['TL_Longitude'], i['TL_Latitude']],
-                 [i['BL_Longitude'], i['BL_Latitude']],
-                 [i['BR_Longitude'], i['BR_Latitude']],
-                 [i['TR_Longitude'], i['TR_Latitude']],
-                 [i['TL_Longitude'], i['TL_Latitude']]]
-            ]
-            feature['bbox'] = bbox(geometry['coordinates'])
-            feature['geometry'] = geometry
+        feature['geometry'] = json.loads(i.geom)
+        feature['bbox'] = bbox(feature['geometry']['coordinates'])
 
-            properties = OrderedDict()
+        properties = OrderedDict()
 
-            start = datetime.fromisoformat(str(i['start'])).isoformat()
-            end = "null" if i['end'] is None else datetime.fromisoformat(str(i['end'])).isoformat()
-            properties['bdc:time_aggregation'] = i['type']
-            properties['bdc:tile'] = i['tileid']
-            properties['datetime'] = f"{start}"
-            feature['properties'] = properties
+        start = datetime.fromisoformat(str(i.start)).isoformat()
+        properties['bdc:tile'] = i.tile
+        properties['datetime'] = f"{start}"
+        feature['properties'] = properties
 
-            assets = OrderedDict()
-            assets['thumbnail'] = {'href': os.getenv('FILE_ROOT') + i['qlookfile']}
-            feature['assets'] = assets
-            feature['links'] = deepcopy(links)
-            feature['links'][0]['href'] += i['datacube']+"/items/"+i['sceneid']
-            feature['links'][1]['href'] += i['datacube']
-            feature['links'][2]['href'] += i['datacube']
-            features.append(feature)
-        features[-1]['assets'][i['band']] = {'href': os.getenv('FILE_ROOT') + i['filename']}
+        feature['assets'] = i.asset
+        feature['links'] = deepcopy(links)
+        feature['links'][0]['href'] += i.collection_id + "/items/" + i.item
+        feature['links'][1]['href'] += i.collection_id
+        feature['links'][2]['href'] += i.collection_id
+
+        features.append(feature)
+
     if len(features) == 1:
         return features[0]
 
-
-    p = (page - 1) * limit + limit
-    min, max = (page - 1) * limit, \
-               len(features) if p > len(features) else p
-#TODO rever estratégia de page, limit
-    gjson['features'] = features[min:max]
+    # TODO rever estratégia de page, limit
+    gjson['features'] = features
 
     return gjson
 
 
 def do_query(sql):
-    connection = 'mysql://{}:{}@{}/{}'.format(os.environ.get('DB_USER'),
-                                              os.environ.get('DB_PASS'),
-                                              os.environ.get('DB_HOST'),
-                                              os.environ.get('DB_NAME'))
-    engine = sqlalchemy.create_engine(connection)
+    connection = 'postgres://{}:{}@{}/{}'.format(os.environ.get('DB_USER'),
+                                                 os.environ.get('DB_PASS'),
+                                                 os.environ.get('DB_HOST'),
+                                                 os.environ.get('DB_NAME'))
+    engine = create_engine(connection)
     result = engine.execute(sql)
     result = result.fetchall()
     engine.dispose()
     result = [dict(row) for row in result]
-    if len(result) >= 1:
+    if len(result) > 0:
         return result
     else:
         return None

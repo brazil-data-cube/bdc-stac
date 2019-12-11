@@ -1,5 +1,6 @@
 Flask
 flasgger
-sqlalchemy
-mysqlclient
-python-dotenv
+jsonschema<3.0.0
+sqlalchemy[postgres]
+git+https://github.com/brazil-data-cube/bdc-db
+git+https://github.com/brazil-data-cube/stac.py

@@ -1,10 +1,9 @@
+import os
 from flask import Flask, jsonify, request, abort
 from flasgger import Swagger
-from dotenv import load_dotenv, find_dotenv
-import os
-from bdc_stac import data
+import data
+import stac
 
-load_dotenv(find_dotenv())
 
 app = Flask(__name__)
 
@@ -55,14 +54,14 @@ def collections_id(collection_id):
 
     collection['links'] = links
 
-    return jsonify(collection)
+    return jsonify(stac.Collection(collection))
 
 
 @app.route("/collections/<collection_id>/items", methods=["GET"])
 def collection_items(collection_id):
     items = data.get_collection_items(collection_id=collection_id, bbox=request.args.get('bbox', None),
                                       time=request.args.get('time', None), type=request.args.get('type', None),
-                                      bands=request.args.get('bands', None))
+                                     )
 
     links = [{"href": f"{request.url_root}collections/", "rel": "self"},
              {"href": f"{request.url_root}collections/", "rel": "parent"},
@@ -70,7 +69,7 @@ def collection_items(collection_id):
              {"href": f"{request.url_root}stac", "rel": "root"}]
 
     gjson = data.make_geojson(items, links, page=int(request.args.get('page', 1)),
-                              limit=int(request.args.get('limit', 10)))
+                              limit=int(request.args.get('limit', 10)),  bands=request.args.get('bands', None))
 
     return jsonify(gjson)
 
@@ -90,8 +89,8 @@ def items_id(collection_id, item_id):
 
 @app.route("/collections", methods=["GET"])
 @app.route("/stac", methods=["GET"])
-def stac():
-    datacubes = data.get_collections()
+def root():
+    collections = data.get_collections()
     catalog = dict()
     catalog["description"] = "Brazil Data Cubes Catalog"
     catalog["id"] = "bdc"
@@ -99,12 +98,12 @@ def stac():
     links = list()
     links.append({"href": request.url, "rel": "self"})
 
-    for datacube in datacubes:
-        links.append({"href": f"{request.url_root}collections/{datacube['datacube']}", "rel": "child", "title": datacube['datacube']})
+    for collection in collections:
+        links.append({"href": f"{request.url_root}collections/{collection.id}", "rel": "child", "title": collection.id})
 
     catalog["links"] = links
 
-    return jsonify(catalog)
+    return jsonify(stac.Catalog(catalog))
 
 
 @app.route("/stac/search", methods=["GET", "POST"])
@@ -202,3 +201,7 @@ def handle_exception(e):
     resp.status_code = 500
 
     return resp
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
