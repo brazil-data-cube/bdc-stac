@@ -1,21 +1,18 @@
 import os
 import json
 from copy import deepcopy
-from collections import OrderedDict
 from datetime import datetime
-from sqlalchemy import create_engine, func, cast, select, text, and_
+from sqlalchemy import create_engine, func, cast
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import JSONB
 from geoalchemy2.functions import GenericFunction
 from bdc_db.models import Collection, CollectionItem, Tile, Band, TemporalCompositionSchema, GrsSchema, Asset
 
-import stac
-
-connection = 'postgres://{}:{}@{}/{}'.format(os.environ.get('DB_USER'),
+connection = 'postgres://dict():dict()@dict()/dict()'.format(os.environ.get('DB_USER'),
                                              os.environ.get('DB_PASS'),
                                              os.environ.get('DB_HOST'),
                                              os.environ.get('DB_NAME'))
-db_engine = create_engine(connection, echo=True)
+db_engine = create_engine(connection)
 
 Session = sessionmaker(bind=db_engine)
 session = Session()
@@ -27,7 +24,7 @@ class ST_Extent(GenericFunction):
 
 
 def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None, type=None, ids=None, bands=None,
-                         collections=None):
+                         collections=None, page=1, limit=10):
     x = session.query(CollectionItem.id.label('item_id'), Band.common_name.label('band'),
                       func.json_build_object('href', func.concat(os.getenv('FILE_ROOT'), Asset.url)).label('url')). \
         filter(Asset.collection_item_id == CollectionItem.id, Asset.band_id == Band.id).subquery('a')
@@ -77,9 +74,15 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
     group_by = [Collection.id, CollectionItem.id, CollectionItem.composite_start, CollectionItem.composite_end,
                 Tile.id, Tile.geom_wgs84, assets.c.asset]
 
-    sql = session.query(*columns).filter(*where).group_by(*group_by).order_by(
+    query = session.query(*columns).filter(*where).group_by(*group_by).order_by(
         CollectionItem.composite_start.desc())
-    result = sql.all()
+
+    if limit:
+        query = query.limit(limit)
+    if page:
+        query = query.offset((page * limit) - limit)
+
+    result = query.all()
     return result
 
 
@@ -106,29 +109,45 @@ def get_collection(collection_id):
                      TemporalCompositionSchema.temporal_composite_unit]
     result = session.query(*columns) \
         .filter(*where).group_by(*group_by).one()
-    bbox = result.bbox[result.bbox.find("(") + 1:result.bbox.find(")")].replace(' ', ',')
 
-    collection = {}
+    bbox = list()
+    if result.bbox:
+        bbox = result.bbox[result.bbox.find("(") + 1:result.bbox.find(")")].replace(' ', ',')
+        bbox = [float(coord) for coord in bbox.split(',')]
+
+    collection = dict()
     collection['id'] = collection_id
-    start = result.start.isoformat()
-    end = result.end.isoformat()
+    if result.start:
+        start = result.start.isoformat()
+        if result.end:
+            end = result.end.isoformat()
+        else:
+            end = None
+    else:
+        start = None
+
+    bands = session.query(Band).filter(Band.collection_id == collection_id).all()
+    bands_json = dict()
+
+    for b in bands:
+        bands_json[b.common_name] = {k: v for k, v in b.__dict__.items() if
+                                     k != 'common_name' and not k.startswith('_')}
 
     collection["stac_version"] = os.getenv("API_VERSION")
-    collection["description"] = ""
+
+    collection["description"] = f"{collection_id} collection with {', '.join([k for k in bands_json.keys()])} bands"
 
     collection["license"] = ""
-    collection["properties"] = {}
-    collection["extent"] = {"spatial": [float(coord) for coord in bbox.split(',')], "temporal": [start, end]}
-    collection["properties"] = OrderedDict()
+    collection["properties"] = dict()
+    collection["extent"] = {"spatial": bbox, "temporal": [start, end]}
+    collection["properties"] = dict()
 
     tiles = session.query(CollectionItem.tile_id).filter(CollectionItem.collection_id == collection_id) \
         .group_by(CollectionItem.tile_id).all()
-    collection
+
     collection["properties"]["bdc:tiles"] = [t.tile_id for t in tiles]
 
-    bands = session.query(Band.common_name).filter(Band.collection_id == collection_id).all()
-
-    collection["properties"]["bdc:bands"] = [b.common_name for b in bands]
+    collection["properties"]["bdc:bands"] = bands_json
     collection["properties"]["bdc:cube"] = is_cube
 
     if is_cube:
@@ -146,31 +165,27 @@ def get_collections():
     return collections
 
 
-def make_geojson(items, links, page=1, limit=10, bands=None):
-    features = []
+def make_geojson(items, links):
+    features = list()
 
-    gjson = OrderedDict()
+    gjson = dict()
     gjson['type'] = 'FeatureCollection'
 
     if len(items) == 0:
         gjson['features'] = features
         return gjson
 
-    p = (page - 1) * limit + limit
-    min, max = (page - 1) * limit, \
-               len(items) if p > len(items) else p
-
-    for i in items[min:max]:
-        feature = OrderedDict()
+    for i in items:
+        feature = dict()
 
         feature['type'] = 'Feature'
         feature['id'] = i.item
         feature['collection'] = i.collection_id
 
         feature['geometry'] = json.loads(i.geom)
-        feature['bbox'] = bbox(feature['geometry']['coordinates'])
+        feature['bbox'] = get_bbox(feature['geometry']['coordinates'])
 
-        properties = OrderedDict()
+        properties = dict()
 
         start = datetime.fromisoformat(str(i.start)).isoformat()
         properties['bdc:tile'] = i.tile
@@ -188,30 +203,13 @@ def make_geojson(items, links, page=1, limit=10, bands=None):
     if len(features) == 1:
         return features[0]
 
-    # TODO rever estratégia de page, limit
     gjson['features'] = features
 
     return gjson
 
 
-def do_query(sql):
-    connection = 'postgres://{}:{}@{}/{}'.format(os.environ.get('DB_USER'),
-                                                 os.environ.get('DB_PASS'),
-                                                 os.environ.get('DB_HOST'),
-                                                 os.environ.get('DB_NAME'))
-    engine = create_engine(connection)
-    result = engine.execute(sql)
-    result = result.fetchall()
-    engine.dispose()
-    result = [dict(row) for row in result]
-    if len(result) > 0:
-        return result
-    else:
-        return None
-
-
-def bbox(coord_list):
-    box = []
+def get_bbox(coord_list):
+    box = list()
     for i in (0, 1):
         res = sorted(coord_list[0], key=lambda x: x[i])
         box.append((res[0][i], res[-1][i]))

@@ -936,9 +936,6 @@ components:
         - rel: next
           href: >-
             http://api.cool-sat.com/query/gasd312fsaeg/ANsXtp9mrqN0yrKWhf-y2PUpHRLQb1GT-mtxNcXou8TwkXhi1Jbk
-servers:
-  - url: 'http://localhost:5000'
-    description: Development server
 tags:
   - name: STAC
     description: Extension to WFS3 Core to support STAC metadata model and search API
