@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from geoalchemy2.functions import GenericFunction
 from bdc_db.models import Collection, CollectionItem, Tile, Band, TemporalCompositionSchema, GrsSchema, Asset
 
-connection = 'postgres://dict():dict()@dict()/dict()'.format(os.environ.get('DB_USER'),
+connection = 'postgres://{}:{}@{}/{}'.format(os.environ.get('DB_USER'),
                                              os.environ.get('DB_PASS'),
                                              os.environ.get('DB_HOST'),
                                              os.environ.get('DB_NAME'))
