@@ -53,7 +53,7 @@ def collections_id(collection_id):
 
     collection['links'] = links
 
-    return jsonify(stac.Collection(collection,validation=os.getenv('STAC_VALIDATE', False)))
+    return jsonify(collection)
 
 
 @app.route("/collections/<collection_id>/items", methods=["GET"])

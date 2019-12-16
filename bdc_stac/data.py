@@ -78,9 +78,9 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
         CollectionItem.composite_start.desc())
 
     if limit:
-        query = query.limit(limit)
+        query = query.limit(int(limit))
     if page:
-        query = query.offset((page * limit) - limit)
+        query = query.offset((int(page) * int(limit)) - int(limit))
 
     result = query.all()
     return result
