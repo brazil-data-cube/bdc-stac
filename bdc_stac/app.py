@@ -16,6 +16,7 @@ swagger = Swagger(app, template_file="./spec/api/0.7.0/STAC.yaml")
 
 BASE_URL = os.getenv('BASE_URL', 'http://localhost:5000')
 
+
 @app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
