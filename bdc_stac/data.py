@@ -139,7 +139,7 @@ def get_collection(collection_id):
 
     collection["license"] = ""
     collection["properties"] = dict()
-    collection["extent"] = {"spatial": bbox, "temporal": [start, end]}
+    collection["extent"] = {"spatial": {"bbox": [bbox]}, "temporal": {"interval": [[start, end]]}}
     collection["properties"] = dict()
 
     tiles = session.query(CollectionItem.tile_id).filter(CollectionItem.collection_id == collection_id) \
@@ -181,7 +181,7 @@ def make_geojson(items, links):
         feature['type'] = 'Feature'
         feature['id'] = i.item
         feature['collection'] = i.collection_id
-
+        feature['stac_version'] = os.getenv("API_VERSION")
         feature['geometry'] = json.loads(i.geom)
         feature['bbox'] = get_bbox(feature['geometry']['coordinates'])
 
