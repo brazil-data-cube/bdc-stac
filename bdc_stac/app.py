@@ -68,7 +68,7 @@ def collection_items(collection_id):
 
     gjson = make_geojson(items, links)
 
-    return jsonify(stac.ItemCollection(gjson, validation=os.getenv('STAC_VALIDATE', False)))
+    return jsonify(stac.ItemCollection(gjson, validation=os.getenv('STAC_VALIDATE') == "True"))
 
 
 @app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
@@ -81,7 +81,7 @@ def items_id(collection_id, item_id):
 
     gjson = make_geojson(item, links)
 
-    return jsonify(stac.Item(gjson, validation=os.getenv('STAC_VALIDATE', False)))
+    return jsonify(stac.Item(gjson, validation=os.getenv("STAC_VALIDATE") == 'True'))
 
 
 @app.route("/collections", methods=["GET"])
@@ -100,7 +100,7 @@ def root():
 
     catalog["links"] = links
 
-    return jsonify(stac.Catalog(catalog, validation=os.getenv('STAC_VALIDATE', False)))
+    return jsonify(stac.Catalog(catalog, validation=os.getenv("STAC_VALIDATE") == 'True'))
 
 
 @app.route("/stac/search", methods=["GET", "POST"])
@@ -144,7 +144,7 @@ def stac_search():
 
     gjson = make_geojson(items, links=links)
 
-    return jsonify(stac.ItemCollection(gjson,validation=os.getenv('STAC_VALIDATE', False)))
+    return jsonify(stac.ItemCollection(gjson, validation=os.getenv("STAC_VALIDATE") == 'True'))
 
 
 @app.errorhandler(400)
