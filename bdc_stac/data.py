@@ -23,8 +23,8 @@ class ST_Extent(GenericFunction):
     type = None
 
 
-def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None, type=None, ids=None, bands=None,
-                         collections=None, page=1, limit=10):
+def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None, ids=None, collections=None,
+                         page=1, limit=10):
     x = session.query(CollectionItem.id.label('item_id'), Band.common_name.label('band'),
                       func.json_build_object('href', func.concat(os.getenv('FILE_ROOT'), Asset.url)).label('url')). \
         filter(Asset.collection_item_id == CollectionItem.id, Asset.band_id == Band.id).subquery('a')
