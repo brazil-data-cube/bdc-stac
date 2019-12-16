@@ -153,10 +153,11 @@ def get_collection(collection_id):
     collection["properties"]["bdc:cube"] = is_cube
 
     if is_cube:
-        collection["properties"]["bdc:tschema"] = result.temporal_schema
-        collection["properties"]["bdc:tstep"] = result.temporal_composite_t
-        collection["properties"]["bdc:tunit"] = result.temporal_composite_unit
-
+        temporal_schema = dict()
+        temporal_schema['schema'] = result.temporal_schema
+        temporal_schema['step'] = result.temporal_composite_t
+        temporal_schema['unit'] = result.temporal_composite_unit
+        collection["properties"]["bdc:temporal_composition"] = temporal_schema
     collection["properties"]["bdc:wrs"] = result.grs_schema
 
     return collection
