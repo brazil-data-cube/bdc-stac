@@ -132,6 +132,8 @@ def get_collection(collection_id):
     for b in bands:
         bands_json[b.common_name] = {k: v for k, v in b.__dict__.items() if
                                      k != 'common_name' and not k.startswith('_')}
+        bands_json[b.common_name].pop("id")
+        bands_json[b.common_name].pop("collection_id")
 
     collection["stac_version"] = os.getenv("API_VERSION")
 
