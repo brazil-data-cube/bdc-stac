@@ -163,6 +163,7 @@ paths:
         - $ref: '#/components/parameters/next'
         - $ref: '#/components/parameters/ids'
         - $ref: '#/components/parameters/collectionsArray'
+        - $ref: '#/components/parameters/cubes'
       responses:
         '200':
           description: A feature collection.
@@ -276,6 +277,16 @@ components:
       required: false
       schema:
         $ref: '#/components/schemas/collectionsArray'
+      explode: false
+    cubes:
+      name: cubes
+      in: query
+      description: |
+        true or false if you want to display only cubes or only collections.
+        When not used will display both cubes and collections
+      required: false
+      schema:
+        $ref: '#/components/schemas/cubes'
       explode: false
     bbox:
       name: bbox
@@ -794,6 +805,7 @@ components:
         - $ref: '#/components/schemas/collectionsFilter'
         - $ref: '#/components/schemas/idsFilter'
         - $ref: '#/components/schemas/limitFilter'
+        - $ref: '#/components/schemas/cubesFilter'
     next:
       type: string
       description: >-
@@ -856,6 +868,12 @@ components:
         Only Items in one of the provided Collections will be searched
       items:
         type: string
+    cubes:
+      type: boolean
+      example: true
+      description: |
+        true or false if you want to display only cubes or only collections.
+        When not used will display both cubes and collections
     ids:
       type: array
       description: >
@@ -883,6 +901,12 @@ components:
       properties:
         limit:
           $ref: '#/components/schemas/limit'
+    cubesFilter:
+      type: object
+      description: Only returns cubes or collections.
+      properties:
+        limit:
+          $ref: '#/components/schemas/cubes'
     nextFilter:
       type: object
       description: Only returns the next set of results
@@ -1509,7 +1533,5 @@ components:
           schema:
             type: string
 servers:
-  - url: 'http://dev.cool-sat.com'
-    description: Development server
-  - url: 'http://www.cool-sat.com'
+  - url: 'http://brazildatacube.dpi.inpe.br/bdc-stac/'
     description: Production server

@@ -11,7 +11,7 @@ app.config["SWAGGER"] = {
     "title": "Brazil Data Cube Catalog"
 }
 
-swagger = Swagger(app, template_file="./spec/api/0.8.0/STAC.yaml")
+swagger = Swagger(app, template_file="./spec/api/{}/STAC.yaml".format(os.getenv("API_VERSION")))
 
 BASE_URL = os.getenv('BASE_URL', 'http://localhost:5000')
 

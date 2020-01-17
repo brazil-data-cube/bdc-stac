@@ -134,6 +134,8 @@ def get_collection(collection_id):
     for b in bands:
         bands_json[b.common_name] = {k: v for k, v in b.__dict__.items() if
                                      k != 'common_name' and not k.startswith('_')}
+        bands_json[b.common_name].pop("id")
+        bands_json[b.common_name].pop("collection_id")
 
     collection["stac_version"] = os.getenv("API_VERSION")
 
@@ -141,7 +143,7 @@ def get_collection(collection_id):
 
     collection["license"] = ""
     collection["properties"] = dict()
-    collection["extent"] = {"spatial": bbox, "temporal": [start, end]}
+    collection["extent"] = {"spatial": {"bbox": [bbox]}, "temporal": {"interval": [[start, end]]}}
     collection["properties"] = dict()
 
     tiles = session.query(CollectionItem.tile_id).filter(CollectionItem.collection_id == collection_id) \
@@ -153,10 +155,11 @@ def get_collection(collection_id):
     collection["properties"]["bdc:cube"] = is_cube
 
     if is_cube:
-        collection["properties"]["bdc:tschema"] = result.temporal_schema
-        collection["properties"]["bdc:tstep"] = result.temporal_composite_t
-        collection["properties"]["bdc:tunit"] = result.temporal_composite_unit
-
+        temporal_schema = dict()
+        temporal_schema['schema'] = result.temporal_schema
+        temporal_schema['step'] = result.temporal_composite_t
+        temporal_schema['unit'] = result.temporal_composite_unit
+        collection["properties"]["bdc:temporal_composition"] = temporal_schema
     collection["properties"]["bdc:wrs"] = result.grs_schema
 
     return collection
@@ -183,7 +186,7 @@ def make_geojson(items, links):
         feature['type'] = 'Feature'
         feature['id'] = i.item
         feature['collection'] = i.collection_id
-
+        feature['stac_version'] = os.getenv("API_VERSION")
         feature['geometry'] = json.loads(i.geom)
         feature['bbox'] = get_bbox(feature['geometry']['coordinates'])
 
