@@ -24,7 +24,7 @@ class ST_Extent(GenericFunction):
 
 
 def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None, ids=None, collections=None,
-                         page=1, limit=10):
+                         cubes=None, page=1, limit=10):
     x = session.query(CollectionItem.id.label('item_id'), Band.common_name.label('band'),
                       func.json_build_object('href', func.concat(os.getenv('FILE_ROOT'), Asset.url)).label('url')). \
         filter(Asset.collection_item_id == CollectionItem.id, Asset.band_id == Band.id).subquery('a')
@@ -44,12 +44,14 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
              assets.c.item_id == CollectionItem.id]
 
     if ids is not None:
-        where += [CollectionItem.id.in_(ids)]
+        where += [CollectionItem.id.in_(ids.split(','))]
     elif item_id is not None:
         where += [CollectionItem.id.like(item_id)]
     else:
+        if cubes is not None:
+            where+= [Collection.is_cube.is_(cubes=='true')]
         if collections is not None:
-            where += [Collection.id.in_(collections)]
+            where += [Collection.id.in_(collections.split(','))]
         elif collection_id is not None:
             where += [Collection.id.like(collection_id)]
         if bbox is not None:
