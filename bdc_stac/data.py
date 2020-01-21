@@ -166,7 +166,9 @@ def get_collection(collection_id):
 
 
 def get_collections():
-    collections = session.query(Collection.id).all()
+    collections = session.query(Collection.id).filter(CollectionItem.collection_id == Collection.id)\
+        .group_by(Collection.id).all()
+
     return collections
 
 
