@@ -1,7 +1,7 @@
 import os
 from flask import Flask, jsonify, request, abort
 from flasgger import Swagger
-from bdc_stac.data import get_collection, get_collections, get_collection_items, make_geojson
+from data import get_collection, get_collections, get_collection_items, make_geojson
 
 app = Flask(__name__)
 
@@ -65,8 +65,14 @@ def collection_items(collection_id):
              {"href": f"{BASE_URL}/collections/", "rel": "collection"},
              {"href": f"{BASE_URL}/stac", "rel": "root"}]
 
-    gjson = make_geojson(items, links)
 
+    gjson = dict()
+    gjson['type'] = 'FeatureCollection'
+
+    features = make_geojson(items, links)
+    
+    gjson['features'] = features
+    
     return jsonify(gjson)
 
 
@@ -78,9 +84,9 @@ def items_id(collection_id, item_id):
              {"href": f"{BASE_URL}/collections/", "rel": "collection"},
              {"href": f"{BASE_URL}/stac", "rel": "root"}]
 
-    gjson = make_geojson(item, links)
+    feature = make_geojson(item, links)
 
-    return jsonify(gjson)
+    return jsonify(feature)
 
 
 @app.route("/collections", methods=["GET"])
@@ -143,8 +149,13 @@ def stac_search():
              {"href": f"{BASE_URL}/collections/", "rel": "collection"},
              {"href": f"{BASE_URL}/stac", "rel": "root"}]
 
-    gjson = make_geojson(items, links=links)
+    gjson = dict()
+    gjson['type'] = 'FeatureCollection'
 
+    features = make_geojson(items, links)
+    
+    gjson['features'] = features
+    
     return jsonify(gjson)
 
 
@@ -195,3 +206,6 @@ def handle_exception(e):
     resp.status_code = 500
 
     return resp
+
+if __name__ == '__main__':
+    app.run()
