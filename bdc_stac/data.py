@@ -175,13 +175,6 @@ def get_collections():
 def make_geojson(items, links):
     features = list()
 
-    gjson = dict()
-    gjson['type'] = 'FeatureCollection'
-
-    if len(items) == 0:
-        gjson['features'] = features
-        return gjson
-
     for i in items:
         feature = dict()
 
@@ -189,6 +182,7 @@ def make_geojson(items, links):
         feature['id'] = i.item
         feature['collection'] = i.collection_id
         feature['stac_version'] = os.getenv("API_VERSION")
+        feature['stac_extensions'] = list()
         feature['geometry'] = json.loads(i.geom)
         feature['bbox'] = get_bbox(feature['geometry']['coordinates'])
 
@@ -207,12 +201,7 @@ def make_geojson(items, links):
 
         features.append(feature)
 
-    if len(features) == 1:
-        return features[0]
-
-    gjson['features'] = features
-
-    return gjson
+    return features
 
 
 def get_bbox(coord_list):

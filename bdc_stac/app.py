@@ -1,7 +1,7 @@
 import os
 from flask import Flask, jsonify, request, abort
 from flasgger import Swagger
-from data import get_collection, get_collections, get_collection_items, make_geojson
+from bdc_stac.data import get_collection, get_collections, get_collection_items, make_geojson
 
 app = Flask(__name__)
 
@@ -70,7 +70,7 @@ def collection_items(collection_id):
     gjson['type'] = 'FeatureCollection'
 
     features = make_geojson(items, links)
-    
+
     gjson['features'] = features
     
     return jsonify(gjson)
@@ -86,7 +86,7 @@ def items_id(collection_id, item_id):
 
     feature = make_geojson(item, links)
 
-    return jsonify(feature)
+    return jsonify(feature[0])
 
 
 @app.route("/collections", methods=["GET"])
