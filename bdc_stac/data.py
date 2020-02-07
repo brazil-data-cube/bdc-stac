@@ -12,6 +12,7 @@ connection = 'postgres://{}:{}@{}/{}'.format(os.environ.get('DB_USER'),
                                              os.environ.get('DB_PASS'),
                                              os.environ.get('DB_HOST'),
                                              os.environ.get('DB_NAME'))
+                                             
 db_engine = create_engine(connection)
 
 Session = sessionmaker(bind=db_engine)
@@ -96,7 +97,7 @@ def get_collection(collection_id):
                func.max(CollectionItem.composite_end).label('end')]
     where = [Collection.id == CollectionItem.collection_id,
              CollectionItem.tile_id == Tile.id,
-             Collection.grs_schema_id == GrsSchema.id,
+             Collection.grs_schema_id == Tile.grs_schema_id,
              Collection.id == collection_id]
     group_by = [GrsSchema.id]
 
@@ -110,7 +111,7 @@ def get_collection(collection_id):
                      TemporalCompositionSchema.temporal_composite_t,
                      TemporalCompositionSchema.temporal_composite_unit]
     result = session.query(*columns) \
-        .filter(*where).group_by(*group_by).one()
+        .filter(*where).group_by(*group_by).first()
 
     bbox = list()
     if result.bbox:
