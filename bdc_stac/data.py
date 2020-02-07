@@ -42,7 +42,7 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
                CollectionItem.composite_end.label('end'), Tile.id.label('tile'),
                func.ST_AsGeoJson(Tile.geom_wgs84).label('geom'), assets.c.asset]
     where = [Collection.id == CollectionItem.collection_id, CollectionItem.tile_id == Tile.id,
-             assets.c.item_id == CollectionItem.id]
+             assets.c.item_id == CollectionItem.id, Collection.grs_schema_id == CollectionItem.grs_schema_id]
 
     if ids is not None:
         where += [CollectionItem.id.in_(ids.split(','))]
