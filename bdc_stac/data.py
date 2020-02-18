@@ -12,6 +12,7 @@ connection = 'postgres://{}:{}@{}/{}'.format(os.environ.get('DB_USER'),
                                              os.environ.get('DB_PASS'),
                                              os.environ.get('DB_HOST'),
                                              os.environ.get('DB_NAME'))
+
 db_engine = create_engine(connection)
 
 Session = sessionmaker(bind=db_engine)
@@ -24,7 +25,7 @@ class ST_Extent(GenericFunction):
 
 
 def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None, ids=None, collections=None,
-                         page=1, limit=10):
+                         cubes=None, page=1, limit=10):
     x = session.query(CollectionItem.id.label('item_id'), Band.common_name.label('band'),
                       func.json_build_object('href', func.concat(os.getenv('FILE_ROOT'), Asset.url)).label('url')). \
         filter(Asset.collection_item_id == CollectionItem.id, Asset.band_id == Band.id).subquery('a')
@@ -41,15 +42,17 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
                CollectionItem.composite_end.label('end'), Tile.id.label('tile'),
                func.ST_AsGeoJson(Tile.geom_wgs84).label('geom'), assets.c.asset]
     where = [Collection.id == CollectionItem.collection_id, CollectionItem.tile_id == Tile.id,
-             assets.c.item_id == CollectionItem.id]
+             assets.c.item_id == CollectionItem.id, Collection.grs_schema_id == CollectionItem.grs_schema_id]
 
     if ids is not None:
-        where += [CollectionItem.id.in_(ids)]
+        where += [CollectionItem.id.in_(ids.split(','))]
     elif item_id is not None:
         where += [CollectionItem.id.like(item_id)]
     else:
+        if cubes is not None:
+            where+= [Collection.is_cube.is_(cubes=='true')]
         if collections is not None:
-            where += [Collection.id.in_(collections)]
+            where += [Collection.id.in_(collections.split(','))]
         elif collection_id is not None:
             where += [Collection.id.like(collection_id)]
         if bbox is not None:
@@ -85,18 +88,39 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
     result = query.all()
     return result
 
+def get_collection_bands(collection_id):
+    bands = session.query(Band).filter(Band.collection_id == collection_id).all()
+    bands_json = dict()
+
+    for b in bands:
+        bands_json[b.common_name] = {k: v for k, v in b.__dict__.items() if
+                                     k != 'common_name' and not k.startswith('_')}
+        bands_json[b.common_name].pop("id")
+        bands_json[b.common_name].pop("collection_id")
+
+    return bands_json
+
+def get_collection_tiles(collection_id):
+    tiles = session.query(CollectionItem.tile_id).filter(CollectionItem.collection_id == collection_id) \
+        .group_by(CollectionItem.tile_id).all()
+
+    return [t.tile_id for t in tiles]
+
+def collection_is_cube(collection_id):
+    return session.query(Collection.is_cube).filter(Collection.id == collection_id).one().is_cube
 
 def get_collection(collection_id):
-    is_cube = session.query(Collection.is_cube).filter(Collection.id == collection_id).one().is_cube
     columns = [GrsSchema.id.label('grs_schema'),
                ST_Extent(Tile.geom_wgs84).label('bbox'),
                func.min(CollectionItem.composite_start).label('start'),
                func.max(CollectionItem.composite_end).label('end')]
     where = [Collection.id == CollectionItem.collection_id,
              CollectionItem.tile_id == Tile.id,
-             Collection.grs_schema_id == GrsSchema.id,
+             Tile.grs_schema_id == GrsSchema.id,
              Collection.id == collection_id]
     group_by = [GrsSchema.id]
+
+    is_cube = collection_is_cube(collection_id)
 
     if is_cube:
         columns += [TemporalCompositionSchema.temporal_schema.label('temporal_schema'),
@@ -108,7 +132,7 @@ def get_collection(collection_id):
                      TemporalCompositionSchema.temporal_composite_t,
                      TemporalCompositionSchema.temporal_composite_unit]
     result = session.query(*columns) \
-        .filter(*where).group_by(*group_by).one()
+        .filter(*where).group_by(*group_by).first()
 
     bbox = list()
     if result.bbox:
@@ -126,30 +150,22 @@ def get_collection(collection_id):
     else:
         start = None
 
-    bands = session.query(Band).filter(Band.collection_id == collection_id).all()
-    bands_json = dict()
-
-    for b in bands:
-        bands_json[b.common_name] = {k: v for k, v in b.__dict__.items() if
-                                     k != 'common_name' and not k.startswith('_')}
-        bands_json[b.common_name].pop("id")
-        bands_json[b.common_name].pop("collection_id")
+    bands = get_collection_bands(collection_id)
+    tiles = get_collection_tiles(collection_id)
 
     collection["stac_version"] = os.getenv("API_VERSION")
 
-    collection["description"] = f"{collection_id} collection with {', '.join([k for k in bands_json.keys()])} bands"
+
+    collection["description"] = f"{collection_id} collection with {', '.join([k for k in bands.keys()])} bands"
 
     collection["license"] = ""
     collection["properties"] = dict()
     collection["extent"] = {"spatial": bbox, "temporal": [start, end]}
     collection["properties"] = dict()
 
-    tiles = session.query(CollectionItem.tile_id).filter(CollectionItem.collection_id == collection_id) \
-        .group_by(CollectionItem.tile_id).all()
+    collection["properties"]["bdc:tiles"] = tiles
 
-    collection["properties"]["bdc:tiles"] = [t.tile_id for t in tiles]
-
-    collection["properties"]["bdc:bands"] = bands_json
+    collection["properties"]["bdc:bands"] = bands
     collection["properties"]["bdc:cube"] = is_cube
 
     if is_cube:
@@ -165,19 +181,13 @@ def get_collection(collection_id):
 
 
 def get_collections():
-    collections = session.query(Collection.id).all()
+    collections = session.query(Collection.id).filter(CollectionItem.collection_id == Collection.id)\
+	        .group_by(Collection.id).all()
     return collections
 
 
 def make_geojson(items, links):
     features = list()
-
-    gjson = dict()
-    gjson['type'] = 'FeatureCollection'
-
-    if len(items) == 0:
-        gjson['features'] = features
-        return gjson
 
     for i in items:
         feature = dict()
@@ -185,6 +195,7 @@ def make_geojson(items, links):
         feature['type'] = 'Feature'
         feature['id'] = i.item
         feature['collection'] = i.collection_id
+        feature['stac_version'] = os.getenv("API_VERSION")
 
         feature['geometry'] = json.loads(i.geom)
         feature['bbox'] = get_bbox(feature['geometry']['coordinates'])
@@ -204,12 +215,7 @@ def make_geojson(items, links):
 
         features.append(feature)
 
-    if len(features) == 1:
-        return features[0]
-
-    gjson['features'] = features
-
-    return gjson
+    return features
 
 
 def get_bbox(coord_list):
@@ -223,3 +229,4 @@ def get_bbox(coord_list):
 
 class InvalidBoundingBoxError(Exception):
     pass
+

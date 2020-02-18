@@ -1,8 +1,10 @@
 import os
+from stac import Catalog, Collection, Item, ItemCollection
 from flask import Flask, jsonify, request, abort
 from flasgger import Swagger
+
+
 from bdc_stac.data import get_collection, get_collections, get_collection_items, make_geojson
-import stac
 
 app = Flask(__name__)
 
@@ -54,7 +56,7 @@ def collections_id(collection_id):
 
     collection['links'] = links
 
-    return jsonify(collection)
+    return jsonify(Collection(collection, True))
 
 
 @app.route("/collections/<collection_id>/items", methods=["GET"])
@@ -66,9 +68,14 @@ def collection_items(collection_id):
              {"href": f"{BASE_URL}/collections/", "rel": "collection"},
              {"href": f"{BASE_URL}/stac", "rel": "root"}]
 
-    gjson = make_geojson(items, links)
+    gjson = dict()
+    gjson['type'] = 'FeatureCollection'
 
-    return jsonify(stac.ItemCollection(gjson, validation=os.getenv('STAC_VALIDATE') == "True"))
+    features = make_geojson(items, links)
+
+    gjson['features'] = features
+
+    return jsonify(ItemCollection(gjson, True))
 
 
 @app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
@@ -81,7 +88,7 @@ def items_id(collection_id, item_id):
 
     gjson = make_geojson(item, links)
 
-    return jsonify(stac.Item(gjson, validation=os.getenv("STAC_VALIDATE") == 'True'))
+    return jsonify(Item(gjson, True))
 
 
 @app.route("/collections", methods=["GET"])
@@ -100,7 +107,7 @@ def root():
 
     catalog["links"] = links
 
-    return jsonify(stac.Catalog(catalog, validation=os.getenv("STAC_VALIDATE") == 'True'))
+    return jsonify(Catalog(catalog, True))
 
 
 @app.route("/stac/search", methods=["GET", "POST"])
@@ -121,7 +128,7 @@ def stac_search():
                 ids = ",".join([x for x in ids])
 
             collections = request_json.get('collections', None)
-
+            cubes = request_json.get('cubes', None)
             page = int(request_json.get('page', 1))
             limit = int(request_json.get('limit', 10))
         else:
@@ -132,6 +139,7 @@ def stac_search():
         time = request.args.get('time', None)
         ids = request.args.get('ids', None)
         collections = request.args.get('collections', None)
+        cubes = request.args.get('cubes', None)
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
 
@@ -142,9 +150,14 @@ def stac_search():
              {"href": f"{BASE_URL}/collections/", "rel": "collection"},
              {"href": f"{BASE_URL}/stac", "rel": "root"}]
 
-    gjson = make_geojson(items, links=links)
+    gjson = dict()
+    gjson['type'] = 'FeatureCollection'
 
-    return jsonify(stac.ItemCollection(gjson, validation=os.getenv("STAC_VALIDATE") == 'True'))
+    features = make_geojson(items, links)
+
+    gjson['features'] = features
+
+    return jsonify(ItemCollection(gjson, True))
 
 
 @app.errorhandler(400)
