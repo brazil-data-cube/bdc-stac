@@ -4,7 +4,7 @@ from flask import Flask, jsonify, request, abort
 from flasgger import Swagger
 
 
-from bdc_stac.data import get_collection, get_collections, get_collection_items, make_geojson
+from .data import get_collection, get_collections, get_collection_items, make_geojson
 
 app = Flask(__name__)
 

@@ -1,8 +1,8 @@
 ..
-    This file is part of bdc-stac.
+    This file is part of Brazil Data Cube STAC.
     Copyright (C) 2019 INPE.
 
-    bdc-stac is a free software; you can redistribute it and/or modify it
+    Brazil Data Cube STAC is a free software; you can redistribute it and/or modify it
     under the terms of the MIT License; see LICENSE file for more details.
 
 
@@ -14,21 +14,29 @@ SpatioTemporal Asset Catalog for the Brazil Data Cube
         :target: https://github.com//brazil-data-cube/bdc-stac/blob/master/LICENSE
         :alt: Software License
 
-.. image:: https://travis-ci.org/brazil-data-cube/bdc-stac.svg?branch=master
+.. image:: https://travis-ci.org/brazil-data-cube/bdc-stac.svg?branch=b-0.7.0
         :target: https://travis-ci.org/brazil-data-cube/bdc-stac
         :alt: Build Status
 
-.. image:: https://coveralls.io/repos/github/brazil-data-cube/bdc-stac/badge.svg?branch=master
-        :target: https://coveralls.io/github/brazil-data-cube/bdc-stac?branch=master
+.. image:: https://coveralls.io/repos/github/brazil-data-cube/bdc-stac/badge.svg?branch=b-0.7.0
+        :target: https://coveralls.io/github/brazil-data-cube/bdc-stac?branch=b-0.7.0
         :alt: Code Coverage Test
 
-.. image:: https://readthedocs.org/projects/bdc-stac/badge/?version=latest
-        :target: https://wtss.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/bdc-stac/badge/?version=b-0.7.0
+        :target: https://bdc-stac.readthedocs.io/en/b-0.7.0
         :alt: Documentation Status
 
 .. image:: https://img.shields.io/badge/lifecycle-experimental-orange.svg
         :target: https://www.tidyverse.org/lifecycle/#experimental
         :alt: Software Life Cycle
+
+.. image:: https://img.shields.io/github/tag/brazil-data-cube/bdc-stac.svg
+        :target: https://github.com/brazil-data-cube/bdc-stac/releases
+        :alt: Release
+
+.. image:: https://badges.gitter.im/brazil-data-cube/community.png
+        :target: https://gitter.im/brazil-data-cube/community#
+        :alt: Join the chat
 
 
 Installation
@@ -37,16 +45,16 @@ Installation
 See `INSTALL.rst <./INSTALL.rst>`_.
 
 
-Running
-=======
+Deploying
+=========
 
-See `RUNNING.rst <./RUNNING.rst>`_.
+See `DEPLOY.rst <./DEPLOY.rst>`_.
 
 
 Developer Documentation
 =======================
 
-See https://bdc-stac.readthedocs.io/en/latest.
+See https://bdc-stac.readthedocs.io/en/b-0.7.0.
 
 
 License
@@ -55,5 +63,5 @@ License
 .. admonition::
     Copyright (C) 2019 INPE.
 
-    bdc-stac is a free software; you can redistribute it and/or modify it
+    Brazil Data Cube STAC is a free software; you can redistribute it and/or modify it
     under the terms of the MIT License; see LICENSE file for more details.

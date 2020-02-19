@@ -37,11 +37,11 @@ with open(os.path.join('bdc_stac', 'version.py'), 'rt') as fp:
     version = g['__version__']
 
 install_requires = ['Flask==1.1.1',
-                    'flasgger==0.9.3',
+                    'flasgger>=0.9.4',
                     'GeoAlchemy2==0.6.3',
                     'SQLAlchemy==1.3.11',
                     'psycopg2-binary==2.8.4',
-                    'bdc-db @ git+https://github.com/brazil-data-cube/bdc-db@master'
+                    'bdc-db @ git+https://github.com/brazil-data-cube/bdc-db@v0.2.0',
                     'stac @ git+https://github.com/brazil-data-cube/stac.py@b-0.7.0']
 
 packages = find_packages()
