@@ -41,8 +41,8 @@ install_requires = ['Flask==1.1.1',
                     'GeoAlchemy2==0.6.3',
                     'SQLAlchemy==1.3.11',
                     'psycopg2-binary==2.8.4',
-                    'git+https://github.com/brazil-data-cube/bdc-db@master',
-                    'git+https://github.com/brazil-data-cube/stac.py@master']
+                    'bdc-db @ git+https://github.com/brazil-data-cube/bdc-db@master'
+                    'stac @ git+https://github.com/brazil-data-cube/stac.py@b-0.7.0']
 
 packages = find_packages()
 
