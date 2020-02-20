@@ -79,11 +79,11 @@ You may need to replace the definition of some environment variables:
 
     - ``DB_NAME="bdcdb"``:  the name of the database containing the image and data cube collections [#f1]_.
 
-    - ``BASE_URI="http://localhost:8080"``: TO BE DONE
+    - ``BASE_URI="http://localhost:8080"``: Base URI of the service.
 
-    - ``API_VERSION="0.7.0"``: TO BE DONE
+    - ``API_VERSION="0.7.0"``: STAC Version used in the service.
 
-    - ``FILE_ROOT="http://localhost:8081"``: TO BE DONE
+    - ``FILE_ROOT="http://localhost:8081"``: File root for the Assets.
 
 
 
