@@ -127,6 +127,7 @@ def stac_search():
             if ids is not None:
                 ids = ",".join([x for x in ids])
 
+            intersects = request_json.get('intersects', None)
             collections = request_json.get('collections', None)
             cubes = request_json.get('cubes', None)
             page = int(request_json.get('page', 1))

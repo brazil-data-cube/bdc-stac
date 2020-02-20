@@ -103,11 +103,11 @@ Let's take a look at each parameter in the above command:/
 
     - ``--env DB_NAME="bdcdb"``:  the name of the database containing the image and data cube collections [#f2]_.
 
-    - ``--env BASE_URI="http://localhost:8080"``: TO BE DONE
+    - ``--env BASE_URI="http://localhost:8080"``: Base URI of the service.
 
-    - ``--env API_VERSION="0.7.0"``: TO BE DONE
+    - ``--env API_VERSION="0.7.0"``: STAC Version used in the service.
 
-    - ``--env FILE_ROOT="http://localhost:8081"``: TO BE DONE
+    - ``--env FILE_ROOT="http://localhost:8081"``: File root for the Assets.
 
     - ``bdc-stac:0.7.0-0``: the name of the base Docker image used to create the container.
 
