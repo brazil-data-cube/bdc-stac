@@ -1,9 +1,23 @@
+#
+# This file is part of Brazil Data Cube STAC.
+# Copyright (C) 2019 INPE.
+#
+# Brazil Data Cube STAC is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+
+"""STAC Implementation for the Brazil Data Cube"""
+
 import os
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 readme = open('README.rst').read()
 
 history = open('CHANGES.rst').read()
+
+docs_require = [
+    'Sphinx>=2.2',
+]
 
 tests_require = [
     'coverage>=4.5',
@@ -14,10 +28,6 @@ tests_require = [
     'pydocstyle>=4.0',
     'isort>4.3',
     'check-manifest>=0.40'
-]
-
-docs_require = [
-    'Sphinx>=2.2',
 ]
 
 extras_require = {
@@ -31,27 +41,28 @@ setup_requires = [
     'pytest-runner>=5.2',
 ]
 
+install_requires = [
+    'Flask==1.1.1',
+    'flasgger>=0.9.4',
+    'GeoAlchemy2==0.6.3',
+    'SQLAlchemy==1.3.11',
+    'psycopg2-binary==2.8.4',
+    'bdc-db @ git+https://github.com/brazil-data-cube/bdc-db@v0.2.1',
+]
+
+packages = find_packages()
+
 with open(os.path.join('bdc_stac', 'version.py'), 'rt') as fp:
     g = {}
     exec(fp.read(), g)
     version = g['__version__']
-
-install_requires = ['Flask==1.1.1',
-                    'flasgger>=0.9.4',
-                    'GeoAlchemy2==0.6.3',
-                    'SQLAlchemy==1.3.11',
-                    'psycopg2-binary==2.8.4',
-                    'bdc-db @ git+https://github.com/brazil-data-cube/bdc-db@v0.2.0',
-                    'stac @ git+https://github.com/brazil-data-cube/stac.py@b-0.7.0']
-
-packages = find_packages()
 
 setup(
     name='bdc-stac',
     version=version,
     description=__doc__,
     long_description=readme + '\n\n' + history,
-    keywords='STAC WebSevice REST',
+    keywords='STAC RESTful Web Service',
     license='MIT',
     author='INPE',
     author_email='mzaglia@gmail.com',
@@ -67,14 +78,15 @@ setup(
     setup_requires=setup_requires,
     tests_require=tests_require,
     classifiers=[
+        'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
-        'Intended Audience :: Developers',
+        'Intended Audience :: Education',
+        'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT',
         'Operating System :: OS Independent',
-        'Programming Language :: Python',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Software Development :: Libraries :: Python Modules',
-        'Programming Language :: Python :: 3.7',
-        'Development Status :: 3 - Alpha',
+        'Topic :: Scientific/Engineering :: GIS',
     ],
 )
