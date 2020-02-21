@@ -1,5 +1,4 @@
 import os
-from stac import Catalog, Collection, Item, ItemCollection
 from flask import Flask, jsonify, request, abort
 from flasgger import Swagger
 
@@ -56,7 +55,7 @@ def collections_id(collection_id):
 
     collection['links'] = links
 
-    return jsonify(Collection(collection, True))
+    return jsonify(collection)
 
 
 @app.route("/collections/<collection_id>/items", methods=["GET"])
@@ -75,7 +74,7 @@ def collection_items(collection_id):
 
     gjson['features'] = features
 
-    return jsonify(ItemCollection(gjson, True))
+    return jsonify(gjson)
 
 
 @app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
@@ -88,7 +87,10 @@ def items_id(collection_id, item_id):
 
     gjson = make_geojson(item, links)
 
-    return jsonify(Item(gjson, True))
+    if len(gjson) > 0:
+        return jsonify(gjson[0])
+
+    abort(404, f"Invalid item id '{item_id}' for collection '{collection_id}'")
 
 
 @app.route("/collections", methods=["GET"])
@@ -107,7 +109,7 @@ def root():
 
     catalog["links"] = links
 
-    return jsonify(Catalog(catalog, True))
+    return jsonify(catalog)
 
 
 @app.route("/stac/search", methods=["GET", "POST"])
@@ -158,7 +160,7 @@ def stac_search():
 
     gjson['features'] = features
 
-    return jsonify(ItemCollection(gjson, True))
+    return jsonify(gjson)
 
 
 @app.errorhandler(400)
@@ -171,7 +173,7 @@ def handle_bad_request(e):
 
 @app.errorhandler(404)
 def handle_page_not_found(e):
-    resp = jsonify({'code': '404', 'description': 'Page not found'})
+    resp = jsonify({'code': '404', 'description': e.description if e.description else 'Page not found'})
     resp.status_code = 404
 
     return resp
