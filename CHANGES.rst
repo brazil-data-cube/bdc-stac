@@ -14,7 +14,7 @@ Changes
 Version 0.7.0-1
 ---------------
 
-Released 2020-02-20
+Released 2020-02-21
 
 - First experimental version.
 - Support for the SpatioTemporal Asset Catalog (STAC) specification version 0.7.0.
