@@ -1,9 +1,10 @@
 import os
-from flask import Flask, jsonify, request, abort
+
 from flasgger import Swagger
+from flask import Flask, abort, jsonify, request
 
-
-from .data import get_collection, get_collections, get_collection_items, make_geojson
+from .data import (InvalidBoundingBoxError, get_collection,
+                   get_collection_items, get_collections, make_geojson)
 
 app = Flask(__name__)
 
@@ -130,7 +131,12 @@ def stac_search():
                 ids = ",".join([x for x in ids])
 
             intersects = request_json.get('intersects', None)
+
             collections = request_json.get('collections', None)
+            collections = request_json.get('ids', None)
+            if collections is not None:
+                collections = ",".join([x for x in collections])
+
             cubes = request_json.get('cubes', None)
             page = int(request_json.get('page', 1))
             limit = int(request_json.get('limit', 10))
@@ -208,6 +214,14 @@ def handle_exception(e):
     app.logger.exception(e)
     resp = jsonify({'code': '500', 'description': 'Internal Server Error'})
     resp.status_code = 500
+
+    return resp
+
+@app.errorhandler(InvalidBoundingBoxError)
+def handle_exception(e):
+    app.logger.exception(e)
+    resp = jsonify({'code': '400', 'description': str(e)})
+    resp.status_code = 400
 
     return resp
 

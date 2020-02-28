@@ -1,14 +1,20 @@
-import os
 import json
+import os
+import warnings
 from copy import deepcopy
 from datetime import datetime
-from sqlalchemy import create_engine, func, cast
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.dialects.postgresql import JSONB
-from geoalchemy2.functions import GenericFunction
-from bdc_db.models import Collection, CollectionItem, Tile, Band, TemporalCompositionSchema, GrsSchema, Asset
 
-connection = 'postgres://{}:{}@{}/{}'.format(os.environ.get('DB_USER'),
+from bdc_db.models import (Asset, Band, Collection, CollectionItem, GrsSchema,
+                           TemporalCompositionSchema, Tile)
+from geoalchemy2.functions import GenericFunction
+from sqlalchemy import cast, create_engine, exc, func
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import sessionmaker
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=exc.SAWarning)
+
+connection = 'postgresql://{}:{}@{}/{}'.format(os.environ.get('DB_USER'),
                                              os.environ.get('DB_PASS'),
                                              os.environ.get('DB_HOST'),
                                              os.environ.get('DB_NAME'))
@@ -57,18 +63,18 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
             where += [Collection.id.like(collection_id)]
 
         if intersects is not None:
-            where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(intersects['geometry']), Tile.geom_wgs84)]
+            where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(str(intersects['geometry'])), Tile.geom_wgs84)]
 
         if bbox is not None:
             try:
-                bbox = bbox.split(',')
-                for x in bbox:
+                split_bbox = bbox.split(',')
+                for x in split_bbox:
                     float(x)
                 where += [func.ST_Intersects(
-                    func.ST_MakeEnvelope(bbox[0], bbox[1], bbox[2], bbox[3], func.ST_SRID(Tile.geom_wgs84)),
+                    func.ST_MakeEnvelope(split_bbox[0], split_bbox[1], split_bbox[2], split_bbox[3], func.ST_SRID(Tile.geom_wgs84)),
                     Tile.geom_wgs84)]
             except:
-                raise (InvalidBoundingBoxError())
+                raise (InvalidBoundingBoxError(f"'{bbox}' is not a valid bbox.'"))
 
         if time is not None:
             if "/" in time:
@@ -114,15 +120,15 @@ def collection_is_cube(collection_id):
     return session.query(Collection.is_cube).filter(Collection.id == collection_id).one().is_cube
 
 def get_collection(collection_id):
-    columns = [GrsSchema.id.label('grs_schema'),
+    columns = [CollectionItem.grs_schema_id.label('grs_schema'),
                ST_Extent(Tile.geom_wgs84).label('bbox'),
                func.min(CollectionItem.composite_start).label('start'),
                func.max(CollectionItem.composite_end).label('end')]
     where = [Collection.id == CollectionItem.collection_id,
              CollectionItem.tile_id == Tile.id,
-             Tile.grs_schema_id == GrsSchema.id,
+             CollectionItem.grs_schema_id == Tile.grs_schema_id,
              Collection.id == collection_id]
-    group_by = [GrsSchema.id]
+    group_by = [CollectionItem.grs_schema_id]
 
     is_cube = collection_is_cube(collection_id)
 
@@ -145,14 +151,13 @@ def get_collection(collection_id):
 
     collection = dict()
     collection['id'] = collection_id
+
+    start, end = None, None
+
     if result.start:
         start = result.start.isoformat()
         if result.end:
             end = result.end.isoformat()
-        else:
-            end = None
-    else:
-        start = None
 
     bands = get_collection_bands(collection_id)
     tiles = get_collection_tiles(collection_id)
@@ -232,5 +237,8 @@ def get_bbox(coord_list):
 
 
 class InvalidBoundingBoxError(Exception):
-    pass
+    def __init__(self, description):
+        self.description = description
 
+    def __str__(self):
+        return str(self.description)
