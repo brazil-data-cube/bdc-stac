@@ -17,15 +17,26 @@ dist: bionic
 python:
     - "3.7"
 
+env:
+    - SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@127.0.0.1:5432/bdcdb"
+
+services:
+    -docker
+
 before_install:
     - pip install --upgrade pip
     - pip install --upgrade setuptools
     - pip install --upgrade wheel
+    - docker run --name postgres -e POSTGRES_PASSWORD=postgres -p 127.0.0.1:5432:5432 -d mdillion/postgis
+
 
 install:
     - pip install -e .[tests,docs]
 
 script:
+    - bdc-db db create-db
+    - bdc-db db upgrade
+    - bdc-db fixtures init
     - ./run-test.sh
 
 after_success:
