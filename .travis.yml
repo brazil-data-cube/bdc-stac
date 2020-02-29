@@ -42,7 +42,6 @@ install:
     - pip install -e .[tests,docs]
 
 script:
-
     - ./run-test.sh
 
 after_success:
