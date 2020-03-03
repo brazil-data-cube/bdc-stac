@@ -14,9 +14,15 @@ os.environ['FILE_ROOT'] = "http://brazildatacube.dpi.inpe.br"
 
 from bdc_stac import create_app
 
+@pytest.fixture(scope='class')
+def client():
+    app = create_app()
+    with app.test_client() as client:
+        yield client
+
 class TestBDCStac:
-    def test_index(self):
-        response = create_app.test_client().get(
+    def test_index(self, client):
+        response = client.get(
             '/'
         )
         data = response.get_json()
@@ -28,8 +34,8 @@ class TestBDCStac:
         assert 'stac' in data[4]['href']
         assert 'stac/search' in data[5]['href']
 
-    def test_conformance(self):
-        response = app.test_client().get(
+    def test_conformance(self, client):
+        response = client.get(
             '/conformance'
         )
         data = response.get_json()
@@ -37,8 +43,8 @@ class TestBDCStac:
         assert response.status_code == 200
         assert 'conformsTo' in data
 
-    def test_catalog(self):
-        response = app.test_client().get(
+    def test_catalog(self, client):
+        response = client.get(
             '/collections'
         )
         data = response.get_json()
@@ -53,8 +59,8 @@ class TestBDCStac:
         assert data['links'][1]['title'] == 'LC8SR'
         assert data['links'][2]['title'] == 'S2TOA'
 
-    def test_collection(self):
-        response = app.test_client().get(
+    def test_collection(self, client):
+        response = client.get(
             '/collections/LC8SR'
         )
         data = response.get_json()
@@ -67,8 +73,8 @@ class TestBDCStac:
         assert data['properties']['bdc:wrs'] == 'WRS2'
 
 
-    def test_collection_items(self):
-        response = app.test_client().get(
+    def test_collection_items(self, client):
+        response = client.get(
             '/collections/LC8SR/items?limit=1'
         )
         data = response.get_json()
@@ -81,8 +87,8 @@ class TestBDCStac:
         assert feature['properties']['bdc:tile'] == '221069'
         assert len(feature['assets']) > 0
 
-    def test_collection_items_id(self):
-        response = app.test_client().get(
+    def test_collection_items_id(self, client):
+        response = client.get(
             '/collections/LC8SR/items/LC8SR-LC08_L1TP_221069_20190103_20190130_01_T1'
         )
         data = response.get_json()
@@ -91,14 +97,14 @@ class TestBDCStac:
         assert stac.Item(data, validate=True)
         assert data['id'] == 'LC8SR-LC08_L1TP_221069_20190103_20190130_01_T1'
 
-    def test_collection_items_id_error(self):
-        response = app.test_client().get(
+    def test_collection_items_id_error(self, client):
+        response = client.get(
             '/collections/LC8SR/items/wrong_item'
         )
         assert response.status_code == 404
 
-    def test_stac_search(self):
-        response = app.test_client().get(
+    def test_stac_search(self, client):
+        response = client.get(
             '/stac/search'
         )
         assert response.status_code == 200
@@ -107,7 +113,7 @@ class TestBDCStac:
 
         assert stac.ItemCollection(data, validate=True)
 
-        response = app.test_client().post(
+        response = client.post(
             '/stac/search', content_type='application/json', json=dict()
         )
 
@@ -117,14 +123,14 @@ class TestBDCStac:
 
         assert stac.ItemCollection(data, validate=True)
 
-    def test_stac_search_wrong_content_type(self):
-        response = app.test_client().post(
+    def test_stac_search_wrong_content_type(self, client):
+        response = client.post(
             '/stac/search', content_type='text/plain', json=dict()
         )
 
         assert response.status_code == 400
 
-    def test_stac_search_parameters(self):
+    def test_stac_search_parameters(self, client):
         parameters = {
             "time": "2018-01-01/2020-01-01",
             "page": 1,
@@ -133,7 +139,7 @@ class TestBDCStac:
             "collections": ["LC8SR"],
         }
 
-        response = app.test_client().post(
+        response = client.post(
             '/stac/search', content_type='application/json', json=parameters
         )
 
@@ -143,12 +149,12 @@ class TestBDCStac:
 
         assert stac.ItemCollection(data, validate=True)
 
-    def test_stac_search_parameters_ids(self):
+    def test_stac_search_parameters_ids(self, client):
         parameters = {
             "ids":["LC8SR-LC08_L1TP_221069_20190103_20190130_01_T1"]
         }
 
-        response = app.test_client().post(
+        response = client.post(
             '/stac/search', content_type='application/json', json=parameters
         )
 
@@ -158,7 +164,7 @@ class TestBDCStac:
 
         assert stac.ItemCollection(data, validate=True)
 
-    def test_stac_search_parameters_intersects(self):
+    def test_stac_search_parameters_intersects(self, client):
         parameters = {
             "time": "2018-01-01",
             "intersects":
@@ -178,7 +184,7 @@ class TestBDCStac:
                 }
             }
         }
-        response = app.test_client().post(
+        response = client.post(
             '/stac/search', content_type='application/json', json=parameters
         )
 
@@ -188,12 +194,12 @@ class TestBDCStac:
 
         assert stac.ItemCollection(data, validate=True)
 
-    def test_stac_search_parameters_invalid_bbox(self):
+    def test_stac_search_parameters_invalid_bbox(self, client):
         parameters = {
             "bbox":[-180,-90,180,"a"],
         }
 
-        response = app.test_client().post(
+        response = client.post(
             '/stac/search', content_type='application/json', json=parameters
         )
 

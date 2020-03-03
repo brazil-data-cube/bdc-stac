@@ -8,7 +8,6 @@ from .data import (InvalidBoundingBoxError, get_collection,
 
 BASE_URL = os.getenv('BASE_URL', 'http://localhost:5000')
 
-
 @current_app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')

@@ -26,7 +26,7 @@ def create_app():
 
     with app.app_context():
         BDCDatabase(app)
-        Swagger(app, template_file="./spec/api/0.7.0/STAC.yaml")
+        Swagger(app, template_file=f"./spec/api/{os.environ.get('API_VERSION')}/STAC.yaml")
 
         from . import routes
 
