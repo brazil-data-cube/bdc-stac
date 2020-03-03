@@ -1,8 +1,8 @@
 import os
 
 from bdc_db import BDCDatabase
-from flask import Flask
 from flasgger import Swagger
+from flask import Flask
 
 from .version import __version__
 

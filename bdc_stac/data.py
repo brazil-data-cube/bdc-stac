@@ -4,9 +4,8 @@ import warnings
 from copy import deepcopy
 from datetime import datetime
 
-from bdc_db.models import (Asset, Band, Collection, CollectionItem, db, GrsSchema,
-                           TemporalCompositionSchema, Tile)
-
+from bdc_db.models import (Asset, Band, Collection, CollectionItem, GrsSchema,
+                           TemporalCompositionSchema, Tile, db)
 from geoalchemy2.functions import GenericFunction
 from sqlalchemy import cast, create_engine, exc, func
 from sqlalchemy.dialects.postgresql import JSONB
