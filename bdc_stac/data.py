@@ -4,8 +4,9 @@ import warnings
 from copy import deepcopy
 from datetime import datetime
 
-from bdc_db.models import (Asset, Band, Collection, CollectionItem, GrsSchema,
+from bdc_db.models import (Asset, Band, Collection, CollectionItem, db, GrsSchema,
                            TemporalCompositionSchema, Tile)
+
 from geoalchemy2.functions import GenericFunction
 from sqlalchemy import cast, create_engine, exc, func
 from sqlalchemy.dialects.postgresql import JSONB
@@ -14,16 +15,7 @@ from sqlalchemy.orm import sessionmaker
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=exc.SAWarning)
 
-connection = 'postgresql://{}:{}@{}/{}'.format(os.environ.get('DB_USER'),
-                                             os.environ.get('DB_PASS'),
-                                             os.environ.get('DB_HOST'),
-                                             os.environ.get('DB_NAME'))
-
-db_engine = create_engine(connection)
-
-Session = sessionmaker(bind=db_engine)
-session = Session()
-
+session = db.session()
 
 class ST_Extent(GenericFunction):
     name = 'ST_Extent'

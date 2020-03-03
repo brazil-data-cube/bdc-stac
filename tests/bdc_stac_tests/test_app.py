@@ -12,11 +12,11 @@ os.environ['DB_PASS'] = "postgres"
 os.environ['API_VERSION'] = "0.7.0"
 os.environ['FILE_ROOT'] = "http://brazildatacube.dpi.inpe.br"
 
-from bdc_stac.app import app
+from bdc_stac import create_app
 
 class TestBDCStac:
     def test_index(self):
-        response = app.test_client().get(
+        response = create_app.test_client().get(
             '/'
         )
         data = response.get_json()

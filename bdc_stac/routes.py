@@ -1,31 +1,22 @@
 import os
 
-from flasgger import Swagger
-from flask import Flask, abort, jsonify, request
-
+from flask import abort,current_app, jsonify, request
+from bdc_db import BDCDatabase
 from .data import (InvalidBoundingBoxError, get_collection,
                    get_collection_items, get_collections, make_geojson)
 
-app = Flask(__name__)
 
-app.config["SWAGGER"] = {
-    "openapi": "3.0.1",
-    "specs_route": "/docs",
-    "title": "Brazil Data Cube Catalog"
-}
-
-swagger = Swagger(app, template_file="./spec/api/0.7.0/STAC.yaml")
 
 BASE_URL = os.getenv('BASE_URL', 'http://localhost:5000')
 
 
-@app.after_request
+@current_app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
 
-@app.route("/", methods=["GET"])
+@current_app.route("/", methods=["GET"])
 def index():
     links = [{"href": f"{BASE_URL}/", "rel": "self"},
              {"href": f"{BASE_URL}/docs", "rel": "service"},
@@ -36,7 +27,7 @@ def index():
     return jsonify(links)
 
 
-@app.route("/conformance", methods=["GET"])
+@current_app.route("/conformance", methods=["GET"])
 def conformance():
     conforms = {"conformsTo": ["http://www.opengis.net/spec/wfs-1/3.0/req/core",
                                "http://www.opengis.net/spec/wfs-1/3.0/req/oas30",
@@ -45,7 +36,7 @@ def conformance():
     return jsonify(conforms)
 
 
-@app.route("/collections/<collection_id>", methods=["GET"])
+@current_app.route("/collections/<collection_id>", methods=["GET"])
 def collections_id(collection_id):
     collection = get_collection(collection_id)
     links = [{"href": f"{BASE_URL}/collections/{collection_id}", "rel": "self"},
@@ -59,7 +50,7 @@ def collections_id(collection_id):
     return jsonify(collection)
 
 
-@app.route("/collections/<collection_id>/items", methods=["GET"])
+@current_app.route("/collections/<collection_id>/items", methods=["GET"])
 def collection_items(collection_id):
     items = get_collection_items(collection_id=collection_id, **request.args.to_dict())
 
@@ -78,7 +69,7 @@ def collection_items(collection_id):
     return jsonify(gjson)
 
 
-@app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
+@current_app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
 def items_id(collection_id, item_id):
     item = get_collection_items(collection_id=collection_id, item_id=item_id)
     links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
@@ -94,8 +85,8 @@ def items_id(collection_id, item_id):
     abort(404, f"Invalid item id '{item_id}' for collection '{collection_id}'")
 
 
-@app.route("/collections", methods=["GET"])
-@app.route("/stac", methods=["GET"])
+@current_app.route("/collections", methods=["GET"])
+@current_app.route("/stac", methods=["GET"])
 def root():
     collections = get_collections()
     catalog = dict()
@@ -113,7 +104,7 @@ def root():
     return jsonify(catalog)
 
 
-@app.route("/stac/search", methods=["GET", "POST"])
+@current_app.route("/stac/search", methods=["GET", "POST"])
 def stac_search():
     bbox, time, ids, collections, page, limit = None, None, None, None, None, None
     if request.method == "POST":
@@ -141,7 +132,7 @@ def stac_search():
             page = int(request_json.get('page', 1))
             limit = int(request_json.get('limit', 10))
         else:
-            abort(400, "POST Request must be an application/json")
+            abort(400, "POST Request must be an current_application/json")
 
     elif request.method == "GET":
         bbox = request.args.get('bbox', None)
@@ -169,7 +160,7 @@ def stac_search():
     return jsonify(gjson)
 
 
-@app.errorhandler(400)
+@current_app.errorhandler(400)
 def handle_bad_request(e):
     resp = jsonify({'code': '400', 'description': 'Bad Request - {}'.format(e.description)})
     resp.status_code = 400
@@ -177,7 +168,7 @@ def handle_bad_request(e):
     return resp
 
 
-@app.errorhandler(404)
+@current_app.errorhandler(404)
 def handle_page_not_found(e):
     resp = jsonify({'code': '404', 'description': e.description if e.description else 'Page not found'})
     resp.status_code = 404
@@ -185,7 +176,7 @@ def handle_page_not_found(e):
     return resp
 
 
-@app.errorhandler(500)
+@current_app.errorhandler(500)
 def handle_api_error(e):
     resp = jsonify({'code': '500', 'description': 'Internal Server Error'})
     resp.status_code = 500
@@ -193,7 +184,7 @@ def handle_api_error(e):
     return resp
 
 
-@app.errorhandler(502)
+@current_app.errorhandler(502)
 def handle_bad_gateway_error(e):
     resp = jsonify({'code': '502', 'description': 'Bad Gateway'})
     resp.status_code = 502
@@ -201,7 +192,7 @@ def handle_bad_gateway_error(e):
     return resp
 
 
-@app.errorhandler(503)
+@current_app.errorhandler(503)
 def handle_service_unavailable_error(e):
     resp = jsonify({'code': '503', 'description': 'Service Unavailable'})
     resp.status_code = 503
@@ -209,22 +200,18 @@ def handle_service_unavailable_error(e):
     return resp
 
 
-@app.errorhandler(Exception)
+@current_app.errorhandler(Exception)
 def handle_exception(e):
-    app.logger.exception(e)
+    current_app.logger.exception(e)
     resp = jsonify({'code': '500', 'description': 'Internal Server Error'})
     resp.status_code = 500
 
     return resp
 
-@app.errorhandler(InvalidBoundingBoxError)
+@current_app.errorhandler(InvalidBoundingBoxError)
 def handle_exception(e):
-    app.logger.exception(e)
+    current_app.logger.exception(e)
     resp = jsonify({'code': '400', 'description': str(e)})
     resp.status_code = 400
 
     return resp
-
-
-if __name__ == '__main__':
-    app.run()
