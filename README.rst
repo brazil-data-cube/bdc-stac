@@ -11,11 +11,11 @@ SpatioTemporal Asset Catalog for the Brazil Data Cube
 =====================================================
 
 .. image:: https://img.shields.io/badge/license-MIT-green
-        :target: https://github.com//brazil-data-cube/bdc-stac/blob/master/LICENSE
+        :target: https://github.com/brazil-data-cube/bdc-stac/blob/master/LICENSE
         :alt: Software License
 
 .. image:: https://travis-ci.org/brazil-data-cube/bdc-stac.svg?branch=b-0.7.0
-        :target: https://travis-ci.org/brazil-data-cube/bdc-stac
+        :target: https://travis-ci.com/brazil-data-cube/bdc-stac
         :alt: Build Status
 
 .. image:: https://coveralls.io/repos/github/brazil-data-cube/bdc-stac/badge.svg?branch=b-0.7.0
