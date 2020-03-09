@@ -87,7 +87,7 @@ The `docker run` command can be used to launch a container from the image `bdc-s
 
 Let's take a look at each parameter in the above command:/
 
-    - ``--detach``: tells Docker that the container will run in background (deamon).
+    - ``--detach``: tells Docker that the container will run in background (daemon).
 
     - ``--name bdc-stac``: names the container.
 
