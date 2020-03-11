@@ -1,3 +1,4 @@
+"""Data module."""
 import json
 import os
 import warnings
@@ -17,12 +18,43 @@ with warnings.catch_warnings():
 session = db.session()
 
 class ST_Extent(GenericFunction):
+    """Postgis ST_Extent function."""
+
     name = 'ST_Extent'
     type = None
 
 
 def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None, ids=None, collections=None,
                          cubes=None, intersects=None, page=1, limit=10, **kwargs):
+    """Retrieve a list of collection items based on filters.
+
+    :param collection_id: Single Collection ID to include in the search for items.
+                          Only Items in one of the provided Collection will be searched, defaults to None
+    :type collection_id: str, optional
+    :param item_id: item identifier, defaults to None
+    :type item_id: str, optional
+    :param bbox: bounding box for intersection [west, north, east, south], defaults to None
+    :type bbox: list, optional
+    :param time: Single date+time, or a range ('/' seperator), formatted to RFC 3339, section 5.6, defaults to None
+    :type time: str, optional
+    :param ids: Array of Item ids to return. All other filter parameters that further restrict the
+                number of search results are ignored, defaults to None
+    :type ids: list, optional
+    :param collections: Array of Collection IDs to include in the search for items.
+                        Only Items in one of the provided Collections will be searched, defaults to None
+    :type collections: list, optional
+    :param cubes: Bool indicating if only cubes should be returned, defaults to None
+    :type cubes: bool, optional
+    :param intersects: Searches items by performing intersection between their geometry and provided GeoJSON geometry.
+                       All GeoJSON geometry types must be supported., defaults to None
+    :type intersects: dict, optional
+    :param page: The page offset of results, defaults to 1
+    :type page: int, optional
+    :param limit: The maximum number of results to return (page size), defaults to 10
+    :type limit: int, optional
+    :return: list of collectio items
+    :rtype: list
+    """
     x = session.query(CollectionItem.id.label('item_id'), Band.common_name.label('band'),
                       func.json_build_object('href', func.concat(os.getenv('FILE_ROOT'), Asset.url)).label('url')). \
         filter(Asset.collection_item_id == CollectionItem.id, Asset.band_id == Band.id).subquery('a')
@@ -90,6 +122,13 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
     return result
 
 def get_collection_bands(collection_id):
+    """Retrive a dict of bands for a given collection.
+
+    :param collection_id: collection identifier
+    :type collection_id: str
+    :return: dict of bands for the collection
+    :rtype: dict
+    """
     bands = session.query(Band).filter(Band.collection_id == collection_id).all()
     bands_json = dict()
 
@@ -102,15 +141,36 @@ def get_collection_bands(collection_id):
     return bands_json
 
 def get_collection_tiles(collection_id):
+    """Retrive a list of tiles for a given collection.
+
+    :param collection_id: collection identifier
+    :type collection_id: str
+    :return: list of tiles for the collection
+    :rtype: list
+    """
     tiles = session.query(CollectionItem.tile_id).filter(CollectionItem.collection_id == collection_id) \
         .group_by(CollectionItem.tile_id).all()
 
     return [t.tile_id for t in tiles]
 
 def collection_is_cube(collection_id):
+    """Check if a collection is a cube.
+
+    :param collection_id: collection identifier
+    :type collection_id: str
+    :return: True if the given collection is a cube, False otherwise
+    :rtype: bool
+    """
     return session.query(Collection.is_cube).filter(Collection.id == collection_id).one().is_cube
 
 def get_collection(collection_id):
+    """Retrieve information of a given collection.
+
+    :param collection_id: collection identifier
+    :type collection_id: str
+    :return: collection metadata
+    :rtype: dict
+    """
     columns = [CollectionItem.grs_schema_id.label('grs_schema'),
                ST_Extent(Tile.geom_wgs84).label('bbox'),
                func.min(CollectionItem.composite_start).label('start'),
@@ -181,12 +241,26 @@ def get_collection(collection_id):
 
 
 def get_collections():
+    """Retrive all available collections.
+
+    :return: a list of available collections
+    :rtype: list
+    """
     collections = session.query(Collection.id).filter(CollectionItem.collection_id == Collection.id)\
 	        .group_by(Collection.id).all()
     return collections
 
 
 def make_geojson(items, links):
+    """Generate a list of STAC Items from a list of collection items.
+
+    :param items: collection items to be formated as GeoJSON Features
+    :type items: list
+    :param links: links for STAC navigation
+    :type links: list
+    :return: GeoJSON Features.
+    :rtype: list
+    """
     features = list()
 
     for i in items:
@@ -219,6 +293,13 @@ def make_geojson(items, links):
 
 
 def get_bbox(coord_list):
+    """Calculate the bounding box for a list of coordinates.
+
+    :param coord_list: list of coordinates.
+    :type coord_list: list
+    :return: bounding box of the coordinates
+    :rtype: list
+    """
     box = list()
     for i in (0, 1):
         res = sorted(coord_list[0], key=lambda x: x[i])
@@ -228,8 +309,16 @@ def get_bbox(coord_list):
 
 
 class InvalidBoundingBoxError(Exception):
+    """Exception for malformed bounding box."""
+
     def __init__(self, description):
+        """Initialize exception with a description.
+
+        :param description: exception description.
+        :type description: str
+        """
         self.description = description
 
     def __str__(self):
+        """:return: str representation of the exception."""
         return str(self.description)
