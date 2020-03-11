@@ -23,3 +23,6 @@ recursive-include doc Makefile
 recursive-include tests *.py
 recursive-include bdc_stac *.yaml
 recursive-include bdc_stac *.py
+recursive-include bdc_stac *.html
+recursive-include bdc_stac *.js
+recursive-include bdc_stac *.png
