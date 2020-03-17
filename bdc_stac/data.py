@@ -270,7 +270,7 @@ def make_geojson(items, links):
         feature['stac_version'] = os.getenv("API_VERSION", "0.8.0")
 
         feature['geometry'] = json.loads(i.geom)
-        feature['bbox'] = get_bbox(feature['geometry']['coordinates'])
+        feature['bbox'] = get_bbox(feature['geometry']['coordinates'][0])
 
         properties = dict()
 
