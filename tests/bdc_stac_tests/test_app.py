@@ -16,7 +16,6 @@ os.environ['DB_HOST'] = "localhost:5432"
 os.environ['DB_NAME'] = "bdcdb"
 os.environ['DB_USER'] = "postgres"
 os.environ['DB_PASS'] = "postgres"
-os.environ['API_VERSION'] = "0.7.0"
 os.environ['FILE_ROOT'] = "http://brazildatacube.dpi.inpe.br"
 
 from bdc_stac import create_app
