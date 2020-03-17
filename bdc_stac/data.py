@@ -233,7 +233,6 @@ def get_collection(collection_id):
         temporal_schema['step'] = result.temporal_composite_t
         temporal_schema['unit'] = result.temporal_composite_unit
         collection["properties"]["bdc:temporal_composition"] = temporal_schema
-
     collection["properties"]["bdc:wrs"] = result.grs_schema
 
     return collection
