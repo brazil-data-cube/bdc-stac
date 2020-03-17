@@ -23,11 +23,6 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
-@current_app.route("/docs")
-def docs():
-    """Render docs page."""
-    return render_template('docs.html')
-
 @current_app.route("/", methods=["GET"])
 def index():
     """Landing page of this API."""
@@ -57,7 +52,7 @@ def root():
     catalog = dict()
     catalog["description"] = "Brazil Data Cubes Catalog"
     catalog["id"] = "bdc"
-    catalog["stac_version"] = os.getenv("API_VERSION")
+    catalog["stac_version"] = os.getenv("API_VERSION", "0.8.0")
     links = list()
     links.append({"href": request.url, "rel": "self"})
 

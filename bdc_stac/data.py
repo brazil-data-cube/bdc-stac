@@ -213,14 +213,13 @@ def get_collection(collection_id):
     bands = get_collection_bands(collection_id)
     tiles = get_collection_tiles(collection_id)
 
-    collection["stac_version"] = os.getenv("API_VERSION")
-
+    collection["stac_version"] = os.getenv("API_VERSION", "0.8.0")
 
     collection["description"] = f"{collection_id} collection with {', '.join([k for k in bands.keys()])} bands"
 
     collection["license"] = ""
     collection["properties"] = dict()
-    collection["extent"] = {"spatial": bbox, "temporal": [start, end]}
+    collection["extent"] = {"spatial": {"bbox": [bbox]}, "temporal": {"interval": [[start, end]]}}
     collection["properties"] = dict()
 
     collection["properties"]["bdc:tiles"] = tiles
@@ -269,7 +268,7 @@ def make_geojson(items, links):
         feature['type'] = 'Feature'
         feature['id'] = i.item
         feature['collection'] = i.collection_id
-        feature['stac_version'] = os.getenv("API_VERSION")
+        feature['stac_version'] = os.getenv("API_VERSION", "0.8.0")
 
         feature['geometry'] = json.loads(i.geom)
         feature['bbox'] = get_bbox(feature['geometry']['coordinates'])

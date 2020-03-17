@@ -10,6 +10,7 @@ import os
 
 from bdc_db import BDCDatabase
 from flask import Flask
+from flask_redoc import Redoc
 
 from .version import __version__
 
@@ -24,9 +25,10 @@ def create_app():
                                              os.environ.get('DB_PASS'),
                                              os.environ.get('DB_HOST'),
                                              os.environ.get('DB_NAME'))
-
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     with app.app_context():
         BDCDatabase(app)
+        Redoc(f'spec/api/{os.environ.get("API_VERSION", "0.8.0")}/STAC.yaml', app)
 
         from . import routes
 
