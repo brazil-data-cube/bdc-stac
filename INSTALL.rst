@@ -64,7 +64,7 @@ In the source code folder, enter the following command:
           DB_PASS="secret" \
           DB_NAME="bdcdb" \
           BASE_URI="http://localhost:5000" \
-          API_VERSION="0.7.0" \
+          API_VERSION="0.8.0" \
           FILE_ROOT="http://localhost:5001" \
           flask run
 
@@ -81,7 +81,7 @@ You may need to replace the definition of some environment variables:
 
     - ``BASE_URI="http://localhost:8080"``: Base URI of the service.
 
-    - ``API_VERSION="0.7.0"``: STAC Version used in the service.
+    - ``API_VERSION="0.8.0"``: STAC Version used in the service.
 
     - ``FILE_ROOT="http://localhost:8081"``: File root for the Assets.
 

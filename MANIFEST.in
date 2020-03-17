@@ -6,7 +6,8 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 #
 
-exclude doc/sphinx/_buildinclude *.rst
+exclude doc/sphinx/_build
+include *.rst
 include .dockerignore
 include *.sh
 include *.txt
@@ -23,6 +24,4 @@ recursive-include doc Makefile
 recursive-include tests *.py
 recursive-include bdc_stac *.yaml
 recursive-include bdc_stac *.py
-recursive-include bdc_stac *.html
-recursive-include bdc_stac *.js
 recursive-include bdc_stac *.png

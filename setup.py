@@ -43,11 +43,11 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask==1.1.1',
-    'flasgger>=0.9.4',
-    'GeoAlchemy2==0.6.3',
-    'SQLAlchemy==1.3.11',
-    'psycopg2-binary==2.8.4',
+    'Flask>=1.1.1',
+    'flask-redoc>=0.1.0',
+    'GeoAlchemy2>=0.6.3',
+    'SQLAlchemy>=1.3.11',
+    'psycopg2-binary>=2.8.4',
     'bdc-db @ git+https://github.com/brazil-data-cube/bdc-db@v0.2.1',
 ]
 
