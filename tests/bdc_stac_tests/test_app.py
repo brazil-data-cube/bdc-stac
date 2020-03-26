@@ -1,3 +1,10 @@
+#
+# This file is part of bdc-stac.
+# Copyright (C) 2019 INPE.
+#
+# bdc-stac is a free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
 import os
 
 import pytest
@@ -9,7 +16,6 @@ os.environ['DB_HOST'] = "localhost:5432"
 os.environ['DB_NAME'] = "bdcdb"
 os.environ['DB_USER'] = "postgres"
 os.environ['DB_PASS'] = "postgres"
-os.environ['API_VERSION'] = "0.7.0"
 os.environ['FILE_ROOT'] = "http://brazildatacube.dpi.inpe.br"
 
 from bdc_stac import create_app
@@ -52,7 +58,7 @@ class TestBDCStac:
 
         assert stac.Catalog(data, validate=True)
         assert 'stac_version' in data
-        assert data['stac_version'] == '0.7.0'
+        assert data['stac_version'] == '0.8.0'
         assert 'id' in data
         assert data['id'] == 'bdc'
         assert 'links' in data
@@ -68,7 +74,7 @@ class TestBDCStac:
         assert response.status_code == 200
         assert stac.Collection(data, validate=True)
         assert data['id'] == 'LC8SR'
-        assert data['stac_version'] == '0.7.0'
+        assert data['stac_version'] == '0.8.0'
         assert data['properties']['bdc:tiles'][0] == '221069'
         assert data['properties']['bdc:wrs'] == 'WRS2'
 
@@ -204,4 +210,3 @@ class TestBDCStac:
         )
 
         assert response.status_code == 400
-
