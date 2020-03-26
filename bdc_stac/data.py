@@ -17,6 +17,7 @@ with warnings.catch_warnings():
 
 session = db.session()
 
+
 class ST_Extent(GenericFunction):
     """Postgis ST_Extent function."""
 
@@ -57,7 +58,8 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
     """
     x = session.query(CollectionItem.id.label('item_id'), Band.common_name.label('band'),
                       func.json_build_object('href', func.concat(os.getenv('FILE_ROOT'), Asset.url)).label('url')). \
-        filter(Asset.collection_item_id == CollectionItem.id, Asset.band_id == Band.id).subquery('a')
+        filter(Asset.collection_item_id == CollectionItem.id,
+               Asset.band_id == Band.id).subquery('a')
 
     assets = session.query(x.c.item_id, cast(func.json_object_agg(x.c.band, x.c.url), JSONB).op('||')(
         cast(func.json_build_object('thumbnail', func.json_build_object('href', func.concat(os.getenv('FILE_ROOT'),
@@ -68,7 +70,8 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
 
     columns = [Collection.id.label('collection_id'), CollectionItem.id.label('item'),
                CollectionItem.composite_start.label('start'),
-               CollectionItem.composite_end.label('end'), Tile.id.label('tile'),
+               CollectionItem.composite_end.label(
+                   'end'), Tile.id.label('tile'),
                func.ST_AsGeoJSON(Tile.geom_wgs84).label('geom'), assets.c.asset]
     where = [Collection.id == CollectionItem.collection_id, CollectionItem.tile_id == Tile.id,
              assets.c.item_id == CollectionItem.id, CollectionItem.grs_schema_id == Tile.grs_schema_id]
@@ -79,14 +82,15 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
         where += [CollectionItem.id.like(item_id)]
     else:
         if cubes is not None:
-            where+= [Collection.is_cube.is_(cubes=='true')]
+            where += [Collection.is_cube.is_(cubes == 'true')]
         if collections is not None:
             where += [Collection.id.in_(collections.split(','))]
         elif collection_id is not None:
             where += [Collection.id.like(collection_id)]
 
         if intersects is not None:
-            where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(str(intersects['geometry'])), Tile.geom_wgs84)]
+            where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(
+                str(intersects['geometry'])), Tile.geom_wgs84)]
 
         if bbox is not None:
             try:
@@ -94,10 +98,12 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
                 for x in split_bbox:
                     float(x)
                 where += [func.ST_Intersects(
-                    func.ST_MakeEnvelope(split_bbox[0], split_bbox[1], split_bbox[2], split_bbox[3], func.ST_SRID(Tile.geom_wgs84)),
+                    func.ST_MakeEnvelope(
+                        split_bbox[0], split_bbox[1], split_bbox[2], split_bbox[3], func.ST_SRID(Tile.geom_wgs84)),
                     Tile.geom_wgs84)]
             except:
-                raise (InvalidBoundingBoxError(f"'{bbox}' is not a valid bbox.'"))
+                raise (InvalidBoundingBoxError(
+                    f"'{bbox}' is not a valid bbox.'"))
 
         if time is not None:
             if "/" in time:
@@ -121,6 +127,7 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
     result = query.all()
     return result
 
+
 def get_collection_bands(collection_id):
     """Retrive a dict of bands for a given collection.
 
@@ -129,7 +136,8 @@ def get_collection_bands(collection_id):
     :return: dict of bands for the collection
     :rtype: dict
     """
-    bands = session.query(Band).filter(Band.collection_id == collection_id).all()
+    bands = session.query(Band).filter(
+        Band.collection_id == collection_id).all()
     bands_json = dict()
 
     for b in bands:
@@ -139,6 +147,7 @@ def get_collection_bands(collection_id):
         bands_json[b.common_name].pop("collection_id")
 
     return bands_json
+
 
 def get_collection_tiles(collection_id):
     """Retrive a list of tiles for a given collection.
@@ -153,6 +162,7 @@ def get_collection_tiles(collection_id):
 
     return [t.tile_id for t in tiles]
 
+
 def collection_is_cube(collection_id):
     """Check if a collection is a cube.
 
@@ -162,6 +172,7 @@ def collection_is_cube(collection_id):
     :rtype: bool
     """
     return session.query(Collection.is_cube).filter(Collection.id == collection_id).one().is_cube
+
 
 def get_collection(collection_id):
     """Retrieve information of a given collection.
@@ -174,20 +185,26 @@ def get_collection(collection_id):
     columns = [CollectionItem.grs_schema_id.label('grs_schema'),
                ST_Extent(Tile.geom_wgs84).label('bbox'),
                func.min(CollectionItem.composite_start).label('start'),
-               func.max(CollectionItem.composite_end).label('end')]
+               func.max(CollectionItem.composite_end).label('end'),
+               Collection.bands_quicklook,
+               Collection.description]
     where = [Collection.id == CollectionItem.collection_id,
              CollectionItem.tile_id == Tile.id,
              CollectionItem.grs_schema_id == Tile.grs_schema_id,
              Collection.id == collection_id]
-    group_by = [CollectionItem.grs_schema_id]
+    group_by = [CollectionItem.grs_schema_id,
+                Collection.bands_quicklook,
+                Collection.description]
 
     is_cube = collection_is_cube(collection_id)
 
     if is_cube:
         columns += [TemporalCompositionSchema.temporal_schema.label('temporal_schema'),
-                    TemporalCompositionSchema.temporal_composite_t.label('temporal_composite_t'),
+                    TemporalCompositionSchema.temporal_composite_t.label(
+                        'temporal_composite_t'),
                     TemporalCompositionSchema.temporal_composite_unit.label('temporal_composite_unit')]
-        where += [Collection.temporal_composition_schema_id == TemporalCompositionSchema.id]
+        where += [Collection.temporal_composition_schema_id ==
+                  TemporalCompositionSchema.id]
 
         group_by += [TemporalCompositionSchema.temporal_schema,
                      TemporalCompositionSchema.temporal_composite_t,
@@ -197,7 +214,8 @@ def get_collection(collection_id):
 
     bbox = list()
     if result.bbox:
-        bbox = result.bbox[result.bbox.find("(") + 1:result.bbox.find(")")].replace(' ', ',')
+        bbox = result.bbox[result.bbox.find(
+            "(") + 1:result.bbox.find(")")].replace(' ', ',')
         bbox = [float(coord) for coord in bbox.split(',')]
 
     collection = dict()
@@ -215,15 +233,16 @@ def get_collection(collection_id):
 
     collection["stac_version"] = os.getenv("API_VERSION", "0.8.0")
 
-    collection["description"] = f"{collection_id} collection with {', '.join([k for k in bands.keys()])} bands"
+    collection["description"] = result.description
 
     collection["license"] = ""
     collection["properties"] = dict()
-    collection["extent"] = {"spatial": {"bbox": [bbox]}, "temporal": {"interval": [[start, end]]}}
+    collection["extent"] = {"spatial": {"bbox": [bbox]},
+                            "temporal": {"interval": [[start, end]]}}
     collection["properties"] = dict()
 
     collection["properties"]["bdc:tiles"] = tiles
-
+    collection["properties"]["bdc:bands_quicklook"] = result.bands_quicklook.split(",")
     collection["properties"]["bdc:bands"] = bands
     collection["properties"]["bdc:cube"] = is_cube
 
@@ -245,7 +264,7 @@ def get_collections():
     :rtype: list
     """
     collections = session.query(Collection.id).filter(CollectionItem.collection_id == Collection.id)\
-	        .group_by(Collection.id).all()
+        .group_by(Collection.id).all()
     return collections
 
 
