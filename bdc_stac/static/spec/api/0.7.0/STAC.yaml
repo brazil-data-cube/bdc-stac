@@ -1,5 +1,7 @@
 openapi: 3.0.1
 info:
+  x-logo:
+    url: '/static/images/datacube-site.png'
   title: The SpatioTemporal Asset Catalog API
   version: 0.7.0
   description: >-
@@ -367,10 +369,10 @@ components:
         vertical axis (elevation or depth):
 
         * Lower left corner, coordinate axis 1
-        * Lower left corner, coordinate axis 2  
-        * Lower left corner, coordinate axis 3 (optional) 
-        * Upper right corner, coordinate axis 1 
-        * Upper right corner, coordinate axis 2 
+        * Lower left corner, coordinate axis 2
+        * Lower left corner, coordinate axis 3 (optional)
+        * Upper right corner, coordinate axis 1
+        * Upper right corner, coordinate axis 2
         * Upper right corner, coordinate axis 3 (optional)
 
         The coordinate reference system of the values is WGS84
@@ -405,7 +407,7 @@ components:
 
         * A date-time: "2018-02-12T23:20:50Z"  * A period:
         "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or
-        "2018-02-12T00:00:00Z/P1M6DT12H31M12S" 
+        "2018-02-12T00:00:00Z/P1M6DT12H31M12S"
 
         Only features that have a temporal property that intersects the value of
         `time` are selected. If a feature has multiple temporal properties, it
@@ -693,10 +695,10 @@ components:
         vertical axis (elevation or depth):
 
         * Lower left corner, coordinate axis 1
-        * Lower left corner, coordinate axis 2  
-        * Lower left corner, coordinate axis 3 (optional) 
-        * Upper right corner, coordinate axis 1 
-        * Upper right corner, coordinate axis 2 
+        * Lower left corner, coordinate axis 2
+        * Lower left corner, coordinate axis 3 (optional)
+        * Upper right corner, coordinate axis 1
+        * Upper right corner, coordinate axis 2
         * Upper right corner, coordinate axis 3 (optional)
 
         The coordinate reference system of the values is WGS84

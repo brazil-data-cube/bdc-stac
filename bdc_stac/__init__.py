@@ -1,7 +1,14 @@
+#
+# This file is part of bdc-stac.
+# Copyright (C) 2019 INPE.
+#
+# bdc-stac is a free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+"""Spatio Temporal Asset Catalog implementation for BDC."""
 import os
 
 from bdc_db import BDCDatabase
-from flasgger import Swagger
 from flask import Flask
 
 from .version import __version__
@@ -18,15 +25,8 @@ def create_app():
                                              os.environ.get('DB_HOST'),
                                              os.environ.get('DB_NAME'))
 
-    app.config["SWAGGER"] = {
-        "openapi": "3.0.1",
-        "specs_route": "/docs",
-        "title": "Brazil Data Cube Catalog"
-    }
-
     with app.app_context():
         BDCDatabase(app)
-        Swagger(app, template_file=f"./spec/api/{os.environ.get('API_VERSION')}/STAC.yaml")
 
         from . import routes
 

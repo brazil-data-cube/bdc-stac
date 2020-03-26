@@ -1,7 +1,16 @@
+#
+# This file is part of bdc-stac.
+# Copyright (C) 2019 INPE.
+#
+# bdc-stac is a free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+"""Routes for the BDC-STAC API."""
 import os
 
 from bdc_db import BDCDatabase
-from flask import abort, current_app, jsonify, request
+from flask import (abort, current_app, jsonify, render_template, request,
+                   send_file)
 
 from .data import (InvalidBoundingBoxError, get_collection,
                    get_collection_items, get_collections, make_geojson)
@@ -10,12 +19,18 @@ BASE_URL = os.getenv('BASE_URL', 'http://localhost:5000')
 
 @current_app.after_request
 def after_request(response):
+    """Enable CORS."""
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
+@current_app.route("/docs")
+def docs():
+    """Render docs page."""
+    return render_template('docs.html')
 
 @current_app.route("/", methods=["GET"])
 def index():
+    """Landing page of this API."""
     links = [{"href": f"{BASE_URL}/", "rel": "self"},
              {"href": f"{BASE_URL}/docs", "rel": "service"},
              {"href": f"{BASE_URL}/conformance", "rel": "conformance"},
@@ -27,15 +42,38 @@ def index():
 
 @current_app.route("/conformance", methods=["GET"])
 def conformance():
+    """Information about standards that this API conforms to."""
     conforms = {"conformsTo": ["http://www.opengis.net/spec/wfs-1/3.0/req/core",
                                "http://www.opengis.net/spec/wfs-1/3.0/req/oas30",
                                "http://www.opengis.net/spec/wfs-1/3.0/req/html",
                                "http://www.opengis.net/spec/wfs-1/3.0/req/geojson"]}
     return jsonify(conforms)
 
+@current_app.route("/collections", methods=["GET"])
+@current_app.route("/stac", methods=["GET"])
+def root():
+    """Return the root catalog or collection."""
+    collections = get_collections()
+    catalog = dict()
+    catalog["description"] = "Brazil Data Cubes Catalog"
+    catalog["id"] = "bdc"
+    catalog["stac_version"] = os.getenv("API_VERSION")
+    links = list()
+    links.append({"href": request.url, "rel": "self"})
+
+    for collection in collections:
+        links.append({"href": f"{BASE_URL}/collections/{collection.id}", "rel": "child", "title": collection.id})
+
+    catalog["links"] = links
+
+    return jsonify(catalog)
 
 @current_app.route("/collections/<collection_id>", methods=["GET"])
 def collections_id(collection_id):
+    """Describe the given feature collection.
+
+    :param collection_id: identifier (name) of a specific collection
+    """
     collection = get_collection(collection_id)
     links = [{"href": f"{BASE_URL}/collections/{collection_id}", "rel": "self"},
              {"href": f"{BASE_URL}/collections/{collection_id}/items", "rel": "items"},
@@ -50,6 +88,10 @@ def collections_id(collection_id):
 
 @current_app.route("/collections/<collection_id>/items", methods=["GET"])
 def collection_items(collection_id):
+    """Retrieve features of the given feature collection.
+
+    :param collection_id: identifier (name) of a specific collection
+    """
     items = get_collection_items(collection_id=collection_id, **request.args.to_dict())
 
     links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
@@ -69,6 +111,11 @@ def collection_items(collection_id):
 
 @current_app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
 def items_id(collection_id, item_id):
+    """Retrieve a given feature from a given feature collection.
+
+    :param collection_id: identifier (name) of a specific collection
+    :param item_id: identifier (name) of a specific item
+    """
     item = get_collection_items(collection_id=collection_id, item_id=item_id)
     links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
              {"href": f"{BASE_URL}/collections/", "rel": "parent"},
@@ -83,28 +130,10 @@ def items_id(collection_id, item_id):
     abort(404, f"Invalid item id '{item_id}' for collection '{collection_id}'")
 
 
-@current_app.route("/collections", methods=["GET"])
-@current_app.route("/stac", methods=["GET"])
-def root():
-    collections = get_collections()
-    catalog = dict()
-    catalog["description"] = "Brazil Data Cubes Catalog"
-    catalog["id"] = "bdc"
-    catalog["stac_version"] = os.getenv("API_VERSION")
-    links = list()
-    links.append({"href": request.url, "rel": "self"})
-
-    for collection in collections:
-        links.append({"href": f"{BASE_URL}/collections/{collection.id}", "rel": "child", "title": collection.id})
-
-    catalog["links"] = links
-
-    return jsonify(catalog)
-
-
 @current_app.route("/stac/search", methods=["GET", "POST"])
 def stac_search():
-    bbox, time, ids, collections, page, limit = None, None, None, None, None, None
+    """Search STAC items with simple filtering."""
+    bbox, time, ids, collections, page, limit, intersects = None, None, None, None, None, None, None
     if request.method == "POST":
         if request.is_json:
             request_json = request.get_json()
@@ -130,7 +159,7 @@ def stac_search():
             page = int(request_json.get('page', 1))
             limit = int(request_json.get('limit', 10))
         else:
-            abort(400, "POST Request must be an current_application/json")
+            abort(400, "POST Request must be an application/json")
 
     elif request.method == "GET":
         bbox = request.args.get('bbox', None)
@@ -141,7 +170,10 @@ def stac_search():
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
 
-    items = get_collection_items(collections=collections, bbox=bbox, time=time, ids=ids, page=page, limit=limit)
+    items = get_collection_items(collections=collections, bbox=bbox,
+                                 time=time, ids=ids,
+                                 page=page, limit=limit,
+                                 intersects=intersects)
 
     links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
              {"href": f"{BASE_URL}/collections/", "rel": "parent"},
@@ -160,6 +192,7 @@ def stac_search():
 
 @current_app.errorhandler(400)
 def handle_bad_request(e):
+    """Handle Bad request error."""
     resp = jsonify({'code': '400', 'description': 'Bad Request - {}'.format(e.description)})
     resp.status_code = 400
 
@@ -168,6 +201,7 @@ def handle_bad_request(e):
 
 @current_app.errorhandler(404)
 def handle_page_not_found(e):
+    """Handle Not found error."""
     resp = jsonify({'code': '404', 'description': e.description if e.description else 'Page not found'})
     resp.status_code = 404
 
@@ -176,6 +210,7 @@ def handle_page_not_found(e):
 
 @current_app.errorhandler(500)
 def handle_api_error(e):
+    """Handle Internal server error."""
     resp = jsonify({'code': '500', 'description': 'Internal Server Error'})
     resp.status_code = 500
 
@@ -184,6 +219,7 @@ def handle_api_error(e):
 
 @current_app.errorhandler(502)
 def handle_bad_gateway_error(e):
+    """Handle Bad gateway error."""
     resp = jsonify({'code': '502', 'description': 'Bad Gateway'})
     resp.status_code = 502
 
@@ -192,6 +228,7 @@ def handle_bad_gateway_error(e):
 
 @current_app.errorhandler(503)
 def handle_service_unavailable_error(e):
+    """Handle Service unavailable error."""
     resp = jsonify({'code': '503', 'description': 'Service Unavailable'})
     resp.status_code = 503
 
@@ -200,6 +237,7 @@ def handle_service_unavailable_error(e):
 
 @current_app.errorhandler(Exception)
 def handle_exception(e):
+    """Handle Exception."""
     current_app.logger.exception(e)
     resp = jsonify({'code': '500', 'description': 'Internal Server Error'})
     resp.status_code = 500
@@ -208,6 +246,7 @@ def handle_exception(e):
 
 @current_app.errorhandler(InvalidBoundingBoxError)
 def handle_exception(e):
+    """Handle InvalidBoundingBoxError."""
     current_app.logger.exception(e)
     resp = jsonify({'code': '400', 'description': str(e)})
     resp.status_code = 400
