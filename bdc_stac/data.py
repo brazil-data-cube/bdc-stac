@@ -72,7 +72,8 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
                CollectionItem.composite_start.label('start'),
                CollectionItem.composite_end.label(
                    'end'), Tile.id.label('tile'),
-               func.ST_AsGeoJSON(Tile.geom_wgs84).label('geom'), assets.c.asset]
+               func.ST_AsGeoJSON(Tile.geom_wgs84).label('geom'), assets.c.asset,
+               func.Box2D(Tile.geom_wgs84).label('bbox')]
     where = [Collection.id == CollectionItem.collection_id, CollectionItem.tile_id == Tile.id,
              assets.c.item_id == CollectionItem.id, CollectionItem.grs_schema_id == Tile.grs_schema_id]
 
@@ -242,7 +243,8 @@ def get_collection(collection_id):
     collection["properties"] = dict()
 
     collection["properties"]["bdc:tiles"] = tiles
-    collection["properties"]["bdc:bands_quicklook"] = result.bands_quicklook.split(",")
+    if result.bands_quicklook is not None:
+        collection["properties"]["bdc:bands_quicklook"] = result.bands_quicklook.split(",")
     collection["properties"]["bdc:bands"] = bands
     collection["properties"]["bdc:cube"] = is_cube
 
@@ -289,7 +291,13 @@ def make_geojson(items, links):
         feature['stac_version'] = os.getenv("API_VERSION", "0.8.0")
 
         feature['geometry'] = json.loads(i.geom)
-        feature['bbox'] = get_bbox(feature['geometry']['coordinates'][0])
+
+        bbox = list()
+        if i.bbox:
+            bbox = i.bbox[i.bbox.find(
+                "(") + 1:i.bbox.find(")")].replace(' ', ',')
+            bbox = [float(coord) for coord in bbox.split(',')]
+        feature['bbox'] = bbox
 
         properties = dict()
 
@@ -307,22 +315,6 @@ def make_geojson(items, links):
         features.append(feature)
 
     return features
-
-
-def get_bbox(coord_list):
-    """Calculate the bounding box for a list of coordinates.
-
-    :param coord_list: list of coordinates.
-    :type coord_list: list
-    :return: bounding box of the coordinates
-    :rtype: list
-    """
-    box = list()
-    for i in (0, 1):
-        res = sorted(coord_list[0], key=lambda x: x[i])
-        box.append((res[0][i], res[-1][i]))
-    ret = [box[0][0], box[1][0], box[0][1], box[1][1]]
-    return ret
 
 
 class InvalidBoundingBoxError(Exception):
