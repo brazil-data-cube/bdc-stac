@@ -4,10 +4,10 @@ RUN apt-get update -y \
     && apt-get install -y libpq-dev git \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /bdc_stac
+RUN mkdir -p bdc_stac
 
-COPY requirements.txt /bdc_stac
-COPY ./bdc_stac /bdc_stac
+COPY requirements.txt bdc_stac/
+COPY ./bdc_stac bdc_stac/
 RUN pip install -r bdc_stac/requirements.txt
 
 EXPOSE 5000
