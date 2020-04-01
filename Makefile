@@ -1,5 +1,6 @@
-.PHONY: all tests docs doc
+SHELL := /bin/bash
 
+.PHONY: all tests docs doc
 
 tests:
 	pydocstyle bdc_stac
@@ -11,6 +12,7 @@ tests:
 docs:
 	sphinx-apidoc -o doc/sphinx bdc_stac
 
+.ONESHELL:
 before_install:
 	pip install --upgrade pip
 	pip install --upgrade setuptools
@@ -18,13 +20,16 @@ before_install:
 	docker run --name postgres -e POSTGRES_PASSWORD=postgres -p 127.0.0.1:5432:5432 -d mdillon/postgis
 	virtualenv venv -p python3
 	source venv/bin/activate
-	git clone -b b-0.2 --depth 1 https://github.com/brazil-data-cube/bdc-db && cd bdc-db
+	git clone -b b-0.2 --depth 1 https://github.com/brazil-data-cube/bdc-db
+	cd bdc-db
 	pip install .
 	bdc-db db create-db
 	bdc-db db upgrade
 	bdc-db db migrate
 	bdc-db fixtures init
-	deactivate && cd .. && rm -rf bdc-db
+	deactivate
+	cd ..
+	rm -rf bdc-db
 	source ~/virtualenv/python3.7/bin/activate
 
 install:
