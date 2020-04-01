@@ -12,8 +12,10 @@ include .dockerignore
 include *.sh
 include *.txt
 include *.py
+include *.enc
 include Dockerfile
 include LICENSE
+include Makefile
 include pytest.ini
 recursive-exclude doc/sphinx/_build *
 recursive-include doc *.bat
