@@ -28,7 +28,7 @@ before_install:
     - docker run --name postgres -e POSTGRES_PASSWORD=postgres -p 127.0.0.1:5432:5432 -d mdillon/postgis
     - virtualenv venv -p python3
     - source venv/bin/activate
-    - git clone -b v0.2.1 --depth 1 https://github.com/brazil-data-cube/bdc-db && cd bdc-db
+    - git clone -b b-0.2 --depth 1 https://github.com/brazil-data-cube/bdc-db && cd bdc-db
     - pip install .
     - bdc-db db create-db
     - bdc-db db upgrade
