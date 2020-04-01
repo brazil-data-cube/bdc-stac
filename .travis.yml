@@ -1,49 +1,37 @@
 language: python
-
 cache:
-    directories:
-    - "$HOME/.cache/pip"
-
+  directories:
+  - "$HOME/.cache/pip"
 branches:
-    only:
-        - master
-        - b-0.7.0
-        - b-0.8.0
-
+  only:
+  - master
+  - b-0.7.0
+  - b-0.8.0
 dist: bionic
-
 python:
-    - '3.7'
-
+- '3.7'
 env:
-    matrix:
-        - SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@127.0.0.1:5432/bdcdb"
-    global:
-        - secure: cJmKWmGjIZBf0GcgKC4ydJAW4gZ3DPO6asc0rN2bRKWdybXhAq1sB5UsoBGcxqXKXRAAOhcQnWTmFmTN/9BvdvCB4CCDP14LRJrJT3w13zjnrlkqwymhP1gauauYrXhVVP1zfBzfoc0qDyTiSHv1apKiuTaV1zrLfzysGTIMHRICVw3TAgBd0OrQanGIYsvrMmc4//3Bo8T4Ly8LcRqNRymp5/8DVZwY+IaLZoKWdn2GjnALKrGAznRHfMRlFy0XiR/zgq98QtybfOESACXE6QYNhlkWvYi93KQ6jF1eRO0Su3bIknsLOKR09ipkaLVNsXOp9RG6osPwg/US+vkFbTjMcbWM71hwYLJYz6DzHsOn9gY61G/VH8jg/ljdhj3AD/XgD2JzKopHEEBYy7nF4J/QxkuLH7OdASVw7gXLt6IKt3Kpxx8J/Pik+IJKM/d774jscc77pqZN8Meq6kRr0vbqoFLaEDl7wRX8JgK/ZmhiORJwh1dXsUaU6oj7jUhNu8gDv/1QRb4/qQwIp8xzE8apPUQroLuOgf155eQb6YKLmM1xGiVWgXtmGveqneTiT9bkbF0slJAWzix276hFmZinikIFxhnojIzxM5HbDjOS1LVJawueGkzJvcSk0NXU26ANFlLppUNxU26Q7qDytDyTZ34ODw/xZQMSvqSwwsQ=
-        - secure: 235bfRSpC+7u+aDoCQACnK8HYA8sKqVAJIHrgZKgVBGq/GCyLfepbnVyylKnWVA7D4qOTdbvmjXIdmQk5D6jsFEuv1aJkKOIS8ZmFVDiYLump6zfATil/ibnSa5NoUjyrSw0E79ucvl3ddaCCQxIiLsw5W/+jGsNdfHeeD/tsW++kchOqC9C1CLt49VNvYTIY/JJ17S/q/dvkj2uDdA+HijhZhvgl61k5Q5fWsKA5BL06Dm9a9w5DfKKHii2+NtmTyGwiJ13m6EXkuCCxxiwMaENXxSkc7U36UmrA0QR9Ydu12GDad5aur+b9fq7Qhrjl3Ljhs66ar+0Cbw7slipanKejPruTRJsFVY95NyRhfVDjB3TBquFRDx3MLHVtimBalTvwveSzLGN4rF7v256ZDzoVdRzCrjcVegxUI88xIPGJlSnjyBXyNoepv2ltxegYIOkSxvgbEUySHXtkvOBtCymWPcmdlwo8LFWOMb3c4SXtInbtc85StLFVZJQ0qlIprIZmyUnWgN+c8mXgUVkxnEpB/J4ZX72GXQ5wU+JTRe9OKSSEZs9kC50WskYDu44twWgcWeJ2nkywNH5OzD/B6LrKfKTU20jmH/owvsuDdgWijGlkv4PQyP02P1QEJpFMiI6UqUQMbjEdwHCokLvxejMGgxG0q1Sc4wXzJOPFpc=
-
+  matrix:
+  - SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@127.0.0.1:5432/bdcdb"
+  global:
+  - secure: cJmKWmGjIZBf0GcgKC4ydJAW4gZ3DPO6asc0rN2bRKWdybXhAq1sB5UsoBGcxqXKXRAAOhcQnWTmFmTN/9BvdvCB4CCDP14LRJrJT3w13zjnrlkqwymhP1gauauYrXhVVP1zfBzfoc0qDyTiSHv1apKiuTaV1zrLfzysGTIMHRICVw3TAgBd0OrQanGIYsvrMmc4//3Bo8T4Ly8LcRqNRymp5/8DVZwY+IaLZoKWdn2GjnALKrGAznRHfMRlFy0XiR/zgq98QtybfOESACXE6QYNhlkWvYi93KQ6jF1eRO0Su3bIknsLOKR09ipkaLVNsXOp9RG6osPwg/US+vkFbTjMcbWM71hwYLJYz6DzHsOn9gY61G/VH8jg/ljdhj3AD/XgD2JzKopHEEBYy7nF4J/QxkuLH7OdASVw7gXLt6IKt3Kpxx8J/Pik+IJKM/d774jscc77pqZN8Meq6kRr0vbqoFLaEDl7wRX8JgK/ZmhiORJwh1dXsUaU6oj7jUhNu8gDv/1QRb4/qQwIp8xzE8apPUQroLuOgf155eQb6YKLmM1xGiVWgXtmGveqneTiT9bkbF0slJAWzix276hFmZinikIFxhnojIzxM5HbDjOS1LVJawueGkzJvcSk0NXU26ANFlLppUNxU26Q7qDytDyTZ34ODw/xZQMSvqSwwsQ=
+  - secure: 235bfRSpC+7u+aDoCQACnK8HYA8sKqVAJIHrgZKgVBGq/GCyLfepbnVyylKnWVA7D4qOTdbvmjXIdmQk5D6jsFEuv1aJkKOIS8ZmFVDiYLump6zfATil/ibnSa5NoUjyrSw0E79ucvl3ddaCCQxIiLsw5W/+jGsNdfHeeD/tsW++kchOqC9C1CLt49VNvYTIY/JJ17S/q/dvkj2uDdA+HijhZhvgl61k5Q5fWsKA5BL06Dm9a9w5DfKKHii2+NtmTyGwiJ13m6EXkuCCxxiwMaENXxSkc7U36UmrA0QR9Ydu12GDad5aur+b9fq7Qhrjl3Ljhs66ar+0Cbw7slipanKejPruTRJsFVY95NyRhfVDjB3TBquFRDx3MLHVtimBalTvwveSzLGN4rF7v256ZDzoVdRzCrjcVegxUI88xIPGJlSnjyBXyNoepv2ltxegYIOkSxvgbEUySHXtkvOBtCymWPcmdlwo8LFWOMb3c4SXtInbtc85StLFVZJQ0qlIprIZmyUnWgN+c8mXgUVkxnEpB/J4ZX72GXQ5wU+JTRe9OKSSEZs9kC50WskYDu44twWgcWeJ2nkywNH5OzD/B6LrKfKTU20jmH/owvsuDdgWijGlkv4PQyP02P1QEJpFMiI6UqUQMbjEdwHCokLvxejMGgxG0q1Sc4wXzJOPFpc=
 services:
-    - docker
+- docker
 before_install:
-    - make before_install
-
+- make before_install
 install:
-    - make install
-
+- make install
 script:
-    - make tests
-
-
+- make tests
 before_deploy:
-    - openssl aes-256-cbc -K $encrypted_3b9f0b9d36d1_key -iv $encrypted_3b9f0b9d36d1_iv
+- openssl aes-256-cbc -K $encrypted_3b9f0b9d36d1_key -iv $encrypted_3b9f0b9d36d1_iv
   -in secrets.tar.enc -out secrets.tar -d
-
 deploy:
-    - provider: script
-    script: make deploy
-    skip_cleanup: true
-    on:
-        branch: master
-
+- provider: script
+  script: make deploy
+  skip_cleanup: true
+  true:
+    branch: master
 after_success:
-    - coveralls
+- coveralls
