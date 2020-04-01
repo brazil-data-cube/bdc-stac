@@ -163,6 +163,18 @@ def collection_is_cube(collection_id):
     """
     return session.query(Collection.is_cube).filter(Collection.id == collection_id).one().is_cube
 
+def get_collection_timeline(collection_id):
+    """Retrive a list of dates for a given collection.
+
+    :param collection_id: collection identifier
+    :type collection_id: str
+    :return: list of dates for the collection
+    :rtype: list
+    """
+    timeline = session.query(CollectionItem.composite_start).filter(CollectionItem.collection_id == collection_id) \
+        .group_by(CollectionItem.composite_start).all()
+
+    return [datetime.fromisoformat(str(t.composite_start)).strftime("%Y-%m-%d") for t in timeline]
 
 def get_collection(collection_id):
     """Retrieve information of a given collection.
@@ -177,14 +189,16 @@ def get_collection(collection_id):
                func.min(CollectionItem.composite_start).label('start'),
                func.max(CollectionItem.composite_end).label('end'),
                Collection.bands_quicklook,
-               Collection.description]
+               Collection.description,
+               GrsSchema.crs.label('crs')]
     where = [Collection.id == CollectionItem.collection_id,
              CollectionItem.tile_id == Tile.id,
              CollectionItem.grs_schema_id == Tile.grs_schema_id,
              Collection.id == collection_id]
     group_by = [CollectionItem.grs_schema_id,
                 Collection.bands_quicklook,
-                Collection.description]
+                Collection.description,
+                GrsSchema.crs]
 
     is_cube = collection_is_cube(collection_id)
 
@@ -214,9 +228,9 @@ def get_collection(collection_id):
     start, end = None, None
 
     if result.start:
-        start = result.start.isoformat()
+        start = result.start.strftime("%Y-%m-%d")
         if result.end:
-            end = result.end.isoformat()
+            end = result.end.strftime("%Y-%m-%d")
 
     bands = get_collection_bands(collection_id)
     tiles = get_collection_tiles(collection_id)
@@ -237,6 +251,7 @@ def get_collection(collection_id):
             ",")
     collection["properties"]["bdc:bands"] = bands
     collection["properties"]["bdc:cube"] = is_cube
+    collection["properties"]["bdc:crs"] = result.crs
 
     if is_cube:
         temporal_schema = dict()
@@ -244,6 +259,7 @@ def get_collection(collection_id):
         temporal_schema['step'] = result.temporal_composite_t
         temporal_schema['unit'] = result.temporal_composite_unit
         collection["properties"]["bdc:temporal_composition"] = temporal_schema
+        collection["properties"]["bdc:timeline"] = get_collection_timeline(collection_id)
     collection["properties"]["bdc:wrs"] = result.grs_schema
 
     return collection
@@ -291,7 +307,7 @@ def make_geojson(items, links):
 
         properties = dict()
 
-        start = datetime.fromisoformat(str(i.start)).isoformat()
+        start = datetime.fromisoformat(str(i.start)).strftime("%Y-%m-%d")
         properties['bdc:tile'] = i.tile
         properties['datetime'] = f"{start}"
         feature['properties'] = properties
