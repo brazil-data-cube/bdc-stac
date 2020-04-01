@@ -296,7 +296,10 @@ def make_geojson(items, links):
         properties['datetime'] = f"{start}"
         feature['properties'] = properties
 
+        for key, value in i.assets.items():
+            value['href'] = os.getenv('FILE_ROOT') + value['href']
         feature['assets'] = i.assets
+
         feature['links'] = deepcopy(links)
         feature['links'][0]['href'] += i.collection_id + "/items/" + i.item
         feature['links'][1]['href'] += i.collection_id
