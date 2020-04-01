@@ -172,7 +172,7 @@ def get_collection_timeline(collection_id):
     :rtype: list
     """
     timeline = session.query(CollectionItem.composite_start).filter(CollectionItem.collection_id == collection_id) \
-        .group_by(CollectionItem.composite_start).all()
+        .group_by(CollectionItem.composite_start).order_by(CollectionItem.composite_start.asc()).all()
 
     return [datetime.fromisoformat(str(t.composite_start)).strftime("%Y-%m-%d") for t in timeline]
 
