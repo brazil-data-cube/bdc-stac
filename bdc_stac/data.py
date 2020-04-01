@@ -5,8 +5,8 @@ import warnings
 from copy import deepcopy
 from datetime import datetime
 
-from bdc_db.models import (Asset, Band, Collection, CollectionItem, GrsSchema,
-                           TemporalCompositionSchema, Tile, db)
+from bdc_db.models import (Asset, AssetMV, Band, Collection, CollectionItem,
+                           GrsSchema, TemporalCompositionSchema, Tile, db)
 from geoalchemy2.functions import GenericFunction
 from sqlalchemy import cast, create_engine, exc, func
 from sqlalchemy.dialects.postgresql import JSONB
@@ -56,26 +56,15 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
     :return: list of collectio items
     :rtype: list
     """
-    x = session.query(CollectionItem.id.label('item_id'), Band.common_name.label('band'),
-                      func.json_build_object('href', func.concat(os.getenv('FILE_ROOT'), Asset.url)).label('url')). \
-        filter(Asset.collection_item_id == CollectionItem.id,
-               Asset.band_id == Band.id).subquery('a')
-
-    assets = session.query(x.c.item_id, cast(func.json_object_agg(x.c.band, x.c.url), JSONB).op('||')(
-        cast(func.json_build_object('thumbnail', func.json_build_object('href', func.concat(os.getenv('FILE_ROOT'),
-                                                                                            CollectionItem.quicklook))),
-             JSONB)).label('asset')).filter(CollectionItem.id == x.c.item_id).group_by(x.c.item_id,
-                                                                                       CollectionItem.quicklook) \
-        .subquery('b')
-
     columns = [Collection.id.label('collection_id'), CollectionItem.id.label('item'),
                CollectionItem.composite_start.label('start'),
                CollectionItem.composite_end.label(
                    'end'), Tile.id.label('tile'),
-               func.ST_AsGeoJSON(Tile.geom_wgs84).label('geom'), assets.c.asset,
+               func.ST_AsGeoJSON(Tile.geom_wgs84).label(
+                   'geom'), AssetMV.assets,
                func.Box2D(Tile.geom_wgs84).label('bbox')]
     where = [Collection.id == CollectionItem.collection_id, CollectionItem.tile_id == Tile.id,
-             assets.c.item_id == CollectionItem.id, CollectionItem.grs_schema_id == Tile.grs_schema_id]
+             AssetMV.item_id == CollectionItem.id, CollectionItem.grs_schema_id == Tile.grs_schema_id]
 
     if ids is not None:
         where += [CollectionItem.id.in_(ids.split(','))]
@@ -115,7 +104,7 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
                 time_start = datetime.fromisoformat(time)
             where += [CollectionItem.composite_start >= time_start]
     group_by = [Collection.id, CollectionItem.id, CollectionItem.composite_start, CollectionItem.composite_end,
-                Tile.id, Tile.geom_wgs84, assets.c.asset]
+                Tile.id, Tile.geom_wgs84, AssetMV.assets]
 
     query = session.query(*columns).filter(*where).group_by(*group_by).order_by(
         CollectionItem.composite_start.desc())
@@ -244,7 +233,8 @@ def get_collection(collection_id):
 
     collection["properties"]["bdc:tiles"] = tiles
     if result.bands_quicklook is not None:
-        collection["properties"]["bdc:bands_quicklook"] = result.bands_quicklook.split(",")
+        collection["properties"]["bdc:bands_quicklook"] = result.bands_quicklook.split(
+            ",")
     collection["properties"]["bdc:bands"] = bands
     collection["properties"]["bdc:cube"] = is_cube
 
@@ -306,7 +296,10 @@ def make_geojson(items, links):
         properties['datetime'] = f"{start}"
         feature['properties'] = properties
 
-        feature['assets'] = i.asset
+        for key, value in i.assets.items():
+            value['href'] = os.getenv('FILE_ROOT') + value['href']
+        feature['assets'] = i.assets
+
         feature['links'] = deepcopy(links)
         feature['links'][0]['href'] += i.collection_id + "/items/" + i.item
         feature['links'][1]['href'] += i.collection_id
