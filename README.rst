@@ -44,7 +44,11 @@ About
 
 This is an implementation of the `SpatioTemporal Asset Catalog specification <https://github.com/radiantearth/stac-spec>`_ for the Brazil Data Cube image and data cube collections.
 
+
 For more information on the catalog data model, please, refer to  `bdc-db <https://github.com/brazil-data-cube/bdc-db>`_ repository.
+
+
+For a full compliant STAC Python client library, check the repository `stac.py <https://github.com/brazil-data-cube/stac.py>`_.
 
 
 Installation
