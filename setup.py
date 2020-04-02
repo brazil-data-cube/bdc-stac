@@ -28,7 +28,7 @@ tests_require = [
     'pydocstyle>=4.0',
     'isort>4.3',
     'check-manifest>=0.40',
-    'stac @ git+https://github.com/brazil-data-cube/stac.py@b-0.7.0'
+    'stac @ git+https://github.com/brazil-data-cube/stac.py@b-0.8.0'
 ]
 
 extras_require = {
@@ -43,12 +43,12 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask==1.1.1',
-    'flasgger>=0.9.4',
-    'GeoAlchemy2==0.6.3',
-    'SQLAlchemy==1.3.11',
-    'psycopg2-binary==2.8.4',
-    'bdc-db @ git+https://github.com/brazil-data-cube/bdc-db@v0.2.1',
+    'Flask>=1.1.1',
+    'flask-redoc>=0.1.0',
+    'GeoAlchemy2>=0.6.3',
+    'SQLAlchemy>=1.3.11',
+    'psycopg2-binary>=2.8.4',
+    'bdc-db @ git+https://github.com/brazil-data-cube/bdc-db@b-0.2',
 ]
 
 packages = find_packages()
@@ -83,7 +83,7 @@ setup(
         'Environment :: Web Environment',
         'Intended Audience :: Education',
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: MIT',
+        'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3.7',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',

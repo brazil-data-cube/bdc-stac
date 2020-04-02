@@ -1,50 +1,41 @@
 language: python
-
 cache:
-    directories:
-        - $HOME/.cache/pip
-
+  directories:
+  - "$HOME/.cache/pip"
 branches:
-    only:
-        - master
-        - b-0.7.0
-        - b-0.8.0
-
+  only:
+  - master
+  - b-0.7.0
+  - b-0.8.0
 dist: bionic
-
 python:
-    - "3.7"
-
+- '3.7'
 env:
-    - SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@127.0.0.1:5432/bdcdb"
-
+  matrix:
+  - SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@127.0.0.1:5432/bdcdb"
+  global:
+  - secure: cJmKWmGjIZBf0GcgKC4ydJAW4gZ3DPO6asc0rN2bRKWdybXhAq1sB5UsoBGcxqXKXRAAOhcQnWTmFmTN/9BvdvCB4CCDP14LRJrJT3w13zjnrlkqwymhP1gauauYrXhVVP1zfBzfoc0qDyTiSHv1apKiuTaV1zrLfzysGTIMHRICVw3TAgBd0OrQanGIYsvrMmc4//3Bo8T4Ly8LcRqNRymp5/8DVZwY+IaLZoKWdn2GjnALKrGAznRHfMRlFy0XiR/zgq98QtybfOESACXE6QYNhlkWvYi93KQ6jF1eRO0Su3bIknsLOKR09ipkaLVNsXOp9RG6osPwg/US+vkFbTjMcbWM71hwYLJYz6DzHsOn9gY61G/VH8jg/ljdhj3AD/XgD2JzKopHEEBYy7nF4J/QxkuLH7OdASVw7gXLt6IKt3Kpxx8J/Pik+IJKM/d774jscc77pqZN8Meq6kRr0vbqoFLaEDl7wRX8JgK/ZmhiORJwh1dXsUaU6oj7jUhNu8gDv/1QRb4/qQwIp8xzE8apPUQroLuOgf155eQb6YKLmM1xGiVWgXtmGveqneTiT9bkbF0slJAWzix276hFmZinikIFxhnojIzxM5HbDjOS1LVJawueGkzJvcSk0NXU26ANFlLppUNxU26Q7qDytDyTZ34ODw/xZQMSvqSwwsQ=
+  - secure: 235bfRSpC+7u+aDoCQACnK8HYA8sKqVAJIHrgZKgVBGq/GCyLfepbnVyylKnWVA7D4qOTdbvmjXIdmQk5D6jsFEuv1aJkKOIS8ZmFVDiYLump6zfATil/ibnSa5NoUjyrSw0E79ucvl3ddaCCQxIiLsw5W/+jGsNdfHeeD/tsW++kchOqC9C1CLt49VNvYTIY/JJ17S/q/dvkj2uDdA+HijhZhvgl61k5Q5fWsKA5BL06Dm9a9w5DfKKHii2+NtmTyGwiJ13m6EXkuCCxxiwMaENXxSkc7U36UmrA0QR9Ydu12GDad5aur+b9fq7Qhrjl3Ljhs66ar+0Cbw7slipanKejPruTRJsFVY95NyRhfVDjB3TBquFRDx3MLHVtimBalTvwveSzLGN4rF7v256ZDzoVdRzCrjcVegxUI88xIPGJlSnjyBXyNoepv2ltxegYIOkSxvgbEUySHXtkvOBtCymWPcmdlwo8LFWOMb3c4SXtInbtc85StLFVZJQ0qlIprIZmyUnWgN+c8mXgUVkxnEpB/J4ZX72GXQ5wU+JTRe9OKSSEZs9kC50WskYDu44twWgcWeJ2nkywNH5OzD/B6LrKfKTU20jmH/owvsuDdgWijGlkv4PQyP02P1QEJpFMiI6UqUQMbjEdwHCokLvxejMGgxG0q1Sc4wXzJOPFpc=
 services:
-    - docker
-
+- docker
 before_install:
-    - pip install --upgrade pip
-    - pip install --upgrade setuptools
-    - pip install --upgrade wheel
-    - docker run --name postgres -e POSTGRES_PASSWORD=postgres -p 127.0.0.1:5432:5432 -d mdillon/postgis
-    - virtualenv venv -p python3
-    - source venv/bin/activate
-    - git clone -b v0.2.1 --depth 1 https://github.com/brazil-data-cube/bdc-db && cd bdc-db
-    - pip install .
-    - bdc-db db create-db
-    - bdc-db db upgrade
-    - bdc-db db migrate
-    - bdc-db fixtures init
-    - deactivate && cd .. && rm -rf bdc-db
-    - source ~/virtualenv/python3.7/bin/activate
-
-
+- make before_install
 install:
-    - pip install -e .[tests,docs]
-
+- make install
 script:
-    - ./run-test.sh
-
+- make tests
+before_deploy:
+- openssl aes-256-cbc -K $encrypted_3b9f0b9d36d1_key -iv $encrypted_3b9f0b9d36d1_iv
+  -in secrets.tar.enc -out secrets.tar -d
+- tar xvf secrets.tar
+deploy:
+- provider: script
+  script: make deploy
+  skip_cleanup: true
+  true:
+    branch: master
 after_success:
+<<<<<<< HEAD
     - coveralls
     
 notifications:
@@ -52,3 +43,6 @@ notifications:
         rooms:
             - secure: "oRt5VsXvnretDrOhJeKteAAmq4fje+HNlIsXBQhfr5Jd2Q7ecj6+vTzWpECCg0WCN4dJLbgvyeO/zasOF/efLx7ysUj4HUbtX7L3NUr00cj0mfxsg/GyHTX0BK/UxQJptDScCH0Dr3+RXcIthypyxEIhwp/5yPYGRzTZw8jjbJ2inETuSDkbQ/OyqAetLDa++0hiNtmsOpI9lQMBAkLKWg9qigAfhdAMRn6BWNjP920olxDv6oiGYAvyjyD7XyhP2gdf5hfsfmXQ0dvhEdDvRcIiDVyCwAM73L9/9yafdBsrxSR8NeolIRDngTqvY+8wp8YUZu6RhJg2o1E8yr/9lyWKAwXlzk9VOArnvnV0uFtkuGPw+r9WySK3JOpUjCvuSF2v5B6+Sy/uEikGZNAtNdzJoKRXTFUiGHqXYrDKDUNzGG7kh3pJRiYXR/+/KBoE3t1ufBC2MJicMjlvCwqedPFTWJ0R0KRU0/x0oGNTjgCu0BXjd16ZsnCDW7YQsokpNYQvzSzJGSLLAD5acofZnplqX2RK7mqFPA3OxlMOo2l6cMSe95Ksqc27IcXCMKmIiLZrlSnlLGLBPPQcUxwBWJlfeNLhgM4v2sECeo05jJOAdZuKBjc16DI5pLPkvooWPLni8R0vETz9GY3V/jB+XdeZMER3VYVL6+37j4zgaps="
         on_sucess: always
+=======
+- coveralls
+>>>>>>> b-0.8.0

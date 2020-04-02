@@ -7,7 +7,7 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 #
 
-# pydocstyle bdc_stac && \
+pydocstyle bdc_stac && \
 isort --check-only --diff --recursive bdc_stac/*.py && \
 check-manifest --ignore ".travis-*" --ignore ".readthedocs.*" && \
 pytest && \
