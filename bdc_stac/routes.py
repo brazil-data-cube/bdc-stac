@@ -11,6 +11,7 @@ import os
 from bdc_db import BDCDatabase
 from flask import (abort, current_app, jsonify, render_template, request,
                    send_file)
+from werkzeug.exceptions import HTTPException, InternalServerError
 
 from .data import (InvalidBoundingBoxError, get_collection,
                    get_collection_items, get_collections, make_geojson)
@@ -184,60 +185,16 @@ def stac_search():
 
     return jsonify(gjson)
 
-
-@current_app.errorhandler(400)
-def handle_bad_request(e):
-    """Handle Bad request error."""
-    resp = jsonify({'code': '400', 'description': 'Bad Request - {}'.format(e.description)})
-    resp.status_code = 400
-
-    return resp
-
-
-@current_app.errorhandler(404)
-def handle_page_not_found(e):
-    """Handle Not found error."""
-    resp = jsonify({'code': '404', 'description': e.description if e.description else 'Page not found'})
-    resp.status_code = 404
-
-    return resp
-
-
-@current_app.errorhandler(500)
-def handle_api_error(e):
-    """Handle Internal server error."""
-    resp = jsonify({'code': '500', 'description': 'Internal Server Error'})
-    resp.status_code = 500
-
-    return resp
-
-
-@current_app.errorhandler(502)
-def handle_bad_gateway_error(e):
-    """Handle Bad gateway error."""
-    resp = jsonify({'code': '502', 'description': 'Bad Gateway'})
-    resp.status_code = 502
-
-    return resp
-
-
-@current_app.errorhandler(503)
-def handle_service_unavailable_error(e):
-    """Handle Service unavailable error."""
-    resp = jsonify({'code': '503', 'description': 'Service Unavailable'})
-    resp.status_code = 503
-
-    return resp
-
-
 @current_app.errorhandler(Exception)
 def handle_exception(e):
-    """Handle Exception."""
-    current_app.logger.exception(e)
-    resp = jsonify({'code': '500', 'description': 'Internal Server Error'})
-    resp.status_code = 500
+    """Handle exceptions."""
+    if isinstance(e, HTTPException):
+        return {'code': e.code, 'description': e.description}, e.code
 
-    return resp
+    current_app.logger.exception(e)
+
+    return {'code': InternalServerError.code,
+            'description': InternalServerError.description}, InternalServerError.code
 
 @current_app.errorhandler(InvalidBoundingBoxError)
 def handle_exception(e):
