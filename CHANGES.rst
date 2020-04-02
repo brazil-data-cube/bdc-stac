@@ -10,6 +10,22 @@
 Changes
 =======
 
+Version 0.8.0-0
+---------------
+
+Released 2020-04-02
+
+- Support for the SpatioTemporal Asset Catalog (STAC) specification version 0.8.0.
+- Database query improvements for fast asset retrieval.
+- Based on BDC-DB 0.2.
+- Improved system documentation.
+- Improved test system, integration with stac.py version 0.8.
+- Improved Travis CI, use of PostgreSQL in the test system.
+- Added Zappa scripts for deploying the service in the AWS Lambda.
+- More robust implementation.
+- Use Flask-Redoc to display online the OpenAPI 3 documentation.
+- Added new keys based on BDC metadata: timeline, crs and composite_function.
+
 
 Version 0.7.0-0
 ---------------
