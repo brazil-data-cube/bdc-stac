@@ -35,14 +35,10 @@ deploy:
   true:
     branch: master
 after_success:
-<<<<<<< HEAD
     - coveralls
-    
+
 notifications:
-    slack:
-        rooms:
-            - secure: "oRt5VsXvnretDrOhJeKteAAmq4fje+HNlIsXBQhfr5Jd2Q7ecj6+vTzWpECCg0WCN4dJLbgvyeO/zasOF/efLx7ysUj4HUbtX7L3NUr00cj0mfxsg/GyHTX0BK/UxQJptDScCH0Dr3+RXcIthypyxEIhwp/5yPYGRzTZw8jjbJ2inETuSDkbQ/OyqAetLDa++0hiNtmsOpI9lQMBAkLKWg9qigAfhdAMRn6BWNjP920olxDv6oiGYAvyjyD7XyhP2gdf5hfsfmXQ0dvhEdDvRcIiDVyCwAM73L9/9yafdBsrxSR8NeolIRDngTqvY+8wp8YUZu6RhJg2o1E8yr/9lyWKAwXlzk9VOArnvnV0uFtkuGPw+r9WySK3JOpUjCvuSF2v5B6+Sy/uEikGZNAtNdzJoKRXTFUiGHqXYrDKDUNzGG7kh3pJRiYXR/+/KBoE3t1ufBC2MJicMjlvCwqedPFTWJ0R0KRU0/x0oGNTjgCu0BXjd16ZsnCDW7YQsokpNYQvzSzJGSLLAD5acofZnplqX2RK7mqFPA3OxlMOo2l6cMSe95Ksqc27IcXCMKmIiLZrlSnlLGLBPPQcUxwBWJlfeNLhgM4v2sECeo05jJOAdZuKBjc16DI5pLPkvooWPLni8R0vETz9GY3V/jB+XdeZMER3VYVL6+37j4zgaps="
-        on_sucess: always
-=======
-- coveralls
->>>>>>> b-0.8.0
+  slack:
+    rooms:
+    - secure: "oRt5VsXvnretDrOhJeKteAAmq4fje+HNlIsXBQhfr5Jd2Q7ecj6+vTzWpECCg0WCN4dJLbgvyeO/zasOF/efLx7ysUj4HUbtX7L3NUr00cj0mfxsg/GyHTX0BK/UxQJptDScCH0Dr3+RXcIthypyxEIhwp/5yPYGRzTZw8jjbJ2inETuSDkbQ/OyqAetLDa++0hiNtmsOpI9lQMBAkLKWg9qigAfhdAMRn6BWNjP920olxDv6oiGYAvyjyD7XyhP2gdf5hfsfmXQ0dvhEdDvRcIiDVyCwAM73L9/9yafdBsrxSR8NeolIRDngTqvY+8wp8YUZu6RhJg2o1E8yr/9lyWKAwXlzk9VOArnvnV0uFtkuGPw+r9WySK3JOpUjCvuSF2v5B6+Sy/uEikGZNAtNdzJoKRXTFUiGHqXYrDKDUNzGG7kh3pJRiYXR/+/KBoE3t1ufBC2MJicMjlvCwqedPFTWJ0R0KRU0/x0oGNTjgCu0BXjd16ZsnCDW7YQsokpNYQvzSzJGSLLAD5acofZnplqX2RK7mqFPA3OxlMOo2l6cMSe95Ksqc27IcXCMKmIiLZrlSnlLGLBPPQcUxwBWJlfeNLhgM4v2sECeo05jJOAdZuKBjc16DI5pLPkvooWPLni8R0vETz9GY3V/jB+XdeZMER3VYVL6+37j4zgaps="
+    on_sucess: always
