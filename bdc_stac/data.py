@@ -6,7 +6,8 @@ from copy import deepcopy
 from datetime import datetime
 
 from bdc_db.models import (Asset, AssetMV, Band, Collection, CollectionItem,
-                           GrsSchema, TemporalCompositionSchema, Tile, db)
+                           CompositeFunctionSchema, GrsSchema,
+                           TemporalCompositionSchema, Tile, db)
 from geoalchemy2.functions import GenericFunction
 from sqlalchemy import cast, create_engine, exc, func
 from sqlalchemy.dialects.postgresql import JSONB
@@ -190,15 +191,18 @@ def get_collection(collection_id):
                func.max(CollectionItem.composite_end).label('end'),
                Collection.bands_quicklook,
                Collection.description,
-               GrsSchema.crs.label('crs')]
+               GrsSchema.crs.label('crs'),
+               CompositeFunctionSchema.id.label('composite_function')]
     where = [Collection.id == CollectionItem.collection_id,
              CollectionItem.tile_id == Tile.id,
              CollectionItem.grs_schema_id == Tile.grs_schema_id,
-             Collection.id == collection_id]
+             Collection.id == collection_id,
+             CompositeFunctionSchema.id == Collection.composite_function_schema_id]
     group_by = [CollectionItem.grs_schema_id,
                 Collection.bands_quicklook,
                 Collection.description,
-                GrsSchema.crs]
+                GrsSchema.crs,
+                CompositeFunctionSchema.id]
 
     is_cube = collection_is_cube(collection_id)
 
@@ -260,6 +264,7 @@ def get_collection(collection_id):
         temporal_schema['unit'] = result.temporal_composite_unit
         collection["properties"]["bdc:temporal_composition"] = temporal_schema
         collection["properties"]["bdc:timeline"] = get_collection_timeline(collection_id)
+        collection["properties"]["bdc:composite_function"] = result.composite_function
     collection["properties"]["bdc:wrs"] = result.grs_schema
 
     return collection
