@@ -25,6 +25,7 @@ Released 2020-04-02
 - More robust implementation.
 - Use Flask-Redoc to display online the OpenAPI 3 documentation.
 - Added new keys based on BDC metadata: timeline, crs and composite_function.
+- Added gunicorn to Dockerfile.
 
 
 Version 0.7.0-0
