@@ -4,13 +4,13 @@ RUN apt-get update -y \
     && apt-get install -y libpq-dev git \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /bdc_stac
-WORKDIR /bdc_stac
+RUN mkdir -p bdc_stac
 
-COPY requirements.txt /bdc_stac
-COPY ./bdc_stac /bdc_stac
-RUN pip install -r requirements.txt
+COPY requirements.txt bdc_stac/
+COPY ./bdc_stac bdc_stac/
+RUN pip install -r bdc_stac/requirements.txt
+RUN pip install gunicorn
 
 EXPOSE 5000
 
-CMD ["flask", "run", "--host=0.0.0.0"]
+CMD ["gunicorn", "-w4", "--bind=0.0.0.0:5000", "bdc_stac:create_app()"]

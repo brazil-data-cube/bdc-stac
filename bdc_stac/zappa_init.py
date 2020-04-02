@@ -5,4 +5,7 @@
 # bdc-stac is a free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 #
-from .test_app import TestBDCStac
+"""File used for zappa deploy."""
+from . import create_app
+
+app = create_app()
