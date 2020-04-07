@@ -16,7 +16,7 @@ from sqlalchemy.orm import sessionmaker
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=exc.SAWarning)
 
-session = db.session()
+session = db.create_scoped_session({'autocommit':True})
 
 
 class ST_Extent(GenericFunction):
