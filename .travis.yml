@@ -32,6 +32,7 @@ deploy:
 - provider: script
   script: make deploy
   skip_cleanup: true
+  fork: false
   on:
     branch: master
 after_success:
