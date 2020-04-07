@@ -13,7 +13,7 @@ Changes
 Version 0.8.0-0
 ---------------
 
-Released 2020-04-02
+Released 2020-04-03
 
 - Support for the SpatioTemporal Asset Catalog (STAC) specification version 0.8.0.
 - Database query improvements for fast asset retrieval.
