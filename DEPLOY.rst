@@ -30,17 +30,17 @@ On the command line use the `docker build` command to create the docker image fo
 
 .. code-block:: shell
 
-        $ docker build --no-cache -t bdc-stac:0.8.0-0 .
+        $ docker build --no-cache -t bdc-stac:0.8.1-0 .
 
 
-The above command will create a Docker image named `bdc-stac` and tag `0.8.0-0`, as one can see with the `docker images` command:
+The above command will create a Docker image named `bdc-stac` and tag `0.8.1-0`, as one can see with the `docker images` command:
 
 .. code-block:: shell
 
         $ docker images
 
         REPOSITORY                                          TAG                 IMAGE ID            CREATED             SIZE
-        bdc-stac                                            0.8.0-0             44651ac917e4        16 hours ago        333MB
+        bdc-stac                                            0.8.1-0             44651ac917e4        16 hours ago        333MB
 
 
 Preparing the Network for Containers
@@ -67,7 +67,7 @@ In the above command, we are supposing that your database container is named `bd
 Launching the Docker Container with the STAC Service
 ----------------------------------------------------
 
-The `docker run` command can be used to launch a container from the image `bdc-stac:0.8.0-0`. The command below shows an example on how to accomplish the launch of a container:
+The `docker run` command can be used to launch a container from the image `bdc-stac:0.8.1-0`. The command below shows an example on how to accomplish the launch of a container:
 
 .. code-block:: shell
 
@@ -80,9 +80,9 @@ The `docker run` command can be used to launch a container from the image `bdc-s
                      --env DB_PASS="secret" \
                      --env DB_NAME="bdcdb" \
                      --env BASE_URI="http://localhost:8080" \
-                     --env API_VERSION="0.8.0" \
+                     --env API_VERSION="0.8.1" \
                      --env FILE_ROOT="http://localhost:8081" \
-                     bdc-stac:0.8.0-0
+                     bdc-stac:0.8.1-0
 
 
 Let's take a look at each parameter in the above command:/
@@ -105,11 +105,11 @@ Let's take a look at each parameter in the above command:/
 
     - ``--env BASE_URI="http://localhost:8080"``: Base URI of the service.
 
-    - ``--env API_VERSION="0.8.0"``: STAC Version used in the service.
+    - ``--env API_VERSION="0.8.1"``: STAC Version used in the service.
 
     - ``--env FILE_ROOT="http://localhost:8081"``: File root for the Assets.
 
-    - ``bdc-stac:0.8.0-0``: the name of the base Docker image used to create the container.
+    - ``bdc-stac:0.8.1-0``: the name of the base Docker image used to create the container.
 
 
 If you have launched the container, you can check if the service has initialized:
