@@ -10,10 +10,10 @@ SHELL := /bin/bash
 .PHONY: all tests docs doc
 
 tests:
-	pydocstyle bdc_stac
-	isort --check-only --diff --recursive bdc_stac/*.py
-	check-manifest --ignore ".travis-*" --ignore ".readthedocs.*"
-	pytest
+	pydocstyle bdc_stac && \
+	isort --check-only --diff --recursive bdc_stac/*.py && \
+	check-manifest --ignore ".travis-*" --ignore ".readthedocs.*" && \
+	pytest && \
 	sphinx-build -qnW --color -b doctest doc/sphinx/ doc/sphinx/_build/doctest
 
 docs:
@@ -45,4 +45,3 @@ install:
 deploy:
 	pip install zappa
 	zappa update
-
