@@ -21,6 +21,7 @@ BASE_URL = os.getenv('BASE_URL', 'http://localhost:5000')
 
 @current_app.teardown_appcontext
 def teardown_appcontext(exceptions=None):
+    """Teardown appcontext."""
     session.remove()
 
 @current_app.after_request
