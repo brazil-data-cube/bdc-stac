@@ -14,7 +14,8 @@ from flask import (abort, current_app, jsonify, render_template, request,
 from werkzeug.exceptions import HTTPException, InternalServerError
 
 from .data import (InvalidBoundingBoxError, get_collection,
-                   get_collection_items, get_collections, make_geojson, session)
+                   get_collection_items, get_collections, make_geojson,
+                   session)
 
 BASE_URL = os.getenv('BASE_URL', 'http://localhost:5000')
 
