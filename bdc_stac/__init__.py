@@ -14,8 +14,7 @@ from flask_redoc import Redoc
 
 from .version import __version__
 
-__all__ = ('__version__',
-           'app')
+__all__ = ('__version__')
 
 
 def create_app():

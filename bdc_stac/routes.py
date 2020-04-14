@@ -21,6 +21,7 @@ BASE_URL = os.getenv('BASE_URL', 'http://localhost:5000')
 
 @current_app.teardown_appcontext
 def teardown_appcontext(exceptions=None):
+    """Teardown appcontext."""
     session.remove()
 
 @current_app.after_request
@@ -58,7 +59,7 @@ def root():
     catalog = dict()
     catalog["description"] = "Brazil Data Cubes Catalog"
     catalog["id"] = "bdc"
-    catalog["stac_version"] = os.getenv("API_VERSION", "0.8.0")
+    catalog["stac_version"] = os.getenv("API_VERSION", "0.8.1")
     links = list()
     links.append({"href": request.url, "rel": "self"})
 

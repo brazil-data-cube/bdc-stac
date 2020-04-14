@@ -239,7 +239,7 @@ def get_collection(collection_id):
     bands = get_collection_bands(collection_id)
     tiles = get_collection_tiles(collection_id)
 
-    collection["stac_version"] = os.getenv("API_VERSION", "0.8.0")
+    collection["stac_version"] = os.getenv("API_VERSION", "0.8.1")
 
     collection["description"] = result.description
 
@@ -299,7 +299,7 @@ def make_geojson(items, links):
         feature['type'] = 'Feature'
         feature['id'] = i.item
         feature['collection'] = i.collection_id
-        feature['stac_version'] = os.getenv("API_VERSION", "0.8.0")
+        feature['stac_version'] = os.getenv("API_VERSION", "0.8.1")
 
         feature['geometry'] = json.loads(i.geom)
 

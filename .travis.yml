@@ -34,6 +34,7 @@ deploy:
   on:
     branch: master
     condition: fork = false
+    tags: true
 after_success:
 - coveralls
 notifications:
