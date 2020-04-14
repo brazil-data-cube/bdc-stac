@@ -58,7 +58,7 @@ class TestBDCStac:
 
         assert stac.Catalog(data, validate=True)
         assert 'stac_version' in data
-        assert data['stac_version'] == '0.8.0'
+        assert data['stac_version'] == '0.8.1'
         assert 'id' in data
         assert data['id'] == 'bdc'
         assert 'links' in data
@@ -74,7 +74,7 @@ class TestBDCStac:
         assert response.status_code == 200
         assert stac.Collection(data, validate=True)
         assert data['id'] == 'LC8SR'
-        assert data['stac_version'] == '0.8.0'
+        assert data['stac_version'] == '0.8.1'
         assert data['properties']['bdc:tiles'][0] == '221069'
         assert data['properties']['bdc:wrs'] == 'WRS2'
 
