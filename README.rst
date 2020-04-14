@@ -14,16 +14,16 @@ SpatioTemporal Asset Catalog for the Brazil Data Cube
         :target: https://github.com/brazil-data-cube/bdc-stac/blob/master/LICENSE
         :alt: Software License
 
-.. image:: https://travis-ci.com/brazil-data-cube/bdc-stac.svg?branch=b-0.8.1
+.. image:: https://travis-ci.com/brazil-data-cube/bdc-stac.svg?branch=master
         :target: https://travis-ci.com/brazil-data-cube/bdc-stac
         :alt: Build Status
 
-.. image:: https://coveralls.io/repos/github/brazil-data-cube/bdc-stac/badge.svg?branch=b-0.8.1
-        :target: https://coveralls.io/github/brazil-data-cube/bdc-stac?branch=b-0.8.1
+.. image:: https://coveralls.io/repos/github/brazil-data-cube/bdc-stac/badge.svg?branch=master
+        :target: https://coveralls.io/github/brazil-data-cube/bdc-stac?branch=master
         :alt: Code Coverage Test
 
-.. image:: https://readthedocs.org/projects/bdc-stac/badge/?version=b-0.8.1
-        :target: https://bdc-stac.readthedocs.io/en/b-0.8.1
+.. image:: https://readthedocs.org/projects/bdc-stac/badge/?version=latest
+        :target: https://bdc-stac.readthedocs.io/en/latest
         :alt: Documentation Status
 
 .. image:: https://img.shields.io/badge/lifecycle-experimental-orange.svg
@@ -34,7 +34,7 @@ SpatioTemporal Asset Catalog for the Brazil Data Cube
         :target: https://github.com/brazil-data-cube/bdc-stac/releases
         :alt: Release
 
-.. image:: https://badges.gitter.im/brazil-data-cube/community.png
+.. image:: https://badges.gitter.im/brazil-data-cube/community.svg/
         :target: https://gitter.im/brazil-data-cube/community#
         :alt: Join the chat
 
@@ -66,7 +66,7 @@ See `DEPLOY.rst <./DEPLOY.rst>`_.
 Developer Documentation
 =======================
 
-See https://bdc-stac.readthedocs.io/en/b-0.8.1.
+See https://bdc-stac.readthedocs.io/en/latest.
 
 
 License

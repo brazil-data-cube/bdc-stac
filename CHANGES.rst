@@ -10,6 +10,15 @@
 Changes
 =======
 
+Version 0.8.1-0
+---------------
+
+Released 2020-04-14
+
+- Support for the SpatioTemporal Asset Catalog (STAC) specification version 0.8.1.
+- Compatibility with `Brazil Data Cube Database module Version 0.2.0 <https://github.com/brazil-data-cube/bdc-db/tree/v0.2.0>`_.
+
+
 Version 0.8.0-0
 ---------------
 
@@ -17,7 +26,7 @@ Released 2020-04-03
 
 - Support for the SpatioTemporal Asset Catalog (STAC) specification version 0.8.0.
 - Database query improvements for fast asset retrieval.
-- Based on BDC-DB 0.2.
+- Compatibility with `Brazil Data Cube Database module Version 0.2.0 <https://github.com/brazil-data-cube/bdc-db/tree/v0.2.0>`_.
 - Improved system documentation.
 - Improved test system, integration with stac.py version 0.8.
 - Improved Travis CI, use of PostgreSQL in the test system.
@@ -42,5 +51,5 @@ Released 2020-02-21
 - Deploy on Docker containers.
 - Installation and Deployment instructions.
 - Source code versioning based on `Semantic Versioning 2.0.0 <https://semver.org/>`_.
-- License: `MIT <https://raw.githubusercontent.com/brazil-data-cube/bdc-db/b-0.2/LICENSE>`_.
+- License: `MIT <https://raw.githubusercontent.com/brazil-data-cube/bdc-stac/v0.7.0-0/LICENSE>`_.
 - Compatibility with `Brazil Data Cube Database module Version 0.2.0 <https://github.com/brazil-data-cube/bdc-db/tree/v0.2.0>`_.

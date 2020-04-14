@@ -66,7 +66,7 @@ setup(
     keywords='STAC RESTful Web Service',
     license='MIT',
     author='INPE',
-    author_email='mzaglia@gmail.com',
+    author_email='brazildatacube@dpi.inpe.br',
     url='https://github.com/brazil-data-cube/bdc-stac',
     packages=packages,
     zip_safe=False,
