@@ -34,7 +34,7 @@ SpatioTemporal Asset Catalog for the Brazil Data Cube
         :target: https://github.com/brazil-data-cube/bdc-stac/releases
         :alt: Release
 
-.. image:: https://badges.gitter.im/brazil-data-cube/community.png
+.. image:: https://badges.gitter.im/brazil-data-cube/community.svg/
         :target: https://gitter.im/brazil-data-cube/community#
         :alt: Join the chat
 
