@@ -28,7 +28,7 @@ tests_require = [
     'pydocstyle>=4.0',
     'isort>4.3',
     'check-manifest>=0.40',
-    'stac @ git+https://github.com/brazil-data-cube/stac.py@b-0.8.0'
+    'stac @ git+https://github.com/brazil-data-cube/stac.py@b-0.8.1'
 ]
 
 extras_require = {
@@ -66,7 +66,7 @@ setup(
     keywords='STAC RESTful Web Service',
     license='MIT',
     author='INPE',
-    author_email='mzaglia@gmail.com',
+    author_email='brazildatacube@dpi.inpe.br',
     url='https://github.com/brazil-data-cube/bdc-stac',
     packages=packages,
     zip_safe=False,
