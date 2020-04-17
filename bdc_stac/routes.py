@@ -6,10 +6,15 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 #
 """Routes for the BDC-STAC API."""
+
+import simplejson
+import mgzip
 import os
+from io import BytesIO
+
 
 from bdc_db import BDCDatabase
-from flask import (abort, current_app, jsonify, render_template, request,
+from flask import (abort, current_app, jsonify, make_response, request,
                    send_file)
 from werkzeug.exceptions import HTTPException, InternalServerError
 
@@ -27,8 +32,25 @@ def teardown_appcontext(exceptions=None):
 
 @current_app.after_request
 def after_request(response):
-    """Enable CORS."""
+    """Enable CORS and compress response."""
     response.headers.add('Access-Control-Allow-Origin', '*')
+
+    accept_encoding = request.headers.get('Accept-Encoding', '')
+
+    if response.status_code < 200 or \
+        response.status_code >= 300 or \
+        response.direct_passthrough or \
+        len(response.get_data()) < 500 or \
+        'gzip' not in accept_encoding.lower() or \
+        'Content-Encoding' in response.headers:
+        return response
+
+    compressed_data =  mgzip.compress(response.get_data(), thread=0, compresslevel=4)
+
+    response.set_data(compressed_data)
+    response.headers['Content-Encoding'] = 'gzip'
+    response.headers['Content-Length'] = len(response.get_data())
+
     return response
 
 @current_app.route("/", methods=["GET"])
@@ -108,8 +130,7 @@ def collection_items(collection_id):
     features = make_geojson(items, links)
 
     gjson['features'] = features
-
-    return jsonify(gjson)
+    return gjson
 
 
 @current_app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
