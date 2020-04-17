@@ -7,12 +7,10 @@
 #
 """Routes for the BDC-STAC API."""
 
-import simplejson
-import mgzip
 import os
 from io import BytesIO
 
-
+import mgzip
 from bdc_db import BDCDatabase
 from flask import (abort, current_app, jsonify, make_response, request,
                    send_file)
