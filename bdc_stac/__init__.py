@@ -31,7 +31,7 @@ def create_app():
 
     with app.app_context():
         BDCDatabase(app)
-        Redoc(f'spec/api/{os.environ.get("API_VERSION", "0.8.0")}/STAC.yaml', app)
+        Redoc(f'spec/api/{os.environ.get("API_VERSION", "0.8.1")}/STAC.yaml', app)
 
         from . import routes
 
