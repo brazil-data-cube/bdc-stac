@@ -14,6 +14,7 @@ import mgzip
 from bdc_db import BDCDatabase
 from flask import (abort, current_app, jsonify, make_response, request,
                    send_file)
+from werkzeug import url_encode
 from werkzeug.exceptions import HTTPException, InternalServerError
 
 from .data import (InvalidBoundingBoxError, get_collection,
@@ -28,6 +29,7 @@ def teardown_appcontext(exceptions=None):
     """Teardown appcontext."""
     session.remove()
 
+
 @current_app.after_request
 def after_request(response):
     """Enable CORS and compress response."""
@@ -40,10 +42,11 @@ def after_request(response):
         response.direct_passthrough or \
         len(response.get_data()) < 500 or \
         'gzip' not in accept_encoding.lower() or \
-        'Content-Encoding' in response.headers:
+            'Content-Encoding' in response.headers:
         return response
 
-    compressed_data =  mgzip.compress(response.get_data(), thread=0, compresslevel=4)
+    compressed_data = mgzip.compress(
+        response.get_data(), thread=0, compresslevel=4)
 
     response.set_data(compressed_data)
     response.headers['Content-Encoding'] = 'gzip'
@@ -51,26 +54,26 @@ def after_request(response):
 
     return response
 
+
 @current_app.route("/", methods=["GET"])
 def index():
     """Landing page of this API."""
-    links = [{"href": f"{BASE_URL}/", "rel": "self"},
-             {"href": f"{BASE_URL}/docs", "rel": "service"},
-             {"href": f"{BASE_URL}/conformance", "rel": "conformance"},
-             {"href": f"{BASE_URL}/collections", "rel": "data"},
-             {"href": f"{BASE_URL}/stac", "rel": "data"},
-             {"href": f"{BASE_URL}/stac/search", "rel": "search"}]
-    return jsonify(links)
+    return jsonify([{"href": f"{BASE_URL}/", "rel": "self"},
+                    {"href": f"{BASE_URL}/docs", "rel": "service"},
+                    {"href": f"{BASE_URL}/conformance", "rel": "conformance"},
+                    {"href": f"{BASE_URL}/collections", "rel": "data"},
+                    {"href": f"{BASE_URL}/stac", "rel": "data"},
+                    {"href": f"{BASE_URL}/stac/search", "rel": "search"}])
 
 
 @current_app.route("/conformance", methods=["GET"])
 def conformance():
     """Information about standards that this API conforms to."""
-    conforms = {"conformsTo": ["http://www.opengis.net/spec/wfs-1/3.0/req/core",
-                               "http://www.opengis.net/spec/wfs-1/3.0/req/oas30",
-                               "http://www.opengis.net/spec/wfs-1/3.0/req/html",
-                               "http://www.opengis.net/spec/wfs-1/3.0/req/geojson"]}
-    return jsonify(conforms)
+    return {"conformsTo": ["http://www.opengis.net/spec/wfs-1/3.0/req/core",
+                           "http://www.opengis.net/spec/wfs-1/3.0/req/oas30",
+                           "http://www.opengis.net/spec/wfs-1/3.0/req/html",
+                           "http://www.opengis.net/spec/wfs-1/3.0/req/geojson"]}
+
 
 @current_app.route("/collections", methods=["GET"])
 @current_app.route("/stac", methods=["GET"])
@@ -85,11 +88,13 @@ def root():
     links.append({"href": request.url, "rel": "self"})
 
     for collection in collections:
-        links.append({"href": f"{BASE_URL}/collections/{collection.id}", "rel": "child", "title": collection.id})
+        links.append({"href": f"{BASE_URL}/collections/{collection.id}",
+                      "rel": "child", "title": collection.id})
 
     catalog["links"] = links
 
-    return jsonify(catalog)
+    return catalog
+
 
 @current_app.route("/collections/<collection_id>", methods=["GET"])
 def collections_id(collection_id):
@@ -106,7 +111,7 @@ def collections_id(collection_id):
 
     collection['links'] = links
 
-    return jsonify(collection)
+    return collection
 
 
 @current_app.route("/collections/<collection_id>/items", methods=["GET"])
@@ -115,7 +120,8 @@ def collection_items(collection_id):
 
     :param collection_id: identifier (name) of a specific collection
     """
-    items = get_collection_items(collection_id=collection_id, **request.args.to_dict())
+    items = get_collection_items(
+        collection_id=collection_id, **request.args.to_dict())
 
     links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
              {"href": f"{BASE_URL}/collections/", "rel": "parent"},
@@ -125,7 +131,22 @@ def collection_items(collection_id):
     gjson = dict()
     gjson['type'] = 'FeatureCollection'
 
-    features = make_geojson(items, links)
+    features = make_geojson(items.items, links)
+
+    gjson['links'] = []
+
+    gjson['numberMatched'] = items.total
+    gjson['numberReturned'] = len(items.items)
+
+    args = request.args.copy()
+    if items.has_next:
+        args['page'] = items.next_num
+        gjson['links'].append(
+            {"href": f"{BASE_URL}/collections/{collection_id}/items?"+url_encode(args), "rel": "next"})
+    if items.has_prev:
+        args['page'] = items.prev_num
+        gjson['links'].append(
+            {"href": f"{BASE_URL}/collections/{collection_id}/items?"+url_encode(args), "rel": "prev"})
 
     gjson['features'] = features
     return gjson
@@ -147,7 +168,7 @@ def items_id(collection_id, item_id):
     gjson = make_geojson(item, links)
 
     if len(gjson) > 0:
-        return jsonify(gjson[0])
+        return gjson[0]
 
     abort(404, f"Invalid item id '{item_id}' for collection '{collection_id}'")
 
@@ -205,11 +226,27 @@ def stac_search():
     gjson = dict()
     gjson['type'] = 'FeatureCollection'
 
-    features = make_geojson(items, links)
+    features = make_geojson(items.items, links)
+
+    gjson['links'] = []
+
+    gjson['numberMatched'] = items.total
+    gjson['numberReturned'] = len(items.items)
+
+    args = request.args.copy()
+    if items.has_next:
+        args['page'] = items.next_num
+        gjson['links'].append(
+            {"href": f"{BASE_URL}/stac/search?"+url_encode(args), "rel": "next"})
+    if items.has_prev:
+        args['page'] = items.prev_num
+        gjson['links'].append(
+            {"href": f"{BASE_URL}/stac/search?"+url_encode(args), "rel": "prev"})
 
     gjson['features'] = features
 
-    return jsonify(gjson)
+    return gjson
+
 
 @current_app.errorhandler(Exception)
 def handle_exception(e):
@@ -222,11 +259,9 @@ def handle_exception(e):
     return {'code': InternalServerError.code,
             'description': InternalServerError.description}, InternalServerError.code
 
+
 @current_app.errorhandler(InvalidBoundingBoxError)
 def handle_exception(e):
     """Handle InvalidBoundingBoxError."""
-    current_app.logger.exception(e)
-    resp = jsonify({'code': '400', 'description': str(e)})
-    resp.status_code = 400
 
-    return resp
+    return {'code': '400', 'description': str(e)}, 400

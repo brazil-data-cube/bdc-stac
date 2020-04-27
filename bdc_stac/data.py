@@ -112,12 +112,9 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
     query = session.query(*columns).filter(*where).group_by(*group_by).order_by(
         CollectionItem.composite_start.desc())
 
-    if limit:
-        query = query.limit(int(limit))
-    if page:
-        query = query.offset((int(page) * int(limit)) - int(limit))
+    result = query.paginate(page=int(page), per_page=int(
+        limit), error_out=False, max_per_page=os.getenv('MAX_LIMIT', 1000))
 
-    result = query.all()
     return result
 
 
