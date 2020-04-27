@@ -263,5 +263,4 @@ def handle_exception(e):
 @current_app.errorhandler(InvalidBoundingBoxError)
 def handle_exception(e):
     """Handle InvalidBoundingBoxError."""
-
     return {'code': '400', 'description': str(e)}, 400
