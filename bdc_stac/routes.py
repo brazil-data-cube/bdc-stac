@@ -14,8 +14,8 @@ import mgzip
 from bdc_db import BDCDatabase
 from flask import (abort, current_app, jsonify, make_response, request,
                    send_file)
-from werkzeug import url_encode
 from werkzeug.exceptions import HTTPException, InternalServerError
+from werkzeug.urls import url_encode
 
 from .data import (InvalidBoundingBoxError, get_collection,
                    get_collection_items, get_collections, make_geojson,
