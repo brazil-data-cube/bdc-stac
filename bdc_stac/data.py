@@ -9,7 +9,7 @@ from bdc_db.models import (Asset, AssetMV, Band, Collection, CollectionItem,
                            CompositeFunctionSchema, GrsSchema,
                            TemporalCompositionSchema, Tile, db)
 from geoalchemy2.functions import GenericFunction
-from sqlalchemy import cast, create_engine, exc, func
+from sqlalchemy import cast, create_engine, exc, func, or_
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import sessionmaker
 
@@ -100,22 +100,21 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
             if "/" in time:
                 time_start, end = time.split("/")
                 time_end = datetime.fromisoformat(end)
-                where += [CollectionItem.composite_end <= time_end]
+                where += [or_(CollectionItem.composite_end <= time_end,
+                              CollectionItem.composite_start <= time_end)]
             else:
                 time_start = datetime.fromisoformat(time)
-            where += [CollectionItem.composite_start >= time_start]
+            where += [or_(CollectionItem.composite_start >= time_start,
+                        CollectionItem.composite_end >= time_start)]
     group_by = [Collection.id, CollectionItem.id, CollectionItem.composite_start, CollectionItem.composite_end,
                 Tile.id, Tile.geom_wgs84, AssetMV.assets]
 
     query = session.query(*columns).filter(*where).group_by(*group_by).order_by(
         CollectionItem.composite_start.desc())
 
-    if limit:
-        query = query.limit(int(limit))
-    if page:
-        query = query.offset((int(page) * int(limit)) - int(limit))
+    result = query.paginate(page=int(page), per_page=int(
+        limit), error_out=False, max_per_page=os.getenv('MAX_LIMIT', 1000))
 
-    result = query.all()
     return result
 
 
