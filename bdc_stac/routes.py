@@ -165,7 +165,7 @@ def items_id(collection_id, item_id):
              {"href": f"{BASE_URL}/collections/", "rel": "collection"},
              {"href": f"{BASE_URL}/stac", "rel": "root"}]
 
-    gjson = make_geojson(item, links)
+    gjson = make_geojson(item.items, links)
 
     if len(gjson) > 0:
         return gjson[0]
