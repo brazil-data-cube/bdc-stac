@@ -57,17 +57,6 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
     :return: list of collectio items
     :rtype: list
     """
-    # x = session.query(CollectionItem.id.label('item_id'), Band.common_name.label('band'),
-    #                   func.json_build_object('href', func.concat(os.getenv('FILE_ROOT'), Asset.url)).label('url')). \
-    #     filter(Asset.collection_item_id == CollectionItem.id,
-    #            Asset.band_id == Band.id).subquery('a')
-
-    # assets = session.query(x.c.item_id, cast(func.json_object_agg(x.c.band, x.c.url), JSONB).op('||')(
-    #     cast(func.json_build_object('thumbnail', func.json_build_object('href', func.concat(os.getenv('FILE_ROOT'),
-    #                                                                                         CollectionItem.quicklook))),
-    #          JSONB)).label('asset')).filter(CollectionItem.id == x.c.item_id).group_by(x.c.item_id,
-    #                                                                                    CollectionItem.quicklook) \
-    #     .subquery('b')
 
     columns = [Collection.id.label('collection_id'), CollectionItem.id.label('item'),
                CollectionItem.composite_start.label('start'),
