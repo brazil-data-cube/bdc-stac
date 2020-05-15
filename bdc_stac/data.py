@@ -5,18 +5,18 @@ import warnings
 from copy import deepcopy
 from datetime import datetime
 
-from bdc_db.models import (Asset, AssetMV, Band, Collection, CollectionItem,
+from bdc_db.models import (Asset, Band, Collection, CollectionItem,
                            CompositeFunctionSchema, GrsSchema,
                            TemporalCompositionSchema, Tile, db)
 from geoalchemy2.functions import GenericFunction
-from sqlalchemy import cast, create_engine, exc, func
+from sqlalchemy import cast, create_engine, exc, func, or_
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import sessionmaker
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=exc.SAWarning)
 
-session = db.create_scoped_session({'autocommit':True})
+session = db.create_scoped_session({'autocommit': True})
 
 
 class ST_Extent(GenericFunction):
@@ -57,15 +57,27 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
     :return: list of collectio items
     :rtype: list
     """
+    # x = session.query(CollectionItem.id.label('item_id'), Band.common_name.label('band'),
+    #                   func.json_build_object('href', func.concat(os.getenv('FILE_ROOT'), Asset.url)).label('url')). \
+    #     filter(Asset.collection_item_id == CollectionItem.id,
+    #            Asset.band_id == Band.id).subquery('a')
+
+    # assets = session.query(x.c.item_id, cast(func.json_object_agg(x.c.band, x.c.url), JSONB).op('||')(
+    #     cast(func.json_build_object('thumbnail', func.json_build_object('href', func.concat(os.getenv('FILE_ROOT'),
+    #                                                                                         CollectionItem.quicklook))),
+    #          JSONB)).label('asset')).filter(CollectionItem.id == x.c.item_id).group_by(x.c.item_id,
+    #                                                                                    CollectionItem.quicklook) \
+    #     .subquery('b')
+
     columns = [Collection.id.label('collection_id'), CollectionItem.id.label('item'),
                CollectionItem.composite_start.label('start'),
                CollectionItem.composite_end.label(
                    'end'), Tile.id.label('tile'),
                func.ST_AsGeoJSON(Tile.geom_wgs84).label(
-                   'geom'), AssetMV.assets,
+                   'geom'), CollectionItem.quicklook,
                func.Box2D(Tile.geom_wgs84).label('bbox')]
     where = [Collection.id == CollectionItem.collection_id, CollectionItem.tile_id == Tile.id,
-             AssetMV.item_id == CollectionItem.id, CollectionItem.grs_schema_id == Tile.grs_schema_id]
+             CollectionItem.grs_schema_id == Tile.grs_schema_id]
 
     if ids is not None:
         where += [CollectionItem.id.in_(ids.split(','))]
@@ -100,22 +112,21 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
             if "/" in time:
                 time_start, end = time.split("/")
                 time_end = datetime.fromisoformat(end)
-                where += [CollectionItem.composite_end <= time_end]
+                where += [or_(CollectionItem.composite_end <= time_end,
+                              CollectionItem.composite_start <= time_end)]
             else:
                 time_start = datetime.fromisoformat(time)
-            where += [CollectionItem.composite_start >= time_start]
+            where += [or_(CollectionItem.composite_start >= time_start,
+                          CollectionItem.composite_end >= time_start)]
     group_by = [Collection.id, CollectionItem.id, CollectionItem.composite_start, CollectionItem.composite_end,
-                Tile.id, Tile.geom_wgs84, AssetMV.assets]
+                Tile.id, Tile.geom_wgs84, CollectionItem.quicklook]
 
     query = session.query(*columns).filter(*where).group_by(*group_by).order_by(
         CollectionItem.composite_start.desc())
 
-    if limit:
-        query = query.limit(int(limit))
-    if page:
-        query = query.offset((int(page) * int(limit)) - int(limit))
+    result = query.paginate(page=int(page), per_page=int(
+        limit), error_out=False, max_per_page=int(os.getenv('MAX_LIMIT', 100)))
 
-    result = query.all()
     return result
 
 
@@ -164,6 +175,7 @@ def collection_is_cube(collection_id):
     """
     return session.query(Collection.is_cube).filter(Collection.id == collection_id).one().is_cube
 
+
 def get_collection_timeline(collection_id):
     """Retrive a list of dates for a given collection.
 
@@ -176,6 +188,7 @@ def get_collection_timeline(collection_id):
         .group_by(CollectionItem.composite_start).order_by(CollectionItem.composite_start.asc()).all()
 
     return [datetime.fromisoformat(str(t.composite_start)).strftime("%Y-%m-%d") for t in timeline]
+
 
 def get_collection(collection_id):
     """Retrieve information of a given collection.
@@ -263,7 +276,8 @@ def get_collection(collection_id):
         temporal_schema['step'] = result.temporal_composite_t
         temporal_schema['unit'] = result.temporal_composite_unit
         collection["properties"]["bdc:temporal_composition"] = temporal_schema
-        collection["properties"]["bdc:timeline"] = get_collection_timeline(collection_id)
+        collection["properties"]["bdc:timeline"] = get_collection_timeline(
+            collection_id)
         collection["properties"]["bdc:composite_function"] = result.composite_function
     collection["properties"]["bdc:wrs"] = result.grs_schema
 
@@ -280,6 +294,17 @@ def get_collections():
         .group_by(Collection.id).all()
     return collections
 
+
+def get_assets(item_id):
+    """Retrive all assets for an item.
+
+    :param item_id: collection item identifier
+    :type item_id: str
+    """
+    assets = session.query(Asset.url, Band.common_name.label('band')).filter(
+        Asset.collection_item_id == item_id, Asset.band_id == Band.id).group_by(Asset.url, Band.common_name).all()
+
+    return assets
 
 def make_geojson(items, links):
     """Generate a list of STAC Items from a list of collection items.
@@ -310,16 +335,20 @@ def make_geojson(items, links):
             bbox = [float(coord) for coord in bbox.split(',')]
         feature['bbox'] = bbox
 
-        properties = dict()
 
+        assets = get_assets(i.item)
+        feature['assets'] = dict()
+        asset_path = os.getenv('FILE_ROOT')
+        feature['assets']['thumbnail'] = asset_path + i.quicklook
+
+        for a in assets:
+            feature['assets'][a.band] = asset_path + a.url
+
+        properties = dict()
         start = datetime.fromisoformat(str(i.start)).strftime("%Y-%m-%d")
         properties['bdc:tile'] = i.tile
-        properties['datetime'] = f"{start}"
+        properties['datetime'] = start
         feature['properties'] = properties
-
-        for key, value in i.assets.items():
-            value['href'] = os.getenv('FILE_ROOT') + value['href']
-        feature['assets'] = i.assets
 
         feature['links'] = deepcopy(links)
         feature['links'][0]['href'] += i.collection_id + "/items/" + i.item
