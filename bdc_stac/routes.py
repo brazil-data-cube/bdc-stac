@@ -21,9 +21,6 @@ from .data import (InvalidBoundingBoxError, get_collection,
                    get_collection_items, get_collections, make_geojson,
                    session)
 
-BASE_URL = os.getenv('BASE_URL', 'http://localhost:5000')
-
-
 @current_app.teardown_appcontext
 def teardown_appcontext(exceptions=None):
     """Teardown appcontext."""
@@ -58,13 +55,12 @@ def after_request(response):
 @current_app.route("/", methods=["GET"])
 def index():
     """Landing page of this API."""
-    return jsonify([{"href": f"{BASE_URL}/", "rel": "self"},
-                    {"href": f"{BASE_URL}/docs", "rel": "service"},
-                    {"href": f"{BASE_URL}/conformance", "rel": "conformance"},
-                    {"href": f"{BASE_URL}/collections", "rel": "data"},
-                    {"href": f"{BASE_URL}/stac", "rel": "data"},
-                    {"href": f"{BASE_URL}/stac/search", "rel": "search"}])
-
+    return jsonify([{"href": f"{request.url_root}", "rel": "self"},
+                    {"href": f"{request.url_root}docs", "rel": "service"},
+                    {"href": f"{request.url_root}conformance", "rel": "conformance"},
+                    {"href": f"{request.url_root}collections", "rel": "data"},
+                    {"href": f"{request.url_root}stac", "rel": "data"},
+                    {"href": f"{request.url_root}stac/search", "rel": "search"}])
 
 @current_app.route("/conformance", methods=["GET"])
 def conformance():
@@ -88,7 +84,7 @@ def root():
     links.append({"href": request.url, "rel": "self"})
 
     for collection in collections:
-        links.append({"href": f"{BASE_URL}/collections/{collection.id}",
+        links.append({"href": f"{request.url_root}collections/{collection.id}",
                       "rel": "child", "title": collection.id})
 
     catalog["links"] = links
@@ -103,11 +99,11 @@ def collections_id(collection_id):
     :param collection_id: identifier (name) of a specific collection
     """
     collection = get_collection(collection_id)
-    links = [{"href": f"{BASE_URL}/collections/{collection_id}", "rel": "self"},
-             {"href": f"{BASE_URL}/collections/{collection_id}/items", "rel": "items"},
-             {"href": f"{BASE_URL}/collections", "rel": "parent"},
-             {"href": f"{BASE_URL}/collections", "rel": "root"},
-             {"href": f"{BASE_URL}/stac", "rel": "root"}]
+    links = [{"href": f"{request.url_root}collections/{collection_id}", "rel": "self"},
+             {"href": f"{request.url_root}collections/{collection_id}/items", "rel": "items"},
+             {"href": f"{request.url_root}collections", "rel": "parent"},
+             {"href": f"{request.url_root}collections", "rel": "root"},
+             {"href": f"{request.url_root}stac", "rel": "root"}]
 
     collection['links'] = links
 
@@ -123,10 +119,10 @@ def collection_items(collection_id):
     items = get_collection_items(
         collection_id=collection_id, **request.args.to_dict())
 
-    links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
-             {"href": f"{BASE_URL}/collections/", "rel": "parent"},
-             {"href": f"{BASE_URL}/collections/", "rel": "collection"},
-             {"href": f"{BASE_URL}/stac", "rel": "root"}]
+    links = [{"href": f"{request.url_root}collections/", "rel": "self"},
+             {"href": f"{request.url_root}collections/", "rel": "parent"},
+             {"href": f"{request.url_root}collections/", "rel": "collection"},
+             {"href": f"{request.url_root}stac", "rel": "root"}]
 
     gjson = dict()
     gjson['type'] = 'FeatureCollection'
@@ -142,11 +138,11 @@ def collection_items(collection_id):
     if items.has_next:
         args['page'] = items.next_num
         gjson['links'].append(
-            {"href": f"{BASE_URL}/collections/{collection_id}/items?"+url_encode(args), "rel": "next"})
+            {"href": f"{request.url_root}collections/{collection_id}/items?"+url_encode(args), "rel": "next"})
     if items.has_prev:
         args['page'] = items.prev_num
         gjson['links'].append(
-            {"href": f"{BASE_URL}/collections/{collection_id}/items?"+url_encode(args), "rel": "prev"})
+            {"href": f"{request.url_root}collections/{collection_id}/items?"+url_encode(args), "rel": "prev"})
 
     gjson['features'] = features
     return gjson
@@ -160,10 +156,10 @@ def items_id(collection_id, item_id):
     :param item_id: identifier (name) of a specific item
     """
     item = get_collection_items(collection_id=collection_id, item_id=item_id)
-    links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
-             {"href": f"{BASE_URL}/collections/", "rel": "parent"},
-             {"href": f"{BASE_URL}/collections/", "rel": "collection"},
-             {"href": f"{BASE_URL}/stac", "rel": "root"}]
+    links = [{"href": f"{request.url_root}collections/", "rel": "self"},
+             {"href": f"{request.url_root}collections/", "rel": "parent"},
+             {"href": f"{request.url_root}collections/", "rel": "collection"},
+             {"href": f"{request.url_root}stac", "rel": "root"}]
 
     gjson = make_geojson(item.items, links)
 
@@ -218,10 +214,10 @@ def stac_search():
                                  page=page, limit=limit,
                                  intersects=intersects)
 
-    links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
-             {"href": f"{BASE_URL}/collections/", "rel": "parent"},
-             {"href": f"{BASE_URL}/collections/", "rel": "collection"},
-             {"href": f"{BASE_URL}/stac", "rel": "root"}]
+    links = [{"href": f"{request.url_root}collections/", "rel": "self"},
+             {"href": f"{request.url_root}collections/", "rel": "parent"},
+             {"href": f"{request.url_root}collections/", "rel": "collection"},
+             {"href": f"{request.url_root}stac", "rel": "root"}]
 
     gjson = dict()
     gjson['type'] = 'FeatureCollection'
@@ -237,11 +233,11 @@ def stac_search():
     if items.has_next:
         args['page'] = items.next_num
         gjson['links'].append(
-            {"href": f"{BASE_URL}/stac/search?"+url_encode(args), "rel": "next"})
+            {"href": f"{request.url_root}stac/search?"+url_encode(args), "rel": "next"})
     if items.has_prev:
         args['page'] = items.prev_num
         gjson['links'].append(
-            {"href": f"{BASE_URL}/stac/search?"+url_encode(args), "rel": "prev"})
+            {"href": f"{request.url_root}stac/search?"+url_encode(args), "rel": "prev"})
 
     gjson['features'] = features
 
