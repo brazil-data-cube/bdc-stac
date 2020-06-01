@@ -9,9 +9,10 @@
 import os
 
 from bdc_db import BDCDatabase
-from elasticapm.contrib.flask import ElasticAPM
 from flask import Flask
 from flask_redoc import Redoc
+
+from elasticapm.contrib.flask import ElasticAPM
 
 from .version import __version__
 
