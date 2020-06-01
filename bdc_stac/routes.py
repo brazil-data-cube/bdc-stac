@@ -21,6 +21,7 @@ from .data import (InvalidBoundingBoxError, get_collection,
                    get_collection_items, get_collections, make_geojson,
                    session)
 
+
 @current_app.teardown_appcontext
 def teardown_appcontext(exceptions=None):
     """Teardown appcontext."""

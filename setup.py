@@ -50,6 +50,7 @@ install_requires = [
     'SQLAlchemy>=1.3.11',
     'psycopg2-binary>=2.8.4',
     'bdc-db @ git+https://github.com/brazil-data-cube/bdc-db@b-0.2',
+    'elastic-apm>=5.6.0',
 ]
 
 packages = find_packages()
