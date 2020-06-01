@@ -29,16 +29,17 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['REDOC'] = {'title': 'BDC-STAC'}
 
-    app.config['ELASTIC_APM'] = {
-            'SERVICE_NAME': os.environ.get('BDC_APM_APP_NAME', 'bdc-stac'),
-            'SECRET_TOKEN': os.environ.get('BDC_APM_TOKEN'),
-            'SERVER_URL':  os.environ.get('BDC_APM_SERVER'),
-    }
 
     with app.app_context():
         BDCDatabase(app)
         Redoc(f'spec/api/{os.environ.get("API_VERSION", "0.8.1")}/STAC.yaml', app)
-        ElasticAPM(app)
+        if not app.debug:
+            app.config['ELASTIC_APM'] = {
+                    'SERVICE_NAME': os.environ.get('BDC_APM_APP_NAME', 'bdc-stac'),
+                    'SECRET_TOKEN': os.environ.get('BDC_APM_TOKEN'),
+                    'SERVER_URL':  os.environ.get('BDC_APM_SERVER'),
+            }
+            ElasticAPM(app)
         from . import routes
 
     return app
