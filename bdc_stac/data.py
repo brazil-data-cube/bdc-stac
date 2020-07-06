@@ -330,7 +330,9 @@ def make_geojson(items, links):
         assets = get_assets(i.item)
         feature['assets'] = dict()
         asset_path = os.getenv('FILE_ROOT')
-        feature['assets']['thumbnail'] = {'href': asset_path + i.quicklook}
+
+        if i.quicklook:
+            feature['assets']['thumbnail'] = {'href': asset_path + i.quicklook}
 
         for a in assets:
             feature['assets'][a.band] = {'href': asset_path + a.url}
