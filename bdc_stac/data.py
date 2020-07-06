@@ -12,6 +12,7 @@ from geoalchemy2.functions import GenericFunction
 from sqlalchemy import cast, create_engine, exc, func, or_
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.dialects import postgresql
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=exc.SAWarning)
@@ -199,7 +200,8 @@ def get_collection(collection_id):
              CollectionItem.tile_id == Tile.id,
              CollectionItem.grs_schema_id == Tile.grs_schema_id,
              Collection.id == collection_id,
-             CompositeFunctionSchema.id == Collection.composite_function_schema_id]
+             CompositeFunctionSchema.id == Collection.composite_function_schema_id,
+             GrsSchema.id == Collection.grs_schema_id]
     group_by = [CollectionItem.grs_schema_id,
                 Collection.bands_quicklook,
                 Collection.description,
