@@ -175,7 +175,6 @@ def stac_search():
             intersects = request_json.get('intersects', None)
 
             collections = request_json.get('collections', None)
-            collections = request_json.get('ids', None)
             if collections is not None:
                 collections = ",".join([x for x in collections])
 
