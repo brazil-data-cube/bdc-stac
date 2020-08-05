@@ -7,10 +7,10 @@
 #
 """Routes for the BDC-STAC API."""
 
+import gzip
 import os
 from io import BytesIO
 
-import mgzip
 from bdc_db import BDCDatabase
 from flask import (abort, current_app, jsonify, make_response, request,
                    send_file)
@@ -45,8 +45,8 @@ def after_request(response):
             'Content-Encoding' in response.headers:
         return response
 
-    compressed_data = mgzip.compress(
-        response.get_data(), thread=0, compresslevel=4)
+    compressed_data = gzip.compress(
+        response.get_data(), compresslevel=4)
 
     response.set_data(compressed_data)
     response.headers['Content-Encoding'] = 'gzip'
