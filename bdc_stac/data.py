@@ -81,7 +81,7 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
 
         if intersects is not None:
             where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(
-                str(intersects['geometry'])), Tile.geom_wgs84)]
+                str(intersects)), Tile.geom_wgs84)]
 
         if bbox is not None:
             try:
