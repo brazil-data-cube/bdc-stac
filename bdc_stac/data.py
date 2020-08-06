@@ -194,7 +194,7 @@ def get_collection(collection_id):
                CompositeFunctionSchema.id.label('composite_function')]
     where = [Collection.id == CollectionItem.collection_id,
              CollectionItem.tile_id == Tile.id,
-             CollectionItem.grs_schema_id == Tile.grs_schema_id,
+             Collection.grs_schema_id  == GrsSchema.id,
              Collection.id == collection_id,
              CompositeFunctionSchema.id == Collection.composite_function_schema_id]
     group_by = [CollectionItem.grs_schema_id,
