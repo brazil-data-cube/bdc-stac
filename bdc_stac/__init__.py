@@ -11,8 +11,8 @@ from flask import Flask
 from flask_redoc import Redoc
 
 from .version import __version__
-from .config import BDC_STAC_API_VERSION, SQLALCHEMY_DATABASE_URI, \
-    SQLALCHEMY_TRACK_MODIFICATIONS
+from .config import (BDC_STAC_API_VERSION, SQLALCHEMY_DATABASE_URI,
+                     SQLALCHEMY_TRACK_MODIFICATIONS)
 
 __all__ = ('__version__')
 
