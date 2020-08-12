@@ -16,7 +16,6 @@ from .version import __version__
 
 __all__ = ('__version__')
 
-
 def create_app():
     app = Flask(__name__)
 
@@ -24,14 +23,13 @@ def create_app():
                                              os.environ.get('DB_PASS'),
                                              os.environ.get('DB_HOST'),
                                              os.environ.get('DB_NAME'))
-
+    app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
     app.config['REDOC'] = {'title': 'BDC-STAC'}
 
     with app.app_context():
         BDCDatabase(app)
-        Redoc(f'spec/api/{os.environ.get("API_VERSION", "0.8.0")}/STAC.yaml', app)
+        Redoc(app, f'spec/api/{os.environ.get("API_VERSION", "0.8.1")}/STAC.yaml')
 
         from . import routes
 
