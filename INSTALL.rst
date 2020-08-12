@@ -63,9 +63,9 @@ In the source code folder, enter the following command:
           DB_USER="postgres" \
           DB_PASS="secret" \
           DB_NAME="bdcdb" \
-          BASE_URI="http://localhost:5000" \
-          API_VERSION="0.8.0" \
-          FILE_ROOT="http://localhost:5001" \
+          BDC_STAC_BASE_URI="http://localhost:5000" \
+          BDC_STAC_API_VERSION="0.8.0" \
+          BDC_STAC_FILE_ROOT="http://localhost:5001" \
           flask run
 
 
@@ -79,11 +79,11 @@ You may need to replace the definition of some environment variables:
 
     - ``DB_NAME="bdcdb"``:  the name of the database containing the image and data cube collections [#f1]_.
 
-    - ``BASE_URI="http://localhost:8080"``: Base URI of the service.
+    - ``BDC_STAC_BASE_URI="http://localhost:8080"``: Base URI of the service.
 
-    - ``API_VERSION="0.8.0"``: STAC Version used in the service.
+    - ``BDC_STAC_API_VERSION="0.8.0"``: STAC Version used in the service.
 
-    - ``FILE_ROOT="http://localhost:8081"``: File root for the Assets.
+    - ``BDC_STAC_FILE_ROOT="http://localhost:8081"``: File root for the Assets.
 
 
 
