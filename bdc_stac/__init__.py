@@ -11,7 +11,8 @@ from flask import Flask
 from flask_redoc import Redoc
 
 from .version import __version__
-from .config import BDC_STAC_API_VERSION, SQLALCHEMY_DATABASE_URI
+from .config import BDC_STAC_API_VERSION, SQLALCHEMY_DATABASE_URI, \
+    SQLALCHEMY_TRACK_MODIFICATIONS
 
 __all__ = ('__version__')
 
@@ -20,14 +21,14 @@ def create_app():
     app = Flask(__name__)
 
     app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = SQLALCHEMY_TRACK_MODIFICATIONS
 
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
+    app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
     app.config['REDOC'] = {'title': 'BDC-STAC'}
 
     with app.app_context():
         BDCDatabase(app)
-        Redoc(f'spec/api/{BDC_STAC_API_VERSION}/STAC.yaml', app)
+        Redoc(app, f'spec/api/{BDC_STAC_API_VERSION}/STAC.yaml')
 
         from . import routes
 
