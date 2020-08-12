@@ -6,8 +6,6 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 #
 """Routes for the BDC-STAC API."""
-import os
-
 from bdc_db import BDCDatabase
 from flask import (abort, current_app, jsonify, render_template, request,
                    send_file)
@@ -17,7 +15,9 @@ from .data import (InvalidBoundingBoxError, get_collection,
                    get_collection_items, get_collections, make_geojson,
                    session)
 
-BASE_URL = os.getenv('BASE_URL', 'http://localhost:5000')
+from .config import BDC_STAC_BASE_URL, BDC_STAC_API_VERSION
+
+BASE_URL = BDC_STAC_BASE_URL
 
 
 @current_app.teardown_appcontext
@@ -60,7 +60,7 @@ def root():
     catalog = dict()
     catalog["description"] = "Brazil Data Cubes Catalog"
     catalog["id"] = "bdc"
-    catalog["stac_version"] = os.getenv("API_VERSION", "0.8.1")
+    catalog["stac_version"] = BDC_STAC_API_VERSION
     links = list()
     links.append({"href": request.url, "rel": "self"})
 
