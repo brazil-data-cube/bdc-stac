@@ -79,9 +79,9 @@ The `docker run` command can be used to launch a container from the image `bdc-s
                      --env DB_USER="postgres" \
                      --env DB_PASS="secret" \
                      --env DB_NAME="bdcdb" \
-                     --env BASE_URI="http://localhost:8080" \
-                     --env API_VERSION="0.8.1" \
-                     --env FILE_ROOT="http://localhost:8081" \
+                     --env BDC_STAC_BASE_URI="http://localhost:8080" \
+                     --env BDC_STAC_API_VERSION="0.8.1" \
+                     --env BDC_STAC_FILE_ROOT="http://localhost:8081" \
                      bdc-stac:0.8.1-0
 
 
@@ -95,7 +95,9 @@ Let's take a look at each parameter in the above command:/
 
     - ``--network=bdc_net``: if the container should connect to the database server through a docker network, this parameter will automatically attach the container to the ``bdc_net``. You can ommit this parameter if the database server address can be resolved directly from a host address.
 
-    - ``--env DB_HOST="bdc_pg:5432"``: set the database host address that will be used by the STAC service. In this example, the name ``bdc_pg`` is the name of a PostgreSQL container in the same network as the STAC service.
+    - ``--env DB_HOST="bdc_pg"``: set the database host address that will be used by the STAC service. In this example, the name ``bdc_pg`` is the name of a PostgreSQL container in the same network as the STAC service.
+
+    - ``--env DB_PORT="5432"``: the port for connecting to the database server.
 
     - ``--env DB_USER="postgres"``: the user name for connecting to the database server.
 
@@ -103,11 +105,11 @@ Let's take a look at each parameter in the above command:/
 
     - ``--env DB_NAME="bdcdb"``:  the name of the database containing the image and data cube collections [#f2]_.
 
-    - ``--env BASE_URI="http://localhost:8080"``: Base URI of the service.
+    - ``--env BDC_STAC_BASE_URI="http://localhost:8080"``: Base URI of the service.
 
-    - ``--env API_VERSION="0.8.1"``: STAC Version used in the service.
+    - ``--env BDC_STAC_API_VERSION="0.8.1"``: STAC Version used in the service.
 
-    - ``--env FILE_ROOT="http://localhost:8081"``: File root for the Assets.
+    - ``--env BDC_STAC_FILE_ROOT="http://localhost:8081"``: File root for the Assets.
 
     - ``bdc-stac:0.8.1-0``: the name of the base Docker image used to create the container.
 

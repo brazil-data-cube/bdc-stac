@@ -6,27 +6,29 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 #
 """Spatio Temporal Asset Catalog implementation for BDC."""
-import os
-
 from bdc_catalog import BDCCatalog
 from flask import Flask
 from flask_redoc import Redoc
 
 from .version import __version__
+from .config import (BDC_STAC_API_VERSION, SQLALCHEMY_DATABASE_URI,
+                     SQLALCHEMY_TRACK_MODIFICATIONS)
 
 __all__ = ('__version__')
+
 
 def create_app():
     app = Flask(__name__)
 
-    app.config['SQLALCHEMY_DATABASE_URI'] =  os.environ.get('SQLALCHEMY_DATABASE_URI')
+    app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = SQLALCHEMY_TRACK_MODIFICATIONS
+
     app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['REDOC'] = {'title': 'BDC-STAC'}
 
     with app.app_context():
         BDCCatalog(app)
-        Redoc(app, f'spec/api/{os.environ.get("API_VERSION", "0.8.1")}/STAC.yaml')
+        Redoc(app, f'spec/api/{BDC_STAC_API_VERSION}/STAC.yaml')
 
         from . import routes
 

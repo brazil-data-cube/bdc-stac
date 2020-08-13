@@ -8,7 +8,6 @@
 """Routes for the BDC-STAC API."""
 
 import gzip
-import os
 from io import BytesIO
 
 from bdc_catalog import BDCCatalog
@@ -21,7 +20,9 @@ from .data import (InvalidBoundingBoxError, get_collection,
                    get_collection_items, get_collections, make_geojson,
                    session)
 
-BASE_URL = os.getenv('BASE_URL', 'http://localhost:5000')
+from .config import BDC_STAC_BASE_URL, BDC_STAC_API_VERSION
+
+BASE_URL = BDC_STAC_BASE_URL
 
 
 @current_app.teardown_appcontext
@@ -83,7 +84,7 @@ def root():
     catalog = dict()
     catalog["description"] = "Brazil Data Cubes Catalog"
     catalog["id"] = "bdc"
-    catalog["stac_version"] = os.getenv("API_VERSION", "0.8.1")
+    catalog["stac_version"] = BDC_STAC_API_VERSION
     links = list()
     links.append({"href": request.url, "rel": "self"})
 

@@ -1,6 +1,5 @@
 """Data module."""
 import json
-import os
 import warnings
 from copy import deepcopy
 from datetime import datetime
@@ -11,10 +10,13 @@ from sqlalchemy import cast, create_engine, exc, func, or_, Float
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import sessionmaker
 
+from .config import (BDC_STAC_FILE_ROOT, BDC_STAC_API_VERSION,
+                     BDC_STAC_MAX_LIMIT)
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=exc.SAWarning)
 
-session = db.create_scoped_session({'autocommit':True})
+session = db.create_scoped_session({'autocommit': True})
 
 
 class ST_Extent(GenericFunction):
@@ -112,7 +114,7 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
     result = query.paginate(page=int(page),
                             per_page=int(limit),
                             error_out=False,
-                            max_per_page=os.getenv('MAX_LIMIT', 1000))
+                            max_per_page=int(BDC_STAC_MAX_LIMIT))
 
     return result
 
@@ -260,7 +262,7 @@ def get_collection(collection_id):
     collection = dict()
     collection['id'] = collection_id
 
-    collection["stac_version"] = os.getenv("API_VERSION", "0.8.1")
+    collection["stac_version"] = BDC_STAC_API_VERSION
     collection["description"] = result.description
     collection["license"] = ""
 
@@ -325,7 +327,7 @@ def make_geojson(items, links):
         feature['type'] = 'Feature'
         feature['id'] = i.item
         feature['collection'] = i.collection
-        feature['stac_version'] = os.getenv("API_VERSION", "0.8.1")
+        feature['stac_version'] = BDC_STAC_API_VERSION
 
         feature['geometry'] = json.loads(i.geom)
 
@@ -344,7 +346,7 @@ def make_geojson(items, links):
         feature['properties'] = properties
 
         for key, value in i.assets.items():
-            value['href'] = os.getenv('BDC_STAC_FILE_ROOT') + value['href']
+            value['href'] = BDC_STAC_FILE_ROOT + value['href']
         feature['assets'] = i.assets
 
         feature['links'] = deepcopy(links)
