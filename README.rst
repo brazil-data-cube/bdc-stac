@@ -26,8 +26,8 @@ SpatioTemporal Asset Catalog for the Brazil Data Cube
         :target: https://bdc-stac.readthedocs.io/en/latest
         :alt: Documentation Status
 
-.. image:: https://img.shields.io/badge/lifecycle-experimental-orange.svg
-        :target: https://www.tidyverse.org/lifecycle/#experimental
+.. image:: https://img.shields.io/badge/lifecycle-maturing-blue.svg
+        :target: https://www.tidyverse.org/lifecycle/#maturing
         :alt: Software Life Cycle
 
 .. image:: https://img.shields.io/github/tag/brazil-data-cube/bdc-stac.svg

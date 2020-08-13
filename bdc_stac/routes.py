@@ -10,7 +10,7 @@
 import gzip
 from io import BytesIO
 
-from bdc_db import BDCDatabase
+from bdc_catalog import BDCCatalog
 from flask import (abort, current_app, jsonify, make_response, request,
                    send_file)
 from werkzeug.exceptions import HTTPException, InternalServerError
@@ -89,8 +89,8 @@ def root():
     links.append({"href": request.url, "rel": "self"})
 
     for collection in collections:
-        links.append({"href": f"{BASE_URL}/collections/{collection.id}",
-                      "rel": "child", "title": collection.id})
+        links.append({"href": f"{BASE_URL}/collections/{collection.name}",
+                      "rel": "child", "title": collection.name})
 
     catalog["links"] = links
 

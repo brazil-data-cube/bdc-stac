@@ -6,7 +6,7 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 #
 """Spatio Temporal Asset Catalog implementation for BDC."""
-from bdc_db import BDCDatabase
+from bdc_catalog import BDCCatalog
 from flask import Flask
 from flask_redoc import Redoc
 
@@ -27,8 +27,8 @@ def create_app():
     app.config['REDOC'] = {'title': 'BDC-STAC'}
 
     with app.app_context():
-        BDCDatabase(app)
-        Redoc(app, f'spec/api/{BDC_STAC_API_VERSION}/STAC.yaml')
+        BDCCatalog(app)
+        Redoc(app, f'spec/api/{os.environ.get("API_VERSION", "0.8.1")}/STAC.yaml')
 
         from . import routes
 
