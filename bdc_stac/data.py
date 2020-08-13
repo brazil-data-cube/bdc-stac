@@ -26,8 +26,8 @@ class ST_Extent(GenericFunction):
     type = None
 
 
-def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None, ids=None, collections=None,
-                         cubes=None, intersects=None, page=1, limit=10, **kwargs):
+def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, time=None, ids=None,
+                         collections=None, cubes=None, intersects=None, page=1, limit=10, **kwargs):
     """Retrieve a list of collection items based on filters.
 
     :param collection_id: Single Collection ID to include in the search for items.
@@ -67,7 +67,11 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
                Tile.name.label('tile')]
 
     where = [Collection.id == Item.collection_id,
-              Item.tile_id == Tile.id]
+              Item.tile_id == Tile.id,
+              or_(
+                Collection.is_public.is_(True),
+                Collection.id.in_([int(r.split(':')[0]) for r in roles])
+             )]
 
     if ids is not None:
         where += [Item.id.in_(ids.split(','))]
@@ -223,7 +227,7 @@ def get_collection_quicklook(collection_id):
                                       "WHERE c.id = :collection_id", {"collection_id":collection_id}).fetchone()
     return quicklook_bands["quicklooks"]
 
-def get_collection(collection_id):
+def get_collection(collection_id, roles=[]):
     """Retrieve information of a given collection.
 
     :param collection_id: collection identifier
@@ -233,6 +237,7 @@ def get_collection(collection_id):
     """
     columns = [ST_Extent(Item.geom).label('bbox'),
                Collection.id,
+               Collection.is_public,
                Collection.start_date.label('start'),
                Collection.end_date.label('end'),
                Collection.description,
@@ -244,7 +249,11 @@ def get_collection(collection_id):
 
     where = [Collection.id == Item.collection_id,
              Collection.name == collection_id,
-             Collection.grid_ref_sys_id == GridRefSys.id]
+             Collection.grid_ref_sys_id == GridRefSys.id,
+             or_(
+                Collection.is_public.is_(True),
+                Collection.id.in_([int(r.split(':')[0]) for r in roles])
+             )]
 
     group_by = [Collection.id,
                 Collection.start_date,
@@ -257,7 +266,7 @@ def get_collection(collection_id):
                 GridRefSys.name]
 
     result = session.query(*columns).outerjoin(Collection, Collection.composite_function_id == CompositeFunction.id) \
-        .filter(*where).group_by(*group_by).first()
+        .filter(*where).group_by(*group_by).first_or_404()
 
     collection = dict()
     collection['id'] = collection_id
@@ -299,13 +308,16 @@ def get_collection(collection_id):
     return collection
 
 
-def get_collections():
+def get_collections(roles=[]):
     """Retrive all available collections.
 
     :return: a list of available collections
     :rtype: list
     """
-    collections = session.query(Collection.name).all()
+    collections = session.query(Collection.name, Collection.id).filter(or_(
+        Collection.is_public.is_(True),
+        Collection.id.in_([int(r.split(':')[0]) for r in roles])
+    )).all()
     return collections
 
 
