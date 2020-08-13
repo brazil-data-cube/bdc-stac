@@ -26,8 +26,8 @@ class ST_Extent(GenericFunction):
     type = None
 
 
-def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, time=None, ids=None,
-                         collections=None, cubes=None, intersects=None, page=1, limit=10, **kwargs):
+def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, time=None, ids=None, collections=None,
+                         cubes=None, intersects=None, page=1, limit=10, query=None, **kwargs):
     """Retrieve a list of collection items based on filters.
 
     :param collection_id: Single Collection ID to include in the search for items.
@@ -86,6 +86,11 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
         if intersects is not None:
             where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(
                 str(intersects)), Item.geom)]
+
+        if query:
+           filters =  create_query_filter(query)
+           if filters:
+               where += filters
 
         if bbox is not None:
             try:
@@ -370,6 +375,37 @@ def make_geojson(items, links):
 
     return features
 
+def create_query_filter(query):
+    """Create STAC query filter for SQLAlchemy
+    Notes:
+        Queryable properties must be mapped in this functions.
+    """
+
+    mapping = {
+        'eq': '__eq__',
+        'neq': '__ne__',
+        'lt': '__lt__',
+        'lte': '__le__',
+        'gt': '__gt__',
+        'gte': '__ge__',
+        'startsWith': 'startswith',
+        'endsWith': 'endswith',
+        'contains':'contains',
+        'in': 'in_',
+    }
+
+    bdc_properties = {
+        "bdc:tiles": Tile.name
+    }
+
+    filters = []
+
+    for column, _filters in query.items():
+        for op, value in _filters.items():
+            f = getattr(bdc_properties[column], mapping[op])(value)
+            filters.append(f)
+
+    return filters if len(filters) > 0 else None
 
 class InvalidBoundingBoxError(Exception):
     """Exception for malformed bounding box."""

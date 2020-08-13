@@ -183,7 +183,7 @@ def items_id(collection_id, item_id, roles=[]):
 @oauth2_required(required=False)
 def stac_search(roles=[]):
     """Search STAC items with simple filtering."""
-    bbox, time, ids, collections, page, limit, intersects = None, None, None, None, None, None, None
+    bbox, time, ids, collections, page, limit, intersects, query = None, None, None, None, None, None, None, None
     if request.method == "POST":
         if request.is_json:
             request_json = request.get_json()
@@ -199,7 +199,7 @@ def stac_search(roles=[]):
                 ids = ",".join([x for x in ids])
 
             intersects = request_json.get('intersects', None)
-
+            query = request_json.get('query', None)
             collections = request_json.get('collections', None)
             if collections is not None:
                 collections = ",".join([x for x in collections])
@@ -223,7 +223,7 @@ def stac_search(roles=[]):
                                  roles=roles, bbox=bbox,
                                  time=time, ids=ids,
                                  page=page, limit=limit,
-                                 intersects=intersects)
+                                 intersects=intersects, query=query)
 
     links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
              {"href": f"{BASE_URL}/collections/", "rel": "parent"},

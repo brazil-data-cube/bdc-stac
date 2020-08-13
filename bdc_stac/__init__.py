@@ -27,6 +27,7 @@ def create_app():
     app.config['BDC_AUTH_ACCESS_TOKEN_URL'] = _config.BDC_AUTH_ACCESS_TOKEN_URL
 
     app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+    app.config['JSON_SORT_KEYS'] = False
     app.config['REDOC'] = {'title': 'BDC-STAC'}
 
     with app.app_context():
