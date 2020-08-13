@@ -48,7 +48,7 @@ install_requires = [
     'GeoAlchemy2>=0.6.3',
     'SQLAlchemy>=1.3.11',
     'psycopg2-binary>=2.8.4',
-    'bdc-db @ git+https://github.com/brazil-data-cube/bdc-db@b-0.2',
+    'bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog',
 ]
 
 packages = find_packages()
