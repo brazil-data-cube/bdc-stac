@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   x-logo:
-    url: '/bdc-stac/0.8.0/static/images/datacube-site.png'
+    url: '/bdc-stac/0.8.1/static/images/datacube-site.png'
   title: The SpatioTemporal Asset Catalog API
   version: 0.8.1
   license:
