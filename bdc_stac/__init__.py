@@ -28,7 +28,7 @@ def create_app():
 
     with app.app_context():
         BDCCatalog(app)
-        Redoc(app, f'spec/api/{os.environ.get("API_VERSION", "0.8.1")}/STAC.yaml')
+        Redoc(app, f'spec/api/{BDC_STAC_API_VERSION}/STAC.yaml')
 
         from . import routes
 

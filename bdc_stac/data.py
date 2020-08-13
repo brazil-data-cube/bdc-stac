@@ -10,7 +10,8 @@ from sqlalchemy import cast, create_engine, exc, func, or_, Float
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import sessionmaker
 
-from .config import BDC_STAC_FILE_ROOT, BDC_STAC_API_VERSION
+from .config import (BDC_STAC_FILE_ROOT, BDC_STAC_API_VERSION,
+                     BDC_STAC_MAX_LIMIT)
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=exc.SAWarning)
@@ -113,7 +114,7 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
     result = query.paginate(page=int(page),
                             per_page=int(limit),
                             error_out=False,
-                            max_per_page=os.getenv('MAX_LIMIT', 1000))
+                            max_per_page=int(BDC_STAC_MAX_LIMIT))
 
     return result
 
@@ -261,7 +262,7 @@ def get_collection(collection_id):
     collection = dict()
     collection['id'] = collection_id
 
-    collection["stac_version"] = os.getenv("API_VERSION", "0.8.1")
+    collection["stac_version"] = BDC_STAC_API_VERSION
     collection["description"] = result.description
     collection["license"] = ""
 
