@@ -11,6 +11,7 @@ import gzip
 from io import BytesIO
 
 from bdc_catalog import BDCCatalog
+from bdc_auth_client.decorators import oauth2_required 
 from flask import (abort, current_app, jsonify, make_response, request,
                    send_file)
 from werkzeug.exceptions import HTTPException, InternalServerError
@@ -78,9 +79,10 @@ def conformance():
 
 @current_app.route("/collections", methods=["GET"])
 @current_app.route("/stac", methods=["GET"])
-def root():
+@oauth2_required(required=False)
+def root(roles=[]):
     """Return the root catalog or collection."""
-    collections = get_collections()
+    collections = get_collections(roles=roles)
     catalog = dict()
     catalog["description"] = "Brazil Data Cubes Catalog"
     catalog["id"] = "bdc"
@@ -98,12 +100,13 @@ def root():
 
 
 @current_app.route("/collections/<collection_id>", methods=["GET"])
-def collections_id(collection_id):
+@oauth2_required(required=False)
+def collections_id(collection_id, roles=[]):
     """Describe the given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
     """
-    collection = get_collection(collection_id)
+    collection = get_collection(collection_id, roles=[])
     links = [{"href": f"{BASE_URL}/collections/{collection_id}", "rel": "self"},
              {"href": f"{BASE_URL}/collections/{collection_id}/items", "rel": "items"},
              {"href": f"{BASE_URL}/collections", "rel": "parent"},
@@ -116,13 +119,14 @@ def collections_id(collection_id):
 
 
 @current_app.route("/collections/<collection_id>/items", methods=["GET"])
-def collection_items(collection_id):
+@oauth2_required(required=False)
+def collection_items(collection_id, roles=[]):
     """Retrieve features of the given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
     """
     items = get_collection_items(
-        collection_id=collection_id, **request.args.to_dict())
+        collection_id=collection_id, roles=roles, **request.args.to_dict())
 
     links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
              {"href": f"{BASE_URL}/collections/", "rel": "parent"},
@@ -154,13 +158,14 @@ def collection_items(collection_id):
 
 
 @current_app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
-def items_id(collection_id, item_id):
+@oauth2_required(required=False)
+def items_id(collection_id, item_id, roles=[]):
     """Retrieve a given feature from a given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
     :param item_id: identifier (name) of a specific item
     """
-    item = get_collection_items(collection_id=collection_id, item_id=item_id)
+    item = get_collection_items(collection_id=collection_id, roles=roles, item_id=item_id)
     links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
              {"href": f"{BASE_URL}/collections/", "rel": "parent"},
              {"href": f"{BASE_URL}/collections/", "rel": "collection"},
@@ -175,7 +180,8 @@ def items_id(collection_id, item_id):
 
 
 @current_app.route("/stac/search", methods=["GET", "POST"])
-def stac_search():
+@oauth2_required(required=False)
+def stac_search(roles=[]):
     """Search STAC items with simple filtering."""
     bbox, time, ids, collections, page, limit, intersects = None, None, None, None, None, None, None
     if request.method == "POST":
@@ -213,7 +219,8 @@ def stac_search():
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
 
-    items = get_collection_items(collections=collections, bbox=bbox,
+    items = get_collection_items(collections=collections, 
+                                 roles=roles, bbox=bbox,
                                  time=time, ids=ids,
                                  page=page, limit=limit,
                                  intersects=intersects)
