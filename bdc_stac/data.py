@@ -26,7 +26,7 @@ class ST_Extent(GenericFunction):
     type = None
 
 
-def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, time=None, ids=None, collections=None,
+def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, time=None, names=None, collections=None,
                          cubes=None, intersects=None, page=1, limit=10, query=None, **kwargs):
     """Retrieve a list of collection items based on filters.
 
@@ -39,9 +39,9 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
     :type bbox: list, optional
     :param time: Single date+time, or a range ('/' seperator), formatted to RFC 3339, section 5.6, defaults to None
     :type time: str, optional
-    :param ids: Array of Item ids to return. All other filter parameters that further restrict the
+    :param names: Array of Item names to return. All other filter parameters that further restrict the
                 number of search results are ignored, defaults to None
-    :type ids: list, optional
+    :type names: list, optional
     :param collections: Array of Collection IDs to include in the search for items.
                         Only Items in one of the provided Collections will be searched, defaults to None
     :type collections: list, optional
@@ -73,10 +73,10 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
                 Collection.id.in_([int(r.split(':')[0]) for r in roles])
              )]
 
-    if ids is not None:
-        where += [Item.id.in_(ids.split(','))]
+    if names is not None:
+        where += [Item.name.in_(names.split(','))]
     elif item_id is not None:
-        where += [Item.id.like(item_id)]
+        where += [Item.name.like(item_id)]
     else:
         if collections is not None:
             where += [Collection.name.in_(collections.split(','))]
@@ -230,7 +230,7 @@ def get_collection_quicklook(collection_id):
                                       "INNER JOIN bdc.bands b ON q.blue = b.id "
                                       "INNER JOIN bdc.collections c ON q.collection_id = c.id "
                                       "WHERE c.id = :collection_id", {"collection_id":collection_id}).fetchone()
-    return quicklook_bands["quicklooks"]
+    return quicklook_bands["quicklooks"] if quicklook_bands else None
 
 def get_collection(collection_id, roles=[]):
     """Retrieve information of a given collection.
@@ -270,7 +270,7 @@ def get_collection(collection_id, roles=[]):
                 CompositeFunction.name,
                 GridRefSys.name]
 
-    result = session.query(*columns).outerjoin(Collection, Collection.composite_function_id == CompositeFunction.id) \
+    result = session.query(*columns).outerjoin(CompositeFunction, Collection.composite_function_id == CompositeFunction.id) \
         .filter(*where).group_by(*group_by).first_or_404()
 
     collection = dict()
@@ -326,7 +326,7 @@ def get_collections(roles=[]):
     return collections
 
 
-def make_geojson(items, links):
+def make_geojson(items, links, access_token=''):
     """Generate a list of STAC Items from a list of collection items.
 
     :param items: collection items to be formated as GeoJSON Features
@@ -367,9 +367,9 @@ def make_geojson(items, links):
         feature['assets'] = i.assets
 
         feature['links'] = deepcopy(links)
-        feature['links'][0]['href'] += i.collection + "/items/" + i.item
-        feature['links'][1]['href'] += i.collection
-        feature['links'][2]['href'] += i.collection
+        feature['links'][0]['href'] += i.collection + "/items/" + i.item + access_token
+        feature['links'][1]['href'] += i.collection + access_token
+        feature['links'][2]['href'] += i.collection + access_token
 
         features.append(feature)
 
