@@ -307,7 +307,7 @@ def get_collection(collection_id, roles=[]):
     collection['id'] = collection_id
 
     collection["stac_version"] = BDC_STAC_API_VERSION
-    collection['stac_extensions'] = ["eo"]
+    collection['stac_extensions'] = ["eo", "datacube"]
     collection["description"] = result.description
     collection["license"] = ""
 
@@ -330,15 +330,23 @@ def get_collection(collection_id, roles=[]):
         collection["properties"]["bdc:bands_quicklook"] = quicklooks
 
     collection["properties"].update(get_collection_eo(result.id))
-
-    collection["properties"]["bdc:crs"] = get_collection_crs(result.id)
     collection["properties"]["bdc:wrs"] = result.grid_ref_sys
+    collection["properties"]["bdc:tiles"] = get_collection_tiles(result.id)
+
+    # collection["properties"]["proj:epsg"] =
+    # collection["properties"]["proj:geomtry"]
 
     if result.temporal_composition_schema:
+        datacube = dict()
+        datacube["x"] = dict(type="spatial", axis="x", extent=[bbox[0], bbox[2]])
+        datacube["y"] = dict(type="spatial", axis="y", extent=[bbox[1], bbox[3]])
+        datacube["temporal"] = dict(type="temporal", extent=[start, end],
+                                    values=get_collection_timeline(result.id))
+
+        collection["properties"]["cube:dimension"] = datacube
+        collection["properties"]["bdc:crs"] = get_collection_crs(result.id)
         collection["properties"]["bdc:temporal_composition"] = result.temporal_composition_schema
-        collection["properties"]["bdc:timeline"] = get_collection_timeline(result.id)
         collection["properties"]["bdc:composite_function"] = result.composite_function
-        collection["properties"]["bdc:tiles"] = get_collection_tiles(result.id)
 
     return collection
 
@@ -392,7 +400,6 @@ def make_geojson(items, links):
         start = datetime.fromisoformat(str(i.start)).strftime("%Y-%m-%d")
         properties['bdc:tile'] = i.tile
         properties['datetime'] = start
-        feature['properties'] = properties
 
         properties.update(bands)
         properties['eo:cloud_cover'] = i.cloud_cover
@@ -403,6 +410,7 @@ def make_geojson(items, links):
                 if band['name'] == key:
                     value['eo:bands'] = [index]
 
+        feature['properties'] = properties
         feature['assets'] = i.assets
 
         feature['links'] = deepcopy(links)
