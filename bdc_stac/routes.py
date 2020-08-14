@@ -135,15 +135,15 @@ def collection_items(collection_id, roles=[], access_token=''):
     items = get_collection_items(
         collection_id=collection_id, roles=roles, **request.args.to_dict())
 
-    links = [{"href": f"{BASE_URL}/collections/{access_token}", "rel": "self"},
-             {"href": f"{BASE_URL}/collections/{access_token}", "rel": "parent"},
-             {"href": f"{BASE_URL}/collections/{access_token}", "rel": "collection"},
+    links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
+             {"href": f"{BASE_URL}/collections/", "rel": "parent"},
+             {"href": f"{BASE_URL}/collections/", "rel": "collection"},
              {"href": f"{BASE_URL}/stac", "rel": "root"}]
 
     gjson = dict()
     gjson['type'] = 'FeatureCollection'
 
-    features = make_geojson(items.items, links)
+    features = make_geojson(items.items, links, access_token=access_token)
 
     gjson['links'] = []
 
@@ -175,12 +175,12 @@ def items_id(collection_id, item_id, roles=[], access_token=''):
     access_token = f"?access_token={access_token}" if access_token else ''
 
     item = get_collection_items(collection_id=collection_id, roles=roles, item_id=item_id)
-    links = [{"href": f"{BASE_URL}/collections/{access_token}", "rel": "self"},
-             {"href": f"{BASE_URL}/collections/{access_token}", "rel": "parent"},
-             {"href": f"{BASE_URL}/collections/{access_token}", "rel": "collection"},
+    links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
+             {"href": f"{BASE_URL}/collections/", "rel": "parent"},
+             {"href": f"{BASE_URL}/collections/", "rel": "collection"},
              {"href": f"{BASE_URL}/stac", "rel": "root"}]
 
-    gjson = make_geojson(item.items, links)
+    gjson = make_geojson(item.items, links, access_token=access_token)
 
     if len(gjson) > 0:
         return gjson[0]
@@ -224,7 +224,7 @@ def stac_search(roles=[], access_token=''):
     elif request.method == "GET":
         bbox = request.args.get('bbox', None)
         time = request.args.get('time', None)
-        ids = request.args.get('ids', None)
+        names = request.args.get('names', None)
         collections = request.args.get('collections', None)
         cubes = request.args.get('cubes', None)
         page = int(request.args.get('page', 1))
@@ -232,19 +232,19 @@ def stac_search(roles=[], access_token=''):
 
     items = get_collection_items(collections=collections, 
                                  roles=roles, bbox=bbox,
-                                 time=time, ids=ids,
+                                 time=time, names=names,
                                  page=page, limit=limit,
                                  intersects=intersects, query=query)
 
-    links = [{"href": f"{BASE_URL}/collections/{access_token}", "rel": "self"},
-             {"href": f"{BASE_URL}/collections/{access_token}", "rel": "parent"},
-             {"href": f"{BASE_URL}/collections/{access_token}", "rel": "collection"},
+    links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
+             {"href": f"{BASE_URL}/collections/", "rel": "parent"},
+             {"href": f"{BASE_URL}/collections/", "rel": "collection"},
              {"href": f"{BASE_URL}/stac", "rel": "root"}]
 
     gjson = dict()
     gjson['type'] = 'FeatureCollection'
 
-    features = make_geojson(items.items, links)
+    features = make_geojson(items.items, links, access_token=access_token)
 
     gjson['links'] = []
 
