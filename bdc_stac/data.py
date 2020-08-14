@@ -58,7 +58,7 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
     :return: list of collectio items
     :rtype: list
     """
-    columns = [Collection.name.label('collection'),
+    columns = [func.concat(Collection.name, ':', Collection.version).label('collection'),
                Item.name.label('item'),
                Item.collection_id,
                Item.start_date.label('start'),
@@ -82,9 +82,9 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
         where += [Item.id.like(item_id)]
     else:
         if collections is not None:
-            where += [Collection.name.in_(collections.split(','))]
+            where += [func.concat(Collection.name, ':', Collection.version).in_(collections.split(','))]
         elif collection_id is not None:
-            where += [Collection.name.like(collection_id)]
+            where += [func.concat(Collection.name, ':', Collection.version) == collection_id]
 
         if intersects is not None:
             where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(
@@ -283,7 +283,7 @@ def get_collection(collection_id, roles=[]):
                GridRefSys.name.label('grid_ref_sys')]
 
     where = [Collection.id == Item.collection_id,
-             Collection.name == collection_id,
+             func.concat(Collection.name, ':', Collection.version) == collection_id,
              Collection.grid_ref_sys_id == GridRefSys.id,
              or_(
                 Collection.is_public.is_(True),
@@ -349,7 +349,7 @@ def get_collections(roles=[]):
     :return: a list of available collections
     :rtype: list
     """
-    collections = session.query(Collection.name, Collection.id).filter(or_(
+    collections = session.query(func.concat(Collection.name, ':', Collection.version).label('name'), Collection.id).filter(or_(
         Collection.is_public.is_(True),
         Collection.id.in_([int(r.split(':')[0]) for r in roles])
     )).all()
