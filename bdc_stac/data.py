@@ -395,7 +395,7 @@ def create_query_filter(query):
     }
 
     bdc_properties = {
-        "bdc:tiles": Tile.name
+        "bdc:tile": Tile.name
     }
 
     filters = []
