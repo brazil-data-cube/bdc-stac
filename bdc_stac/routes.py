@@ -11,7 +11,7 @@ import gzip
 from io import BytesIO
 
 from bdc_catalog import BDCCatalog
-from bdc_auth_client.decorators import oauth2_required 
+from bdc_auth_client.decorators import oauth2 
 from flask import (abort, current_app, jsonify, make_response, request,
                    send_file)
 from werkzeug.exceptions import HTTPException, InternalServerError
@@ -79,19 +79,21 @@ def conformance():
 
 @current_app.route("/collections", methods=["GET"])
 @current_app.route("/stac", methods=["GET"])
-@oauth2_required(required=False)
-def root(roles=[]):
+@oauth2(required=False)
+def root(roles=[], access_token=''):
     """Return the root catalog or collection."""
+    access_token = f"?access_token={access_token}" if access_token else ''
+
     collections = get_collections(roles=roles)
     catalog = dict()
     catalog["description"] = "Brazil Data Cubes Catalog"
     catalog["id"] = "bdc"
     catalog["stac_version"] = BDC_STAC_API_VERSION
     links = list()
-    links.append({"href": request.url, "rel": "self"})
+    links.append({"href": f"{BASE_URL}/", "rel": "self"})
 
     for collection in collections:
-        links.append({"href": f"{BASE_URL}/collections/{collection.name}",
+        links.append({"href": f"{BASE_URL}/collections/{collection.name}{access_token}",
                       "rel": "child", "title": collection.name})
 
     catalog["links"] = links
@@ -100,17 +102,20 @@ def root(roles=[]):
 
 
 @current_app.route("/collections/<collection_id>", methods=["GET"])
-@oauth2_required(required=False)
-def collections_id(collection_id, roles=[]):
+@oauth2(required=False)
+def collections_id(collection_id, roles=[], access_token=''):
     """Describe the given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
     """
-    collection = get_collection(collection_id, roles=[])
-    links = [{"href": f"{BASE_URL}/collections/{collection_id}", "rel": "self"},
-             {"href": f"{BASE_URL}/collections/{collection_id}/items", "rel": "items"},
-             {"href": f"{BASE_URL}/collections", "rel": "parent"},
-             {"href": f"{BASE_URL}/collections", "rel": "root"},
+    access_token = f"?access_token={access_token}" if access_token else ''
+
+    collection = get_collection(collection_id, roles=roles)
+
+    links = [{"href": f"{BASE_URL}/collections/{collection_id}{access_token}", "rel": "self"},
+             {"href": f"{BASE_URL}/collections/{collection_id}/items{access_token}", "rel": "items"},
+             {"href": f"{BASE_URL}/collections{access_token}", "rel": "parent"},
+             {"href": f"{BASE_URL}/collections{access_token}", "rel": "root"},
              {"href": f"{BASE_URL}/stac", "rel": "root"}]
 
     collection['links'] = links
@@ -119,18 +124,20 @@ def collections_id(collection_id, roles=[]):
 
 
 @current_app.route("/collections/<collection_id>/items", methods=["GET"])
-@oauth2_required(required=False)
-def collection_items(collection_id, roles=[]):
+@oauth2(required=False)
+def collection_items(collection_id, roles=[], access_token=''):
     """Retrieve features of the given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
     """
+    access_token = f"?access_token={access_token}" if access_token else ''
+
     items = get_collection_items(
         collection_id=collection_id, roles=roles, **request.args.to_dict())
 
-    links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
-             {"href": f"{BASE_URL}/collections/", "rel": "parent"},
-             {"href": f"{BASE_URL}/collections/", "rel": "collection"},
+    links = [{"href": f"{BASE_URL}/collections/{access_token}", "rel": "self"},
+             {"href": f"{BASE_URL}/collections/{access_token}", "rel": "parent"},
+             {"href": f"{BASE_URL}/collections/{access_token}", "rel": "collection"},
              {"href": f"{BASE_URL}/stac", "rel": "root"}]
 
     gjson = dict()
@@ -158,17 +165,19 @@ def collection_items(collection_id, roles=[]):
 
 
 @current_app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
-@oauth2_required(required=False)
-def items_id(collection_id, item_id, roles=[]):
+@oauth2(required=False)
+def items_id(collection_id, item_id, roles=[], access_token=''):
     """Retrieve a given feature from a given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
     :param item_id: identifier (name) of a specific item
     """
+    access_token = f"?access_token={access_token}" if access_token else ''
+
     item = get_collection_items(collection_id=collection_id, roles=roles, item_id=item_id)
-    links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
-             {"href": f"{BASE_URL}/collections/", "rel": "parent"},
-             {"href": f"{BASE_URL}/collections/", "rel": "collection"},
+    links = [{"href": f"{BASE_URL}/collections/{access_token}", "rel": "self"},
+             {"href": f"{BASE_URL}/collections/{access_token}", "rel": "parent"},
+             {"href": f"{BASE_URL}/collections/{access_token}", "rel": "collection"},
              {"href": f"{BASE_URL}/stac", "rel": "root"}]
 
     gjson = make_geojson(item.items, links)
@@ -180,9 +189,11 @@ def items_id(collection_id, item_id, roles=[]):
 
 
 @current_app.route("/stac/search", methods=["GET", "POST"])
-@oauth2_required(required=False)
-def stac_search(roles=[]):
+@oauth2(required=False)
+def stac_search(roles=[], access_token=''):
     """Search STAC items with simple filtering."""
+    access_token = f"?access_token={access_token}" if access_token else ''
+    
     bbox, time, ids, collections, page, limit, intersects, query = None, None, None, None, None, None, None, None
     if request.method == "POST":
         if request.is_json:
@@ -225,9 +236,9 @@ def stac_search(roles=[]):
                                  page=page, limit=limit,
                                  intersects=intersects, query=query)
 
-    links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
-             {"href": f"{BASE_URL}/collections/", "rel": "parent"},
-             {"href": f"{BASE_URL}/collections/", "rel": "collection"},
+    links = [{"href": f"{BASE_URL}/collections/{access_token}", "rel": "self"},
+             {"href": f"{BASE_URL}/collections/{access_token}", "rel": "parent"},
+             {"href": f"{BASE_URL}/collections/{access_token}", "rel": "collection"},
              {"href": f"{BASE_URL}/stac", "rel": "root"}]
 
     gjson = dict()
