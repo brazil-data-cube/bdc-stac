@@ -11,7 +11,7 @@ import gzip
 from io import BytesIO
 
 from bdc_catalog import BDCCatalog
-from bdc_auth_client.decorators import oauth2_required 
+from bdc_auth_client.decorators import oauth2 
 from flask import (abort, current_app, jsonify, make_response, request,
                    send_file)
 from werkzeug.exceptions import HTTPException, InternalServerError
@@ -79,7 +79,7 @@ def conformance():
 
 @current_app.route("/collections", methods=["GET"])
 @current_app.route("/stac", methods=["GET"])
-@oauth2_required(required=False)
+@oauth2(required=False)
 def root(roles=[], access_token=''):
     """Return the root catalog or collection."""
     access_token = f"?access_token={access_token}" if access_token else ''
@@ -102,7 +102,7 @@ def root(roles=[], access_token=''):
 
 
 @current_app.route("/collections/<collection_id>", methods=["GET"])
-@oauth2_required(required=False)
+@oauth2(required=False)
 def collections_id(collection_id, roles=[], access_token=''):
     """Describe the given feature collection.
 
@@ -124,7 +124,7 @@ def collections_id(collection_id, roles=[], access_token=''):
 
 
 @current_app.route("/collections/<collection_id>/items", methods=["GET"])
-@oauth2_required(required=False)
+@oauth2(required=False)
 def collection_items(collection_id, roles=[], access_token=''):
     """Retrieve features of the given feature collection.
 
@@ -165,7 +165,7 @@ def collection_items(collection_id, roles=[], access_token=''):
 
 
 @current_app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
-@oauth2_required(required=False)
+@oauth2(required=False)
 def items_id(collection_id, item_id, roles=[], access_token=''):
     """Retrieve a given feature from a given feature collection.
 
@@ -189,7 +189,7 @@ def items_id(collection_id, item_id, roles=[], access_token=''):
 
 
 @current_app.route("/stac/search", methods=["GET", "POST"])
-@oauth2_required(required=False)
+@oauth2(required=False)
 def stac_search(roles=[], access_token=''):
     """Search STAC items with simple filtering."""
     access_token = f"?access_token={access_token}" if access_token else ''
