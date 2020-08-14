@@ -64,6 +64,8 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
                Item.start_date.label('start'),
                Item.end_date.label('end'),
                Item.assets,
+               Item.created,
+               Item.updated,
                cast(Item.cloud_cover, Float).label('cloud_cover'),
                func.ST_AsGeoJSON(Item.geom).label('geom'),
                func.Box2D(Item.geom).label('bbox'),
@@ -400,7 +402,8 @@ def make_geojson(items, links, access_token=''):
         start = datetime.fromisoformat(str(i.start)).strftime("%Y-%m-%d")
         properties['bdc:tile'] = i.tile
         properties['datetime'] = start
-
+        properties['created'] = i.created
+        properties['updated'] = i.updated
         properties.update(bands)
         properties['eo:cloud_cover'] = i.cloud_cover
 
