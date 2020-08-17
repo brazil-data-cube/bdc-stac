@@ -1,9 +1,10 @@
 """Data module."""
 import json
 import warnings
+
 from copy import deepcopy
 from datetime import datetime
-
+from functools import lru_cache
 from bdc_catalog.models import (Band, Collection, CompositeFunction, Item, GridRefSys, Tile, Quicklook, db)
 from geoalchemy2.functions import GenericFunction
 from sqlalchemy import cast, create_engine, exc, func, or_, Float
@@ -57,11 +58,15 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
     :return: list of collectio items
     :rtype: list
     """
-    columns = [Collection.name.label('collection'),
+    columns = [func.concat(Collection.name, ':', Collection.version).label('collection'),
                Item.name.label('item'),
+               Item.collection_id,
                Item.start_date.label('start'),
                Item.end_date.label('end'),
                Item.assets,
+               Item.created,
+               Item.updated,
+               cast(Item.cloud_cover, Float).label('cloud_cover'),
                func.ST_AsGeoJSON(Item.geom).label('geom'),
                func.Box2D(Item.geom).label('bbox'),
                Tile.name.label('tile')]
@@ -79,9 +84,9 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
         where += [Item.name.like(item_id)]
     else:
         if collections is not None:
-            where += [Collection.name.in_(collections.split(','))]
+            where += [func.concat(Collection.name, ':', Collection.version).in_(collections.split(','))]
         elif collection_id is not None:
-            where += [Collection.name.like(collection_id)]
+            where += [func.concat(Collection.name, ':', Collection.version) == collection_id]
 
         if intersects is not None:
             where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(
@@ -127,6 +132,32 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
 
     return result
 
+@lru_cache()
+def get_collection_eo(collection_id):
+    """Get Collection Eletro-Optical properties.
+
+    Args:
+        collection_id (str): collection identifier
+    Returns:
+        eo_gsd, eo_bands (tuple(float, dict)):
+    """
+    bands = session.query(Band.name, Band.common_name,
+                          cast(Band.min, Float).label('min'), cast(Band.max, Float).label('max'),
+                          cast(Band.nodata, Float).label('nodata'), cast(Band.scale, Float).label('scale'),
+                          cast(Band.resolution_x, Float).label('gsd'), Band.data_type,
+                          cast(Band.center_wavelength, Float).label('center_wavelength'),
+                          cast(Band.full_width_half_max, Float).label('full_width_half_max')).filter(Band.collection_id == collection_id).all()
+    eo_bands = list()
+    eo_gsd = 0.0
+
+    for band in bands:
+        eo_bands.append(dict(name=band.name, common_name=band.common_name, min=band.min,
+                             max=band.max,nodata=band.nodata, center_wavelength=band.center_wavelength,
+                             full_width_half_max=band.full_width_half_max, data_type=band.data_type))
+        if band.gsd > eo_gsd:
+            eo_gsd = band.gsd
+
+    return {"eo:gsd":eo_gsd, "eo:bands":eo_bands}
 
 def get_collection_bands(collection_id):
     """Retrive a dict of bands for a given collection.
@@ -136,10 +167,9 @@ def get_collection_bands(collection_id):
     :return: dict of bands for the collection
     :rtype: dict
     """
-    bands = session.query(Band.name, Band.common_name, Band.description,
+    bands = session.query(Band.name, Band.common_name,
                           cast(Band.min, Float).label('min'), cast(Band.max, Float).label('max'),
                           cast(Band.nodata, Float).label('nodata'), cast(Band.scale, Float).label('scale'),
-                          cast(Band.resolution_x, Float).label('resolution_x'), cast(Band.resolution_y, Float).label('resolution_y'),
                                Band.data_type).filter(Band.collection_id == collection_id).all()
     bands_json = dict()
 
@@ -164,6 +194,7 @@ def get_collection_tiles(collection_id):
 
     return [t.name for t in tiles]
 
+@lru_cache()
 def get_collection_crs(collection_id):
     """Retrive the CRS for a given collection.
 
@@ -230,6 +261,7 @@ def get_collection_quicklook(collection_id):
                                       "INNER JOIN bdc.bands b ON q.blue = b.id "
                                       "INNER JOIN bdc.collections c ON q.collection_id = c.id "
                                       "WHERE c.id = :collection_id", {"collection_id":collection_id}).fetchone()
+
     return quicklook_bands["quicklooks"] if quicklook_bands else None
 
 def get_collection(collection_id, roles=[]):
@@ -253,7 +285,7 @@ def get_collection(collection_id, roles=[]):
                GridRefSys.name.label('grid_ref_sys')]
 
     where = [Collection.id == Item.collection_id,
-             Collection.name == collection_id,
+             func.concat(Collection.name, ':', Collection.version) == collection_id,
              Collection.grid_ref_sys_id == GridRefSys.id,
              or_(
                 Collection.is_public.is_(True),
@@ -277,6 +309,7 @@ def get_collection(collection_id, roles=[]):
     collection['id'] = collection_id
 
     collection["stac_version"] = BDC_STAC_API_VERSION
+    collection['stac_extensions'] = ["eo", "datacube"]
     collection["description"] = result.description
     collection["license"] = ""
 
@@ -298,17 +331,24 @@ def get_collection(collection_id, roles=[]):
     if quicklooks is not None:
         collection["properties"]["bdc:bands_quicklook"] = quicklooks
 
-    bands = get_collection_bands(result.id)
-    collection["properties"]["bdc:bands"] = bands
-
-    collection["properties"]["bdc:crs"] = get_collection_crs(result.id)
+    collection["properties"].update(get_collection_eo(result.id))
     collection["properties"]["bdc:wrs"] = result.grid_ref_sys
+    collection["properties"]["bdc:tiles"] = get_collection_tiles(result.id)
+
+    # collection["properties"]["proj:epsg"] =
+    # collection["properties"]["proj:geomtry"]
 
     if result.temporal_composition_schema:
+        datacube = dict()
+        datacube["x"] = dict(type="spatial", axis="x", extent=[bbox[0], bbox[2]])
+        datacube["y"] = dict(type="spatial", axis="y", extent=[bbox[1], bbox[3]])
+        datacube["temporal"] = dict(type="temporal", extent=[start, end],
+                                    values=get_collection_timeline(result.id))
+
+        collection["properties"]["cube:dimension"] = datacube
+        collection["properties"]["bdc:crs"] = get_collection_crs(result.id)
         collection["properties"]["bdc:temporal_composition"] = result.temporal_composition_schema
-        collection["properties"]["bdc:timeline"] = get_collection_timeline(result.id)
         collection["properties"]["bdc:composite_function"] = result.composite_function
-        collection["properties"]["bdc:tiles"] = get_collection_tiles(result.id)
 
     return collection
 
@@ -319,7 +359,7 @@ def get_collections(roles=[]):
     :return: a list of available collections
     :rtype: list
     """
-    collections = session.query(Collection.name, Collection.id).filter(or_(
+    collections = session.query(func.concat(Collection.name, ':', Collection.version).label('name'), Collection.id).filter(or_(
         Collection.is_public.is_(True),
         Collection.id.in_([int(r.split(':')[0]) for r in roles])
     )).all()
@@ -345,6 +385,7 @@ def make_geojson(items, links, access_token=''):
         feature['id'] = i.item
         feature['collection'] = i.collection
         feature['stac_version'] = BDC_STAC_API_VERSION
+        feature['stac_extensions'] = ["eo"]
 
         feature['geometry'] = json.loads(i.geom)
 
@@ -355,15 +396,24 @@ def make_geojson(items, links, access_token=''):
             bbox = [float(coord) for coord in bbox.split(',')]
         feature['bbox'] = bbox
 
-        properties = dict()
+        bands = get_collection_eo(i.collection_id)
 
+        properties = dict()
         start = datetime.fromisoformat(str(i.start)).strftime("%Y-%m-%d")
         properties['bdc:tile'] = i.tile
-        properties['datetime'] = f"{start}"
-        feature['properties'] = properties
+        properties['datetime'] = start
+        properties['created'] = i.created
+        properties['updated'] = i.updated
+        properties.update(bands)
+        properties['eo:cloud_cover'] = i.cloud_cover
 
         for key, value in i.assets.items():
             value['href'] = BDC_STAC_FILE_ROOT + value['href']
+            for index, band in enumerate(properties['eo:bands'], start=0):
+                if band['name'] == key:
+                    value['eo:bands'] = [index]
+
+        feature['properties'] = properties
         feature['assets'] = i.assets
 
         feature['links'] = deepcopy(links)
