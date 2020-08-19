@@ -80,10 +80,6 @@ html_theme_options = {
     'titles_only': False
 }
 
-#html_theme_path = ''
-
-#html_style = ''
-
 html_title = 'BDC-STAC'
 
 html_context = {
@@ -99,8 +95,6 @@ html_show_sourcelink = False
 html_logo = './img/logo-bdc.png'
 
 html_favicon = './img/favicon.ico'
-
-#html_static_path = ['_static']
 
 html_css_files = [ ]
 
@@ -119,10 +113,4 @@ numfig_format = {
     'section': 'Section %s.'
 }
 
-#def setup(app):
-#    app.add_stylesheet('bdc-db.css')
-
-
-#todo_include_todos = True
-#todo_emit_warnings = True
 master_doc = 'index'
