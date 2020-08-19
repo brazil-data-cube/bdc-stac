@@ -1,24 +1,29 @@
 """Data module."""
 import json
 import warnings
-
 from copy import deepcopy
 from datetime import datetime
 from functools import lru_cache
-from bdc_catalog.models import (Band, Collection, CompositeFunction, Item, GridRefSys, Tile, Quicklook, db)
+
+from bdc_catalog.models import (Band, Collection, CompositeFunction,
+                                GridRefSys, Item, Quicklook, Tile)
+from bdc_catalog.models.base_sql import db
+from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2.functions import GenericFunction
-from sqlalchemy import cast, create_engine, exc, func, or_, Float
+from sqlalchemy import Float, cast, create_engine, exc, func, or_
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import sessionmaker
 
-from .config import (BDC_STAC_FILE_ROOT, BDC_STAC_API_VERSION,
+from .config import (BDC_STAC_API_VERSION, BDC_STAC_FILE_ROOT,
                      BDC_STAC_MAX_LIMIT)
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=exc.SAWarning)
 
-session = db.create_scoped_session({'autocommit': True})
 
+db = SQLAlchemy()
+
+session = db.create_scoped_session({'autocommit': True})
 
 class ST_Extent(GenericFunction):
     """Postgis ST_Extent function."""
@@ -142,7 +147,7 @@ def get_collection_eo(collection_id):
         eo_gsd, eo_bands (tuple(float, dict)):
     """
     bands = session.query(Band.name, Band.common_name,
-                          cast(Band.min, Float).label('min'), cast(Band.max, Float).label('max'),
+                          cast(Band.min_value, Float).label('min'), cast(Band.max_value, Float).label('max'),
                           cast(Band.nodata, Float).label('nodata'), cast(Band.scale, Float).label('scale'),
                           cast(Band.resolution_x, Float).label('gsd'), Band.data_type,
                           cast(Band.center_wavelength, Float).label('center_wavelength'),
@@ -279,6 +284,7 @@ def get_collection(collection_id, roles=[]):
                Collection.end_date.label('end'),
                Collection.description,
                Collection.name,
+               Collection.collection_type,
                Collection.version,
                Collection.temporal_composition_schema,
                CompositeFunction.name.label('composite_function'),
@@ -320,9 +326,9 @@ def get_collection(collection_id, roles=[]):
     start, end = None, None
 
     if result.start:
-        start = result.start.strftime("%Y-%m-%d")
+        start = result.start.strftime("%Y-%m-%dT%H:%M")
         if result.end:
-            end = result.end.strftime("%Y-%m-%d")
+            end = result.end.strftime("%Y-%m-%dT%H:%M")
 
     collection["extent"] = {"spatial": {"bbox": [bbox]},
                             "temporal": {"interval": [[start, end]]}}
@@ -335,20 +341,18 @@ def get_collection(collection_id, roles=[]):
     collection["properties"]["bdc:wrs"] = result.grid_ref_sys
     collection["properties"]["bdc:tiles"] = get_collection_tiles(result.id)
 
-    # collection["properties"]["proj:epsg"] =
-    # collection["properties"]["proj:geomtry"]
+    collection["properties"]["bdc:composite_function"] = result.composite_function
 
-    if result.temporal_composition_schema:
+    if result.collection_type == 'cube':
         datacube = dict()
         datacube["x"] = dict(type="spatial", axis="x", extent=[bbox[0], bbox[2]])
         datacube["y"] = dict(type="spatial", axis="y", extent=[bbox[1], bbox[3]])
         datacube["temporal"] = dict(type="temporal", extent=[start, end],
                                     values=get_collection_timeline(result.id))
 
-        collection["properties"]["cube:dimension"] = datacube
         collection["properties"]["bdc:crs"] = get_collection_crs(result.id)
+        collection["properties"]["cube:dimension"] = datacube
         collection["properties"]["bdc:temporal_composition"] = result.temporal_composition_schema
-        collection["properties"]["bdc:composite_function"] = result.composite_function
 
     return collection
 
@@ -399,11 +403,11 @@ def make_geojson(items, links, access_token=''):
         bands = get_collection_eo(i.collection_id)
 
         properties = dict()
-        start = datetime.fromisoformat(str(i.start)).strftime("%Y-%m-%d")
+        start = datetime.fromisoformat(str(i.start)).strftime("%Y-%m-%dT%H:%M")
         properties['bdc:tile'] = i.tile
         properties['datetime'] = start
-        properties['created'] = i.created
-        properties['updated'] = i.updated
+        properties['created'] = i.created.strftime("%Y-%m-%dT%H:%M")
+        properties['updated'] = i.updated.strftime("%Y-%m-%dT%H:%M")
         properties.update(bands)
         properties['eo:cloud_cover'] = i.cloud_cover
 
