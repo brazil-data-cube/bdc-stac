@@ -6,13 +6,11 @@ from datetime import datetime
 from functools import lru_cache
 
 from bdc_catalog.models import (Band, Collection, CompositeFunction,
-                                GridRefSys, Item, Quicklook, Tile)
+                                GridRefSys, Item, Tile)
 from bdc_catalog.models.base_sql import db
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2.functions import GenericFunction
-from sqlalchemy import Float, cast, create_engine, exc, func, or_
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Float, cast, exc, func, or_
 
 from .config import (BDC_STAC_API_VERSION, BDC_STAC_FILE_ROOT,
                      BDC_STAC_MAX_LIMIT)
@@ -24,6 +22,7 @@ with warnings.catch_warnings():
 db = SQLAlchemy()
 
 session = db.create_scoped_session({'autocommit': True})
+
 
 class ST_Extent(GenericFunction):
     """Postgis ST_Extent function."""
@@ -77,10 +76,10 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
                Tile.name.label('tile')]
 
     where = [Collection.id == Item.collection_id,
-              Item.tile_id == Tile.id,
-              or_(
-                Collection.is_public.is_(True),
-                Collection.id.in_([int(r.split(':')[0]) for r in roles])
+             Item.tile_id == Tile.id,
+             or_(
+                 Collection.is_public.is_(True),
+                 Collection.id.in_([int(r.split(':')[0]) for r in roles])
              )]
 
     if names is not None:
@@ -98,9 +97,9 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
                 str(intersects)), Item.geom)]
 
         if query:
-           filters =  create_query_filter(query)
-           if filters:
-               where += filters
+            filters = create_query_filter(query)
+            if filters:
+                where += filters
 
         if bbox is not None:
             try:
@@ -125,8 +124,7 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
             else:
                 time_start = datetime.fromisoformat(time)
             where += [or_(Item.start_date >= time_start,
-                        Item.end_date >= time_start)]
-
+                          Item.end_date >= time_start)]
 
     query = session.query(*columns).filter(*where).order_by(Item.start_date.desc())
 
@@ -136,6 +134,7 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
                             max_per_page=int(BDC_STAC_MAX_LIMIT))
 
     return result
+
 
 @lru_cache()
 def get_collection_eo(collection_id):
@@ -157,12 +156,13 @@ def get_collection_eo(collection_id):
 
     for band in bands:
         eo_bands.append(dict(name=band.name, common_name=band.common_name, min=band.min,
-                             max=band.max,nodata=band.nodata, center_wavelength=band.center_wavelength,
+                             max=band.max, nodata=band.nodata, center_wavelength=band.center_wavelength,
                              full_width_half_max=band.full_width_half_max, data_type=band.data_type))
         if band.gsd > eo_gsd:
             eo_gsd = band.gsd
 
-    return {"eo:gsd":eo_gsd, "eo:bands":eo_bands}
+    return {"eo:gsd": eo_gsd, "eo:bands": eo_bands}
+
 
 def get_collection_bands(collection_id):
     """Retrive a dict of bands for a given collection.
@@ -175,7 +175,7 @@ def get_collection_bands(collection_id):
     bands = session.query(Band.name, Band.common_name,
                           cast(Band.min, Float).label('min'), cast(Band.max, Float).label('max'),
                           cast(Band.nodata, Float).label('nodata'), cast(Band.scale, Float).label('scale'),
-                               Band.data_type).filter(Band.collection_id == collection_id).all()
+                          Band.data_type).filter(Band.collection_id == collection_id).all()
     bands_json = dict()
 
     for b in bands:
@@ -199,6 +199,7 @@ def get_collection_tiles(collection_id):
 
     return [t.name for t in tiles]
 
+
 @lru_cache()
 def get_collection_crs(collection_id):
     """Retrive the CRS for a given collection.
@@ -219,6 +220,7 @@ def get_collection_crs(collection_id):
 
     return crs["proj"]
 
+
 def get_collection_timeline(collection_id):
     """Retrive a list of dates for a given collection.
 
@@ -232,13 +234,14 @@ def get_collection_timeline(collection_id):
 
     return [datetime.fromisoformat(str(t.start_date)).strftime("%Y-%m-%d") for t in timeline]
 
+
 def get_collection_extent(collection_id):
     """Retrive the extent as a BBOX for a given collection.
 
-        :param collection_id: collection identifier
-        :type collection_id: str
-        :return: list of coordinates for the collection extent
-        :rtype: lis
+    :param collection_id: collection identifier
+    :type collection_id: str
+    :return: list of coordinates for the collection extent
+    :rtype: list
     """
     extent = session.query(func.ST_Extent(Item.geom).label('bbox'))\
                     .filter(Collection.id == Item.collection_id,
@@ -251,13 +254,14 @@ def get_collection_extent(collection_id):
         bbox = [float(coord) for coord in bbox.split(',')]
     return bbox
 
+
 def get_collection_quicklook(collection_id):
     """Retrive a list of bands used to create the quicklooks for a given collection.
 
-        :param collection_id: collection identifier
-        :type collection_id: str
-        :return: list of bands
-        :rtype: lis
+    :param collection_id: collection identifier
+    :type collection_id: str
+    :return: list of bands
+    :rtype: list.
     """
     quicklook_bands = session.execute("SELECT  array[r.name, g.name, b.name] as quicklooks "
                                       "FROM bdc.quicklook q "
@@ -265,9 +269,10 @@ def get_collection_quicklook(collection_id):
                                       "INNER JOIN bdc.bands g ON q.green = g.id "
                                       "INNER JOIN bdc.bands b ON q.blue = b.id "
                                       "INNER JOIN bdc.collections c ON q.collection_id = c.id "
-                                      "WHERE c.id = :collection_id", {"collection_id":collection_id}).fetchone()
+                                      "WHERE c.id = :collection_id", {"collection_id": collection_id}).fetchone()
 
     return quicklook_bands["quicklooks"] if quicklook_bands else None
+
 
 def get_collection(collection_id, roles=[]):
     """Retrieve information of a given collection.
@@ -294,8 +299,8 @@ def get_collection(collection_id, roles=[]):
              func.concat(Collection.name, ':', Collection.version) == collection_id,
              Collection.grid_ref_sys_id == GridRefSys.id,
              or_(
-                Collection.is_public.is_(True),
-                Collection.id.in_([int(r.split(':')[0]) for r in roles])
+                 Collection.is_public.is_(True),
+                 Collection.id.in_([int(r.split(':')[0]) for r in roles])
              )]
 
     group_by = [Collection.id,
@@ -429,12 +434,13 @@ def make_geojson(items, links, access_token=''):
 
     return features
 
+
 def create_query_filter(query):
-    """Create STAC query filter for SQLAlchemy
+    """Create STAC query filter for SQLAlchemy.
+
     Notes:
         Queryable properties must be mapped in this functions.
     """
-
     mapping = {
         'eq': '__eq__',
         'neq': '__ne__',
@@ -444,7 +450,7 @@ def create_query_filter(query):
         'gte': '__ge__',
         'startsWith': 'startswith',
         'endsWith': 'endswith',
-        'contains':'contains',
+        'contains': 'contains',
         'in': 'in_',
     }
 
@@ -461,6 +467,7 @@ def create_query_filter(query):
 
     return filters if len(filters) > 0 else None
 
+
 class InvalidBoundingBoxError(Exception):
     """Exception for malformed bounding box."""
 
@@ -470,6 +477,7 @@ class InvalidBoundingBoxError(Exception):
         :param description: exception description.
         :type description: str
         """
+        super(InvalidBoundingBoxError, self).__init__()
         self.description = description
 
     def __str__(self):
