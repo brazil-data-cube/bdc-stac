@@ -13,14 +13,24 @@ Documentation
 =============
 
 .. toctree::
+    :hidden:
+
+    self
+
+
+.. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: API Reference
 
-   deploy
    installation
+   deploy
    api
-   license
 
+.. toctree::
+    :maxdepth: 2
+    :caption: Additional Notes
+
+    license
 
 
 Indices and tables

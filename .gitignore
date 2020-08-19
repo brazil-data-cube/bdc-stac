@@ -111,3 +111,6 @@ venv.bak/
 
 #zappa
 zappa_settings.json
+
+# Sphinx documentation
+docs/sphinx/_build/

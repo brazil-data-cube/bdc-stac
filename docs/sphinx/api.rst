@@ -8,6 +8,15 @@
 Python API
 ==========
 
-**(Under Development)**
 
+.. automodule:: bdc_stac.config
+    :members:
+
+
+.. automodule:: bdc_stac.data
+    :members:
+
+
+.. automodule:: bdc_stac.routes
+    :members:
 
