@@ -84,7 +84,7 @@ html_theme_options = {
 
 #html_style = ''
 
-html_title = 'BDC-DB'
+html_title = 'BDC-STAC'
 
 html_context = {
     'display_github': False,
