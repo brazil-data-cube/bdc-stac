@@ -10,6 +10,19 @@
 Changes
 =======
 
+Version 0.8.1-1
+---------------
+
+Released 2020-08-19
+
+- This is a special version based on STAC 0.8.1 and `BDC Catalog Version 0.4.0 <https://github.com/brazil-data-cube/bdc-catalog/tree/v0.4.0>`_
+- Added support for the following STAC Extension: datacube, eo, version
+
+.. note::
+
+    The branch 0.8.1 and below depends on previous version of `BDC Catalog Version 0.2.0 <https://github.com/brazil-data-cube/bdc-catalog/tree/v0.2.0>`_
+
+
 Version 0.8.1-0
 ---------------
 
