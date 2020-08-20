@@ -31,3 +31,6 @@ MANIFEST
 
 #PyCharm
 .idea/
+
+# Sphinx documentation
+docs/sphinx/_build/

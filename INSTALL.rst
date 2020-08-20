@@ -9,49 +9,94 @@
 Installation
 ============
 
-The Brazil Data Cube STAC implementation depends essentially on `Flask <https://palletsprojects.com/p/flask/>`_, `SQLAlchemy <https://www.sqlalchemy.org/>`_, `JSONSchema <https://github.com/Julian/jsonschema>`_ and the `Brazil Data Cube Database Module <https://github.com/brazil-data-cube/bdc-db>`_.
-
 
 Development Installation
 ------------------------
 
-Clone the software repository:
 
-.. code-block:: shell
-
-        $ git clone https://github.com/brazil-data-cube/bdc-stac.git
+Pre-Requirements
+++++++++++++++++
 
 
-Go to the source code folder:
+The Brazil Data Cube STAC implementation depends essentially on:
 
-.. code-block:: shell
+- `Flask <https://palletsprojects.com/p/flask/>`_: a lightweight WSGI web application framework.
+
+- `Flask-SQLAlchemy <https://flask-sqlalchemy.palletsprojects.com/en/2.x/>`_: an extension for Flask that adds support of `SQLAlchemy <https://www.sqlalchemy.org/>`_.
+
+- `BDC-Catalog <https://bdc-catalog.readthedocs.io/en/latest/>`_: an image metadata storage module for Earth Observation imagery of Brazil Data Cube.
+
+- `Flask-Redoc <https://pypi.org/project/flask-redoc/>`_: a Flask extension for displaying OpenAPI/Swagger documentation using Redocs.
+
+
+Clone the software repository
++++++++++++++++++++++++++++++
+
+Use ``git`` to clone the software repository::
+
+    git clone https://github.com/brazil-data-cube/bdc-stac.git
+
+
+Install BDC-STAC in Development Mode
+++++++++++++++++++++++++++++++++++++
+
+Go to the source code folder::
 
         $ cd bdc-stac
 
 
-Install in development mode:
-
-.. code-block:: shell
+Install in development mode::
 
         $ pip3 install -e .[all]
 
 
-Generate the documentation:
+.. note::
 
-.. code-block:: shell
+    If you want to create a new *Python Virtual Environment*, please, follow this instruction:
 
-        $ python setup.py build_sphinx
+    *1.* Create a new virtual environment linked to Python 3.7::
+
+        python3.7 -m venv venv
 
 
-The above command will generate the documentation in HTML and it will place it under:
+    **2.** Activate the new environment::
 
-.. code-block:: shell
+        source venv/bin/activate
 
-    doc/sphinx/_build/html/
+
+    **3.** Update pip and setuptools::
+
+        pip3 install --upgrade pip
+
+        pip3 install --upgrade setuptools
+
+
+Build the Documentation
++++++++++++++++++++++++
+
+
+You can generate the documentation based on Sphinx with the following command::
+
+    python setup.py build_sphinx
+
+
+The above command will generate the documentation in HTML and it will place it under::
+
+    docs/sphinx/_build/html/
+
+
+You can open the above documentation in your favorite browser, as::
+
+    firefox docs/sphinx/_build/html/index.html
 
 
 Running in Development Mode
----------------------------
++++++++++++++++++++++++++++
+
+.. note::
+
+        Make sure you have a database prepared using `Brazil Data Cube Catalog Module <https://github.com/brazil-data-cube/bdc-catalog>`_.
+
 
 In the source code folder, enter the following command:
 
@@ -59,35 +104,29 @@ In the source code folder, enter the following command:
 
         $ FLASK_APP="bdc_stac" \
           FLASK_ENV="development" \
-          DB_HOST="localhost:5432" \
-          DB_USER="postgres" \
-          DB_PASS="secret" \
-          DB_NAME="bdcdb" \
-          BDC_STAC_BASE_URI="http://localhost:5000" \
-          BDC_STAC_API_VERSION="0.8.0" \
+          SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdc_catalog" \
+          BDC_STAC_BASE_URL="http://localhost:5000" \
+          BDC_STAC_API_VERSION="0.8.1" \
           BDC_STAC_FILE_ROOT="http://localhost:5001" \
           flask run
 
 
 You may need to replace the definition of some environment variables:
 
-    - ``DB_HOST="localhost:5432"``: set the database host address that will be used by the STAC service.
+    - ``SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdc_catalog"``: set the database URI connection.
 
-    - ``DB_USER="postgres"``: the user name for connecting to the database server.
+    - ``BDC_STAC_BASE_URL="http://localhost:8080"``: Base URI of the service.
 
-    - ``DB_PASS="secret"``: the user password for connecting to the database server.
-
-    - ``DB_NAME="bdcdb"``:  the name of the database containing the image and data cube collections [#f1]_.
-
-    - ``BDC_STAC_BASE_URI="http://localhost:8080"``: Base URI of the service.
-
-    - ``BDC_STAC_API_VERSION="0.8.0"``: STAC Version used in the service.
+    - ``BDC_STAC_API_VERSION="0.8.1"``: STAC Version used in the service.
 
     - ``BDC_STAC_FILE_ROOT="http://localhost:8081"``: File root for the Assets.
 
+    - ``BDC_STAC_MAX_LIMIT``: Set number of maximum items fetched per request. Default is ``1000``.
 
+To add authentication support with Brazil Data Cube OAuth 2.0, use the following:
 
-.. rubric:: Footnotes
+    - ``BDC_AUTH_CLIENT_ID``: The OAuth 2.0 client identification
 
-.. [#f1] Make sure you have a database prepared with the schema for Image and Data Cube collections from the `Brazil Data Cube Database Module <https://github.com/brazil-data-cube/bdc-db>`_
+    - ``BDC_AUTH_CLIENT_SECRET``: The OAuth 2.0 client secret
 
+    - ``BDC_AUTH_ACCESS_TOKEN_URL``: The URL domain of BDC-OAuth 2.0 provider.

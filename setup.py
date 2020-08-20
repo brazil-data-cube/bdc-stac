@@ -17,6 +17,9 @@ history = open('CHANGES.rst').read()
 
 docs_require = [
     'Sphinx>=2.2',
+    'sphinx_rtd_theme',
+    'sphinx-copybutton',
+    'sphinx-tabs',
 ]
 
 tests_require = [

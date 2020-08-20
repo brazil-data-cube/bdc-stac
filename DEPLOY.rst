@@ -9,8 +9,6 @@
 Deploying
 =========
 
-The Brazil Data Cube STAC implementation depends essentially on `Flask <https://palletsprojects.com/p/flask/>`_, `SQLAlchemy <https://www.sqlalchemy.org/>`_, `JSONSchema <https://github.com/Julian/jsonschema>`_ and the `Brazil Data Cube Database Module <https://github.com/brazil-data-cube/bdc-db>`_.
-
 
 There is a Dockerfile for quick deployment. This section explains how to get the STAC service up and running with Docker. If you do not have Docker installed, take a look at `this tutorial on how to install it in your system <https://docs.docker.com/install/>`_.
 
@@ -19,7 +17,7 @@ There is a Dockerfile for quick deployment. This section explains how to get the
 Requirements
 ------------
 
-Besides Docker, you will need an instance of a PostgreSQL DBMS with a database prepared with the schema for Image and Data Cube collections from the `Brazil Data Cube Database Module <https://github.com/brazil-data-cube/bdc-db>`_.
+Besides Docker, you will need an instance of a PostgreSQL DBMS with a database prepared using `Brazil Data Cube Catalog Module <https://github.com/brazil-data-cube/bdc-catalog>`_.
 
 
 
@@ -46,19 +44,16 @@ The above command will create a Docker image named `bdc-stac` and tag `0.8.1-0`,
 Preparing the Network for Containers
 ------------------------------------
 
-If you have the PostgreSQL server running in a Docker container and you want to have it accesible to the STAC service, you can create a Docker network and attach your PostgreSQL container to it [#f1]_.
+If you have the PostgreSQL server running in a Docker container and you want to have it accessible to the STAC service, you can create a Docker network and attach your PostgreSQL container to it [#f1]_.
 
-To create a new network, you ca use the `docker network` command:
-.. code-block:: shell
+To create a new network, you ca use the `docker network` command::
 
-        $ docker network create bdc_net
+        docker network create bdc_net
 
 
-The above command will create a network named `bdc_net`. Now, it is possible to attach your database container in this network:
+The above command will create a network named `bdc_net`. Now, it is possible to attach your database container in this network::
 
-.. code-block:: shell
-
-        $ docker network connect bdc_net bdc_pg
+        docker network connect bdc_net bdc_pg
 
 
 In the above command, we are supposing that your database container is named `bdc_pg`.
@@ -67,25 +62,20 @@ In the above command, we are supposing that your database container is named `bd
 Launching the Docker Container with the STAC Service
 ----------------------------------------------------
 
-The `docker run` command can be used to launch a container from the image `bdc-stac:0.8.1-0`. The command below shows an example on how to accomplish the launch of a container:
+The `docker run` command can be used to launch a container from the image `bdc-stac:0.8.1-0`. The command below shows an example on how to accomplish the launch of a container::
 
-.. code-block:: shell
-
-        $ docker run --detach \
-                     --name bdc-stac \
-                     --publish 127.0.0.1:8080:5000 \
-                     --network=bdc_net \
-                     --env DB_HOST="bdc_pg:5432" \
-                     --env DB_USER="postgres" \
-                     --env DB_PASS="secret" \
-                     --env DB_NAME="bdcdb" \
-                     --env BDC_STAC_BASE_URI="http://localhost:8080" \
-                     --env BDC_STAC_API_VERSION="0.8.1" \
-                     --env BDC_STAC_FILE_ROOT="http://localhost:8081" \
-                     bdc-stac:0.8.1-0
+        docker run --detach \
+                   --name bdc-stac \
+                   --publish 127.0.0.1:8080:5000 \
+                   --network=bdc_net \
+                   --env SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdc_catalog" \
+                   --env BDC_STAC_BASE_URL="http://localhost:8080" \
+                   --env BDC_STAC_API_VERSION="0.8.1" \
+                   --env BDC_STAC_FILE_ROOT="http://localhost:8081" \
+                   bdc-stac:0.8.1-0
 
 
-Let's take a look at each parameter in the above command:/
+Let's take a look at each parameter in the above command:
 
     - ``--detach``: tells Docker that the container will run in background (daemon).
 
@@ -95,17 +85,9 @@ Let's take a look at each parameter in the above command:/
 
     - ``--network=bdc_net``: if the container should connect to the database server through a docker network, this parameter will automatically attach the container to the ``bdc_net``. You can ommit this parameter if the database server address can be resolved directly from a host address.
 
-    - ``--env DB_HOST="bdc_pg"``: set the database host address that will be used by the STAC service. In this example, the name ``bdc_pg`` is the name of a PostgreSQL container in the same network as the STAC service.
+    - ``--env SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdc_catalog"``: set the database URI. [#f2]_.
 
-    - ``--env DB_PORT="5432"``: the port for connecting to the database server.
-
-    - ``--env DB_USER="postgres"``: the user name for connecting to the database server.
-
-    - ``--env DB_PASS="secret"``: the user password for connecting to the database server.
-
-    - ``--env DB_NAME="bdcdb"``:  the name of the database containing the image and data cube collections [#f2]_.
-
-    - ``--env BDC_STAC_BASE_URI="http://localhost:8080"``: Base URI of the service.
+    - ``--env BDC_STAC_BASE_URL="http://localhost:8080"``: Base URI of the service.
 
     - ``--env BDC_STAC_API_VERSION="0.8.1"``: STAC Version used in the service.
 
@@ -141,5 +123,4 @@ Finally, to test if it is listening, use the ``curl`` command:
 
 .. [#f1] If you have a valid address for the PostgreSQL DBMS you can skip this section.
 
-.. [#f2] Make sure you have a database prepared with the schema for Image and Data Cube collections from the `Brazil Data Cube Database Module <https://github.com/brazil-data-cube/bdc-db>`_
-
+.. [#f2] `Brazil Data Cube Catalog Module <https://github.com/brazil-data-cube/bdc-catalog>`_
