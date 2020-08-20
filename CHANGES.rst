@@ -20,7 +20,7 @@ Released 2020-08-19
 
 .. note::
 
-    The branch 0.8.1 and below depends on previous version of `BDC Catalog Version 0.2.0 <https://github.com/brazil-data-cube/bdc-catalog/tree/v0.2.0>`_
+    The tag 0.8.1-0 and below depends on previous version of `BDC Catalog Version 0.2.0 <https://github.com/brazil-data-cube/bdc-catalog/tree/v0.2.0>`_
 
 
 Version 0.8.1-0
