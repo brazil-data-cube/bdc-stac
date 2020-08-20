@@ -104,7 +104,7 @@ In the source code folder, enter the following command:
 
         $ FLASK_APP="bdc_stac" \
           FLASK_ENV="development" \
-          SQLALCHEMY_DATABASE_URI="postgresql://postgres:secret@localhost:5432/bdcdb" \
+          SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdc_catalog" \
           BDC_STAC_BASE_URL="http://localhost:5000" \
           BDC_STAC_API_VERSION="0.8.1" \
           BDC_STAC_FILE_ROOT="http://localhost:5001" \
@@ -113,7 +113,7 @@ In the source code folder, enter the following command:
 
 You may need to replace the definition of some environment variables:
 
-    - ``SQLALCHEMY_DATABASE_URI="postgresql://postgres:secret@localhost:5432/bdcdb"``: set the database URI connection.
+    - ``SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdc_catalog"``: set the database URI connection.
 
     - ``BDC_STAC_BASE_URL="http://localhost:8080"``: Base URI of the service.
 
@@ -130,13 +130,3 @@ To add authentication support with Brazil Data Cube OAuth 2.0, use the following
     - ``BDC_AUTH_CLIENT_SECRET``: The OAuth 2.0 client secret
 
     - ``BDC_AUTH_ACCESS_TOKEN_URL``: The URL domain of BDC-OAuth 2.0 provider.
-
-
-.. note::
-
-        If you would like to set database URI connection individually instead ``SQLALCHEMY_DATABASE_URI``, you can also set:
-
-            - ``DB_HOST`` - the host address
-            - ``DB_NAME`` - the database name
-            - ``DB_USER`` - as user name connection
-            - ``DB_PASS`` - the user password

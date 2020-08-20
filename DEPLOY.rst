@@ -68,11 +68,7 @@ The `docker run` command can be used to launch a container from the image `bdc-s
                    --name bdc-stac \
                    --publish 127.0.0.1:8080:5000 \
                    --network=bdc_net \
-                   --env DB_HOST="bdc_pg" \
-                   --env DB_USER="postgres" \
-                   --env DB_PASS="secret" \
-                   --env DB_NAME="bdcdb" \
-                   --env DB_PORT="5432" \
+                   --env SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdc_catalog" \
                    --env BDC_STAC_BASE_URL="http://localhost:8080" \
                    --env BDC_STAC_API_VERSION="0.8.1" \
                    --env BDC_STAC_FILE_ROOT="http://localhost:8081" \
@@ -89,15 +85,7 @@ Let's take a look at each parameter in the above command:
 
     - ``--network=bdc_net``: if the container should connect to the database server through a docker network, this parameter will automatically attach the container to the ``bdc_net``. You can ommit this parameter if the database server address can be resolved directly from a host address.
 
-    - ``--env DB_HOST="bdc_pg"``: set the database host address that will be used by the STAC service. In this example, the name ``bdc_pg`` is the name of a PostgreSQL container in the same network as the STAC service.
-
-    - ``--env DB_PORT="5432"``: the port for connecting to the database server.
-
-    - ``--env DB_USER="postgres"``: the user name for connecting to the database server.
-
-    - ``--env DB_PASS="secret"``: the user password for connecting to the database server.
-
-    - ``--env DB_NAME="bdcdb"``:  the name of the database containing the image and data cube collections [#f2]_.
+    - ``--env SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdc_catalog"``: set the database URI. [#f2]_.
 
     - ``--env BDC_STAC_BASE_URL="http://localhost:8080"``: Base URI of the service.
 
@@ -136,4 +124,3 @@ Finally, to test if it is listening, use the ``curl`` command:
 .. [#f1] If you have a valid address for the PostgreSQL DBMS you can skip this section.
 
 .. [#f2] `Brazil Data Cube Catalog Module <https://github.com/brazil-data-cube/bdc-catalog>`_
-
