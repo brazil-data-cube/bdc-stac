@@ -1,9 +1,9 @@
 openapi: 3.0.1
 info:
+  title: The SpatioTemporal Asset Catalog API
+  version: 0.9.0
   x-logo:
     url: '/bdc-stac/0.8.1/static/images/datacube-site.png'
-  title: The SpatioTemporal Asset Catalog API
-  version: 0.8.1
   license:
     name: Apache License 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0'
@@ -33,8 +33,13 @@ paths:
         - Capabilities
       summary: landing page
       description: |-
+        Returns the root STAC Catalog or STAC Collection that is the entry point
+        for users to browse with STAC Browser or for search engines to crawl.
+        This can either return a single STAC Collection or more commonly a STAC
+        catalog.
+
         The landing page provides links to the API definition, the conformance
-        statements and to the feature collections in this dataset.
+        statements, the collections and sub-catalogs.
       operationId: getLandingPage
       responses:
         '200':
@@ -130,34 +135,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  /stac:
-    get:
-      summary: Return the root catalog or collection.
-      description: >-
-        Returns the root STAC Catalog or STAC Collection that is the entry point
-        for users to browse with STAC Browser or for search engines to crawl.
-        This can either return a single STAC Collection or more commonly a STAC
-        catalog that usually lists sub-catalogs of STAC Collections, i.e. a
-        simple catalog that lists all collections available through the API.
-      tags:
-        - STAC
-      responses:
-        '200':
-          description: A catalog JSON definition. Used as an entry point for a crawler.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/catalogDefinition'
-  /stac/search:
+  /search:
     get:
       summary: Search STAC items with simple filtering.
-      description: >-
+      description: |-
         Retrieve Items matching filters. Intended as a shorthand API for simple
         queries.
 
+        This method is optional, but you MUST implement `POST /search` if you
+        want to implement this method.
 
-        This method is optional, but you MUST implement `POST /stac/search` if
-        you want to implement this method.
+        If this endpoint is implemented on a server, it is required to add a
+        link referring to this endpoint with `rel` set to `search` to the
+        `links` array in `GET /`. As `GET` is the default method, the `method`
+        may not be set explicitly in the link.
       operationId: getSearchSTAC
       tags:
         - STAC
@@ -165,7 +156,6 @@ paths:
         - $ref: '#/components/parameters/bbox'
         - $ref: '#/components/parameters/datetime'
         - $ref: '#/components/parameters/limit'
-        - $ref: '#/components/parameters/next'
         - $ref: '#/components/parameters/ids'
         - $ref: '#/components/parameters/collectionsArray'
       responses:
@@ -189,15 +179,14 @@ paths:
                 type: string
     post:
       summary: Search STAC items with full-featured filtering.
-      description: >-
+      description: |-
         retrieve items matching filters. Intended as the standard, full-featured
         query API.
 
-
-        This method is mandatory to implement if `GET /stac/search` is
-        implemented. If this endpoint is implemented on a server, it is required
-        to add a link with `rel` set to `search` to the `links` array in `GET
-        /stac` that refers to this endpoint.
+        This method is mandatory to implement if `GET /search` is implemented.
+        If this endpoint is implemented on a server, it is required to add a
+        link referring to this endpoint with `rel` set to `search` and `method`
+        set to `POST` to the `links` array in `GET /`.
       operationId: postSearchSTAC
       tags:
         - STAC
@@ -235,9 +224,10 @@ components:
         selected.
 
         The bounding box is provided as four or six numbers, depending on
-        whether the
 
-        coordinate reference system includes a vertical axis (height or depth):
+        whether the coordinate reference system includes a vertical axis (height
+
+        or depth):
 
 
         * Lower left corner, coordinate axis 1
@@ -254,24 +244,23 @@ components:
 
 
         The coordinate reference system of the values is WGS 84
-        longitude/latitude
 
-        (http://www.opengis.net/def/crs/OGC/1.3/CRS84) unless a different
-        coordinate
+        longitude/latitude (http://www.opengis.net/def/crs/OGC/1.3/CRS84) unless
 
-        reference system is specified in the parameter `bbox-crs`.
+        a different coordinate reference system is specified in the parameter
+
+        `bbox-crs`.
 
 
         For WGS 84 longitude/latitude the values are in most cases the sequence
-        of
 
-        minimum longitude, minimum latitude, maximum longitude and maximum
-        latitude.
+        of minimum longitude, minimum latitude, maximum longitude and maximum
 
-        However, in cases where the box spans the antimeridian the first value
+        latitude. However, in cases where the box spans the antimeridian the
 
-        (west-most box edge) is larger than the third value (east-most box
-        edge).
+        first value (west-most box edge) is larger than the third value
+
+        (east-most box edge).
 
 
         If the vertical axis is included, the third and the sixth number are
@@ -280,12 +269,19 @@ components:
 
 
         If a feature has multiple spatial geometry properties, it is the
-        decision of the
 
-        server whether only a single spatial geometry property is used to
-        determine
+        decision of the server whether only a single spatial geometry property
 
-        the extent or all relevant geometries.
+        is used to determine the extent or all relevant geometries.
+
+
+        Example: The bounding box of the New Zealand Exclusive Economic Zone in
+
+        WGS 84 (from 160.6°E to 170°W and from 55.95°S to 25.89°S) would be
+
+        represented in JSON as `[160.6, -55.95, -170, -25.89]` and in a query as
+
+        `bbox=160.6,-55.95,-170,-25.89`.
       required: false
       schema:
         type: array
@@ -368,24 +364,12 @@ components:
         default: 10
       style: form
       explode: false
-    next:
-      name: next
-      in: query
-      description: >-
-        The token to retrieve the next set of results, e.g., offset, page,
-        continuation token
-      required: false
-      schema:
-        $ref: '#/components/schemas/next'
-      style: form
     ids:
       name: ids
       in: query
-      description: >
+      description: |-
         Array of Item ids to return. All other filter parameters that further
-        restrict the number of
-
-        search results (except `next` and `limit`) are ignored
+        restrict the number of search results are ignored
       required: false
       schema:
         $ref: '#/components/schemas/ids'
@@ -420,14 +404,10 @@ components:
           type: string
           example: address
         description:
-          description: >-
-            Detailed multi-line description to fully explain the collection.
-
-
-            [CommonMark 0.29](http://commonmark.org/) syntax MAY be used for
-            rich text representation.
+          description: a description of the features in the collection
           type: string
           example: An address.
+          $ref: '#/components/schemas/description'
         links:
           type: array
           items:
@@ -465,17 +445,54 @@ components:
           description: List of keywords describing the collection.
           items:
             type: string
-        version:
-          type: string
-          description: Version of the collection.
         license:
           $ref: '#/components/schemas/license'
         providers:
           $ref: '#/components/schemas/providers'
         summaries:
-          $ref: '#/components/schemas/summaries'
+          description: |-
+            Summaries are either a unique set of all available values *or*
+            statistics. Statistics by default only specify the range (minimum
+            and maximum values), but can optionally be accompanied by additional
+            statistical values. The range can specify the potential range of
+            values, but it is recommended to be as precise as possible. The set
+            of values must contain at least one element and it is strongly
+            recommended to list all values. It is recommended to list as many
+            properties as reasonable so that consumers get a full overview of
+            the Collection. Properties that are covered by the Collection
+            specification (e.g. `providers` and `license`) may not be repeated
+            in the summaries.
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: array
+                title: Set of values
+                items:
+                  description: A value of any type.
+              - type: object
+                title: Statistics
+                description: |-
+                  By default, only ranges with a minimum and a maximum value can
+                  be specified. Ranges can be specified for ordinal values only,
+                  which means they need to have a rank order. Therefore, ranges
+                  can only be specified for numbers and some special types of
+                  strings. Examples: grades (A to F), dates or times.
+                  Implementors are free to add other derived statistical values
+                  to the object, for example `mean` or `stddev`.
+                required:
+                  - min
+                  - max
+                properties:
+                  min:
+                    anyOf:
+                      - type: string
+                      - type: number
+                  max:
+                    anyOf:
+                      - type: string
+                      - type: number
       example:
-        stac_version: 0.8.1
+        stac_version: 0.9.0
         stac_extensions: []
         id: Sentinel-2
         title: 'Sentinel-2 MSI: MultiSpectral Instrument, Level-1C'
@@ -517,66 +534,53 @@ components:
             - 10
             - 30
             - 60
-          'eo:platform':
+          platform:
             - sentinel-2a
             - sentinel-2b
-          'eo:constellation':
+          constellation:
             - sentinel-2
-          'eo:instrument':
+          instruments:
             - msi
-          'eo:off_nadir':
+          'view:off_nadir':
             min: 0
             max: 100
-          'eo:sun_elevation':
+          'view:sun_elevation':
             min: 6.78
             max: 89.9
           'eo:bands':
             - - name: B1
                 common_name: coastal
                 center_wavelength: 4.439
-                gsd: 60
               - name: B2
                 common_name: blue
                 center_wavelength: 4.966
-                gsd: 10
               - name: B3
                 common_name: green
                 center_wavelength: 5.6
-                gsd: 10
               - name: B4
                 common_name: red
                 center_wavelength: 6.645
-                gsd: 10
               - name: B5
                 center_wavelength: 7.039
-                gsd: 20
               - name: B6
                 center_wavelength: 7.402
-                gsd: 20
               - name: B7
                 center_wavelength: 7.825
-                gsd: 20
               - name: B8
                 common_name: nir
                 center_wavelength: 8.351
-                gsd: 10
               - name: B8A
                 center_wavelength: 8.648
-                gsd: 20
               - name: B9
                 center_wavelength: 9.45
-                gsd: 60
               - name: B10
                 center_wavelength: 1.3735
-                gsd: 60
               - name: B11
                 common_name: swir16
                 center_wavelength: 1.6137
-                gsd: 20
               - name: B12
                 common_name: swir22
                 center_wavelength: 2.2024
-                gsd: 20
         links:
           - rel: self
             href: 'http://cool-sat.com/collections/Sentinel-2'
@@ -880,6 +884,9 @@ components:
       type: object
       required:
         - links
+        - stac_version
+        - id
+        - description
       properties:
         title:
           type: string
@@ -893,6 +900,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/link'
+        stac_version:
+          $ref: '#/components/schemas/stac_version'
+        stac_extensions:
+          $ref: '#/components/schemas/stac_extensions'
+        id:
+          type: string
     linestringGeoJSON:
       type: object
       required:
@@ -935,6 +948,38 @@ components:
           example: NAIP Child Catalog
         length:
           type: integer
+        method:
+          type: string
+          enum:
+            - GET
+            - POST
+          default: GET
+          description: Specifies the HTTP method that the link expects
+        headers:
+          type: object
+          description: Object key values pairs they map to headers
+          example:
+            Accept: application/json
+        body:
+          type: object
+          description: >-
+            For POST requests, the link can specify the HTTP body as a JSON
+            object.
+        merge:
+          type: boolean
+          default: false
+          description: |-
+            This is only valid when the server is responding to POST request.
+
+            If merge is true, the client is expected to merge the body value
+            into the current request body before following the link.
+            This avoids passing large post bodies back and forth when following
+            links, particularly for navigating pages through the `POST /search`
+            endpoint.
+
+            NOTE: To support form encoding it is expected that a client be able
+            to merge in the key value pairs specified as JSON
+            `{"next": "token"}` will become `&next=token`.
       title: Link
     multilinestringGeoJSON:
       type: object
@@ -1056,22 +1101,28 @@ components:
       type: string
       format: date-time
       example: '2017-08-17T08:05:32Z'
+    description:
+      type: string
+      description: |-
+        Detailed multi-line description to fully explain the catalog or
+        collection.
+
+        [CommonMark 0.29](http://commonmark.org/) syntax MAY be used for rich
+        text representation.
     license:
       type: string
-      description: >-
-        License(s) of the data as a SPDX [License
-        identifier](https://spdx.org/licenses/) or
-        [expression](https://spdx.org/spdx-specification-21-web-version#h.jxpfx0ykyb60).
-        Alternatively, use `proprietary` if the license is not on the SPDX
-        license list or `various` if multiple licenses apply. In these two cases
-        links to the license texts SHOULD be added, see the `license` link
-        relation type.
-
+      description: |-
+        License(s) of the data as a SPDX
+        [License identifier](https://spdx.org/licenses/). Alternatively, use
+        `proprietary` if the license is not on the SPDX license list or
+        `various` if multiple licenses apply. In these two cases links to the
+        license texts SHOULD be added, see the `license` link relation type.
 
         Non-SPDX licenses SHOULD add a link to the license text with the
         `license` relation in the links section. The license text MUST NOT be
         provided as a value of this field. If there is no public license URL
-        available, it is RECOMMENDED to host the license text and link to it.
+        available, it is RECOMMENDED to host the license text and
+        link to it.
       example: Apache-2.0
     providers:
       type: array
@@ -1099,26 +1150,22 @@ components:
               CommonMark 0.29 syntax MAY be used for rich text representation.
             type: string
           roles:
-            description: >-
+            description: |-
               Roles of the provider.
-
 
               The provider's role(s) can be one or more of the following
               elements:
 
               * licensor: The organization that is licensing the dataset under
-              the license specified in the collection's license field.
-
+                the license specified in the collection's license field.
               * producer: The producer of the data is the provider that
-              initially captured and processed the source data, e.g. ESA for
-              Sentinel-2 data.
-
+                initially captured and processed the source data, e.g. ESA for
+                Sentinel-2 data.
               * processor: A processor is any provider who processed data to a
-              derived product.
-
+                derived product.
               * host: The host is the actual provider offering the data on their
-              storage. There should be no more than one host, specified as last
-              element of the list.
+                storage. There should be no more than one host, specified as last
+                element of the list.
             type: array
             items:
               type: string
@@ -1140,16 +1187,9 @@ components:
         - $ref: '#/components/schemas/bboxFilter'
         - $ref: '#/components/schemas/datetimeFilter'
         - $ref: '#/components/schemas/intersectsFilter'
-        - $ref: '#/components/schemas/nextFilter'
         - $ref: '#/components/schemas/collectionsFilter'
         - $ref: '#/components/schemas/idsFilter'
         - $ref: '#/components/schemas/limitFilter'
-    next:
-      type: string
-      description: >-
-        The token to retrieve the next set of results, e.g., offset, page,
-        continuation token
-      default: null
     limit:
       type: integer
       minimum: 1
@@ -1158,7 +1198,7 @@ components:
       maximum: 10000
       description: The maximum number of results to return (page size). Defaults to 10
     bbox:
-      description: |
+      description: |-
         Only features that have a geometry that intersects the bounding box are
         selected. The bounding box is provided as four or six numbers,
         depending on whether the coordinate reference system includes a
@@ -1182,10 +1222,14 @@ components:
         first value (west-most box edge) is larger than the third value
         (east-most box edge).
 
-
         If a feature has multiple spatial geometry properties, it is the
         decision of the server whether only a single spatial geometry property
         is used to determine the extent or all relevant geometries.
+
+        Example: The bounding box of the New Zealand Exclusive Economic Zone in
+        WGS 84 (from 160.6°E to 170°W and from 55.95°S to 25.89°S) would be
+        represented in JSON as `[160.6, -55.95, -170, -25.89]` and in a query as
+        `bbox=160.6,-55.95,-170,-25.89`.
       type: array
       minItems: 4
       maxItems: 6
@@ -1204,18 +1248,16 @@ components:
           $ref: '#/components/schemas/bbox'
     collectionsArray:
       type: array
-      description: |
+      description: |-
         Array of Collection IDs to include in the search for items.
-        Only Items in one of the provided Collections will be searched
+        Only Items in one of the provided Collections will be searched.
       items:
         type: string
     ids:
       type: array
-      description: >
+      description: |-
         Array of Item ids to return. All other filter parameters that further
-        restrict the number of
-
-        search results (except `next` and `limit`) are ignored
+        restrict the number of search results are ignored
       items:
         type: string
     datetimeFilter:
@@ -1236,12 +1278,6 @@ components:
       properties:
         limit:
           $ref: '#/components/schemas/limit'
-    nextFilter:
-      type: object
-      description: Only returns the next set of results
-      properties:
-        next:
-          $ref: '#/components/schemas/next'
     idsFilter:
       type: object
       description: Only returns items that match the array of given ids
@@ -1256,38 +1292,28 @@ components:
           $ref: '#/components/schemas/collectionsArray'
     datetime:
       type: string
-      description: >-
+      description: |-
         Either a date-time or an interval, open or closed. Date and time
-        expressions
-
-        adhere to RFC 3339. Open intervals are expressed using double-dots.
-
+        expressions adhere to RFC 3339. Open intervals are expressed using
+        double-dots.
 
         Examples:
 
-
         * A date-time: "2018-02-12T23:20:50Z"
-
         * A closed interval: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z"
-
         * Open intervals: "2018-02-12T00:00:00Z/.." or "../2018-03-18T12:31:12Z"
 
-
         Only features that have a temporal property that intersects the value of
-
         `datetime` are selected.
 
-
         If a feature has multiple temporal properties, it is the decision of the
-
         server whether only a single temporal property is used to determine
-
         the extent or all relevant temporal properties.
       example: '2018-02-12T00:00:00Z/2018-03-18T12:31:12Z'
     stac_version:
       title: STAC version
       type: string
-      example: 0.8.1
+      example: 0.9.0
     stac_extensions:
       title: STAC extensions
       type: array
@@ -1299,96 +1325,6 @@ components:
             format: uri
           - title: Reference to a core extension
             type: string
-    summaries:
-      description: >-
-        Summaries are either a unique set of all available values *or*
-        statistics. Statistics by default only specify the range (minimum and
-        maximum values), but can optionally be accompanied by additional
-        statistical values. The range can specify the potential range of values,
-        but it is recommended to be as precise as possible. The set of values
-        must contain at least one element and it is strongly recommended to list
-        all values. It is recommended to list as many properties as reasonable
-        so that consumers get a full overview of the Collection. Properties that
-        are covered by the Collection specification (e.g. `providers` and
-        `license`) may not be repeated in the summaries.
-      type: object
-      additionalProperties:
-        oneOf:
-          - type: array
-            title: Set of values
-            items:
-              description: A value of any type.
-          - type: object
-            title: Statistics
-            description: >-
-              By default, only ranges with a minimum and a maximum value can be
-              specified. Ranges can be specified for ordinal values only, which
-              means they need to have a rank order. Therefore, ranges can only
-              be specified for numbers and some special types of strings.
-              Examples: grades (A to F), dates or times. Implementors are free
-              to add other derived statistical values to the object, for example
-              `mean` or `stddev`.
-            required:
-              - min
-              - max
-            properties:
-              min:
-                anyOf:
-                  - type: string
-                  - type: number
-              max:
-                anyOf:
-                  - type: string
-                  - type: number
-    catalogDefinition:
-      type: object
-      required:
-        - stac_version
-        - id
-        - description
-        - links
-      properties:
-        stac_version:
-          $ref: '#/components/schemas/stac_version'
-        stac_extensions:
-          $ref: '#/components/schemas/stac_extensions'
-        id:
-          type: string
-          example: naip
-        title:
-          type: string
-          example: NAIP Imagery
-        description:
-          type: string
-          example: Catalog of NAIP Imagery.
-        summaries:
-          $ref: '#/components/schemas/summaries'
-        links:
-          type: array
-          items:
-            anyOf:
-              - $ref: '#/components/schemas/link'
-              - title: Link to search endpoint
-                description: >-
-                  Link the search endpoint, which is **required** to be
-                  specified if the API implements `/stac/search`.
-                type: object
-                required:
-                  - href
-                  - rel
-                properties:
-                  href:
-                    type: string
-                    format: url
-                    example: 'http://www.cool-sat.com/stac/search'
-                  rel:
-                    type: string
-                    enum:
-                      - search
-                  type:
-                    type: string
-                  title:
-                    type: string
     itemCollection:
       description: >-
         A GeoJSON FeatureCollection augmented with foreign members that contain
@@ -1444,9 +1380,10 @@ components:
         assets:
           $ref: '#/components/schemas/itemAssets'
       example:
-        stac_version: 0.8.1
+        stac_version: 0.9.0
         stac_extensions:
           - eo
+          - view
           - 'https://example.com/cs-extension/1.0/schema.json'
         type: Feature
         id: CS3-20160503_132131_05
@@ -1478,13 +1415,14 @@ components:
                 - producer
                 - licensor
               url: 'https://cool-sat.com/'
-          'eo:sun_azimuth': 168.7
+          'view:sun_azimuth': 168.7
           'eo:cloud_cover': 0.12
-          'eo:off_nadir': 1.4
-          'eo:platform': coolsat2
-          'eo:instrument': cool_sensor_v1
+          'view:off_nadir': 1.4
+          platform: coolsat2
+          instruments:
+            - cool_sensor_v1
           'eo:bands': []
-          'eo:sun_elevation': 33.4
+          'view:sun_elevation': 33.4
           'eo:gsd': 0.512
         collection: CS3
         links:
@@ -1531,10 +1469,25 @@ components:
             type: string
             description: Displayed title
             example: Thumbnail
+          description:
+            type: string
+            description: |-
+              Multi-line description to explain the asset.
+
+              [CommonMark 0.29](http://commonmark.org/) syntax MAY be used for
+              rich text representation.
+            example: Small 256x256px PNG thumbnail for a preview.
           type:
             type: string
             description: Media type of the asset
             example: image/png
+          roles:
+            type: array
+            items:
+              type: string
+            description: Purposes of the asset
+            example:
+              - thumbnail
     itemProperties:
       type: object
       required:
@@ -1557,7 +1510,7 @@ components:
       example:
         - rel: next
           href: >-
-            http://api.cool-sat.com/stac/search?next=ANsXtp9mrqN0yrKWhf-y2PUpHRLQb1GT-mtxNcXou8TwkXhi1Jbk
+            http://api.cool-sat.com/search?next=ANsXtp9mrqN0yrKWhf-y2PUpHRLQb1GT-mtxNcXou8TwkXhi1Jbk
   responses:
     LandingPage:
       description: |-
@@ -1567,15 +1520,17 @@ components:
         link relation `conformance`), and the Feature
         Collections (path `/collections`, link relation
         `data`).
+
+        Links to the search endpoints (path `/search`, link relation `search`,
+        method `GET` or `POST`) are **required** to be specified if the API
+        implements `/search` for any of the specified HTTP methods.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/landingPage'
           example:
-            title: Buildings in Bonn
-            description: >-
-              Access to data about buildings in the city of Bonn via a Web API
-              that conforms to the OGC API Features specification.
+            title: NAIP Imagery
+            description: Catalog of NAIP Imagery.
             links:
               - href: 'http://data.example.org/'
                 rel: self
@@ -1597,6 +1552,12 @@ components:
                 rel: data
                 type: application/json
                 title: Information about the feature collections
+              - href: 'http://data.example.org/search'
+                rel: search
+                type: application/json
+                title: Search across feature collections
+            stac_version: 0.9.0
+            id: naip
         text/html:
           schema:
             type: string
@@ -1779,7 +1740,7 @@ components:
           schema:
             type: string
 servers:
-  - url: 'http://dev.cool-sat.com'
+  - url: 'http://brazildatacube.dpi.inpe.br/dev/bdc-stac/'
     description: Development server
-  - url: 'http://www.cool-sat.com'
+  - url: 'http://brazildatacube.dpi.inpe.br/bdc-stac/'
     description: Production server

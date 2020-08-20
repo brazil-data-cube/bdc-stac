@@ -33,7 +33,7 @@ def create_app():
 
     with app.app_context():
         db.init_app(app)
-        Redoc(app, f'spec/api/{_config.BDC_STAC_API_VERSION}/STAC.yaml')
+        Redoc(app, 'spec/api/STAC.yaml')
 
         from . import routes
 

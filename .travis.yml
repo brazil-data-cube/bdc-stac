@@ -16,12 +16,13 @@ branches:
   - b-0.7.0
   - b-0.8.0
   - b-0.8.1
+  - b-0.9.0
 dist: bionic
 python:
 - '3.7'
 env:
   matrix:
-  - SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@127.0.0.1:5432/bdcdb"
+  - SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@127.0.0.1:5432/bdc_catalog"
   global:
   - secure: zBpGvesnFU+bzWCeIzlCNvPE4IvxuewLppfyHjSaI8pFR3BW7kxH8cN5WKd0i158XiwHdIRhhtAK6WnJNBrsbd7KkeciIC7x4S74ggpCdAu+N2odRU/VW9d70DSnLPXFcLAZCxShtdw+zHeQBWKGp7hNcVtP6f9JNVLJxcqT2z4xh7aTMpQwOVVX7wpmLV7LN2LoyWR6l/zwej4Znlq0sWYhur1KJndLhhWA+cTtQq9jMS1191OIdrEK6Ro1eTHNHzshQrVrgIRJpMgn6/uh600CsTP35Ep8a3unX36ORYX4Dd6svma9Z4V/ne75SRTHXk1CDbD/nkdC0b7UjqHX6koVxLUl5qt01bUX1WV4ErNf7kRTfYChrJygB/OlNHRttkTpxv/rVM0uu5zo3Or0H126Aq87nBg5EzQkeAZU0NySR2jNFL+CQC1qR9b0XsNUg2SXd4M9FjZeDmZeBvIRGNPHx90/LV6nZf5NtNYmlIC7jYbarz24CjzOhnSnIACLlXZk71+TJNMHiASvkZof7cTBxjHDXs0I8RMBeroLse3ymwgXe1QB+spySg/qZeFqmJtwOMIqof0H1L/lzUKvPEkgCSfZ/IPvQbMIq+B3E1JqN3/22SjcYuZ1FNoEIkSZeOmye9QY4v4anh/D4VZXBYiHCaxZcb+D94fdVnykBqU=
   - secure: ra3l9Ao7O7Uh2c80AdcdjleypBCOG8e65wgaOndjqCB8lghsdNhT9HDJPNvM2YCmViL9m4Avm3N4NkNOUKO8vaxfVK91Nz31315u5oVn8VBGzBxB+5Cc0rxV2b2DB05QfSbW3uGLP4HswycRc8a3WoM+M7Dyx46T0kqbSEbNi5Bwpt02Vxm1FuIPNJmWfIoAvrSJu8v1/aPqt+tq4uppK+KvhiXdXAeCgjjEOMmf87pRjZjqmDsfMS8V/xfgyX0tjc1pGehjwuHbF0VGReOVpg3Bj3jmyrvG9g/HnfPAmI02Viv+NosbcIEo6Bv3Dy7LbN7iLnMbXbgc5raPAvZSv3xDsewQCq8U+j5+rojI8KixN3f5onAy1l+k0u/UT2G/P97v+erfxqsqly4KMT0K4YkJ/ToNoC5Nu0d59Io+kR4Of8VeQMEq8n2jtge8X11UblV0eJBT0V/Fd1ABmeksk6LUFoAHd0NochdrtzwlOhdyNMGjNd9ThWYhoKmV5pG59dljqt44ZpNIV2OF9l7WADjx4/1ymzvFD/KRTIuLEovm+/pyv9UtumVI8fBgVlAmQ8WEokP5rBwNUGMmHXa01XisB8OIM/KXCY0/fvQE+zG4hZXRa3riyp9qLTUQwdEXazCkZRAMKs6KaMB6m7D1FRdmXjCy6qs263gf9esdIaM=
@@ -46,8 +47,3 @@ deploy:
     tags: true
 after_success:
 - coveralls
-notifications:
-  slack:
-    rooms:
-    - secure: oRt5VsXvnretDrOhJeKteAAmq4fje+HNlIsXBQhfr5Jd2Q7ecj6+vTzWpECCg0WCN4dJLbgvyeO/zasOF/efLx7ysUj4HUbtX7L3NUr00cj0mfxsg/GyHTX0BK/UxQJptDScCH0Dr3+RXcIthypyxEIhwp/5yPYGRzTZw8jjbJ2inETuSDkbQ/OyqAetLDa++0hiNtmsOpI9lQMBAkLKWg9qigAfhdAMRn6BWNjP920olxDv6oiGYAvyjyD7XyhP2gdf5hfsfmXQ0dvhEdDvRcIiDVyCwAM73L9/9yafdBsrxSR8NeolIRDngTqvY+8wp8YUZu6RhJg2o1E8yr/9lyWKAwXlzk9VOArnvnV0uFtkuGPw+r9WySK3JOpUjCvuSF2v5B6+Sy/uEikGZNAtNdzJoKRXTFUiGHqXYrDKDUNzGG7kh3pJRiYXR/+/KBoE3t1ufBC2MJicMjlvCwqedPFTWJ0R0KRU0/x0oGNTjgCu0BXjd16ZsnCDW7YQsokpNYQvzSzJGSLLAD5acofZnplqX2RK7mqFPA3OxlMOo2l6cMSe95Ksqc27IcXCMKmIiLZrlSnlLGLBPPQcUxwBWJlfeNLhgM4v2sECeo05jJOAdZuKBjc16DI5pLPkvooWPLni8R0vETz9GY3V/jB+XdeZMER3VYVL6+37j4zgaps=
-    on_success: always
