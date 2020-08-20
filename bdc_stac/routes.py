@@ -8,20 +8,18 @@
 """Routes for the BDC-STAC API."""
 
 import gzip
-import os
-from io import BytesIO
 
-from bdc_db import BDCDatabase
-from flask import (abort, current_app, jsonify, make_response, request,
-                   send_file)
+from bdc_auth_client.decorators import oauth2
+from flask import abort, current_app, jsonify, request
 from werkzeug.exceptions import HTTPException, InternalServerError
 from werkzeug.urls import url_encode
 
+from .config import BDC_STAC_API_VERSION, BDC_STAC_BASE_URL
 from .data import (InvalidBoundingBoxError, get_collection,
                    get_collection_items, get_collections, make_geojson,
                    session)
 
-BASE_URL = os.getenv('BASE_URL', 'http://localhost:5000')
+BASE_URL = BDC_STAC_BASE_URL
 
 
 @current_app.teardown_appcontext
@@ -77,19 +75,22 @@ def conformance():
 
 @current_app.route("/collections", methods=["GET"])
 @current_app.route("/stac", methods=["GET"])
-def root():
+@oauth2(required=False)
+def root(roles=[], access_token=''):
     """Return the root catalog or collection."""
-    collections = get_collections()
+    access_token = f"?access_token={access_token}" if access_token else ''
+
+    collections = get_collections(roles=roles)
     catalog = dict()
     catalog["description"] = "Brazil Data Cubes Catalog"
     catalog["id"] = "bdc"
-    catalog["stac_version"] = os.getenv("API_VERSION", "0.8.1")
+    catalog["stac_version"] = BDC_STAC_API_VERSION
     links = list()
-    links.append({"href": request.url, "rel": "self"})
+    links.append({"href": f"{BASE_URL}/", "rel": "self"})
 
     for collection in collections:
-        links.append({"href": f"{BASE_URL}/collections/{collection.id}",
-                      "rel": "child", "title": collection.id})
+        links.append({"href": f"{BASE_URL}/collections/{collection.name}{access_token}",
+                      "rel": "child", "title": collection.name})
 
     catalog["links"] = links
 
@@ -97,16 +98,20 @@ def root():
 
 
 @current_app.route("/collections/<collection_id>", methods=["GET"])
-def collections_id(collection_id):
+@oauth2(required=False)
+def collections_id(collection_id, roles=[], access_token=''):
     """Describe the given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
     """
-    collection = get_collection(collection_id)
-    links = [{"href": f"{BASE_URL}/collections/{collection_id}", "rel": "self"},
-             {"href": f"{BASE_URL}/collections/{collection_id}/items", "rel": "items"},
-             {"href": f"{BASE_URL}/collections", "rel": "parent"},
-             {"href": f"{BASE_URL}/collections", "rel": "root"},
+    access_token = f"?access_token={access_token}" if access_token else ''
+
+    collection = get_collection(collection_id, roles=roles)
+
+    links = [{"href": f"{BASE_URL}/collections/{collection_id}{access_token}", "rel": "self"},
+             {"href": f"{BASE_URL}/collections/{collection_id}/items{access_token}", "rel": "items"},
+             {"href": f"{BASE_URL}/collections{access_token}", "rel": "parent"},
+             {"href": f"{BASE_URL}/collections{access_token}", "rel": "root"},
              {"href": f"{BASE_URL}/stac", "rel": "root"}]
 
     collection['links'] = links
@@ -115,13 +120,16 @@ def collections_id(collection_id):
 
 
 @current_app.route("/collections/<collection_id>/items", methods=["GET"])
-def collection_items(collection_id):
+@oauth2(required=False)
+def collection_items(collection_id, roles=[], access_token=''):
     """Retrieve features of the given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
     """
+    access_token = f"?access_token={access_token}" if access_token else ''
+
     items = get_collection_items(
-        collection_id=collection_id, **request.args.to_dict())
+        collection_id=collection_id, roles=roles, **request.args.to_dict())
 
     links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
              {"href": f"{BASE_URL}/collections/", "rel": "parent"},
@@ -131,7 +139,7 @@ def collection_items(collection_id):
     gjson = dict()
     gjson['type'] = 'FeatureCollection'
 
-    features = make_geojson(items.items, links)
+    features = make_geojson(items.items, links, access_token=access_token)
 
     gjson['links'] = []
 
@@ -153,19 +161,22 @@ def collection_items(collection_id):
 
 
 @current_app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
-def items_id(collection_id, item_id):
+@oauth2(required=False)
+def items_id(collection_id, item_id, roles=[], access_token=''):
     """Retrieve a given feature from a given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
     :param item_id: identifier (name) of a specific item
     """
-    item = get_collection_items(collection_id=collection_id, item_id=item_id)
+    access_token = f"?access_token={access_token}" if access_token else ''
+
+    item = get_collection_items(collection_id=collection_id, roles=roles, item_id=item_id)
     links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
              {"href": f"{BASE_URL}/collections/", "rel": "parent"},
              {"href": f"{BASE_URL}/collections/", "rel": "collection"},
              {"href": f"{BASE_URL}/stac", "rel": "root"}]
 
-    gjson = make_geojson(item.items, links)
+    gjson = make_geojson(item.items, links, access_token=access_token)
 
     if len(gjson) > 0:
         return gjson[0]
@@ -174,9 +185,12 @@ def items_id(collection_id, item_id):
 
 
 @current_app.route("/stac/search", methods=["GET", "POST"])
-def stac_search():
+@oauth2(required=False)
+def stac_search(roles=[], access_token=''):
     """Search STAC items with simple filtering."""
-    bbox, time, ids, collections, page, limit, intersects = None, None, None, None, None, None, None
+    access_token = f"?access_token={access_token}" if access_token else ''
+
+    bbox, time, ids, collections, page, limit, intersects, query = None, None, None, None, None, None, None, None
     if request.method == "POST":
         if request.is_json:
             request_json = request.get_json()
@@ -192,7 +206,7 @@ def stac_search():
                 ids = ",".join([x for x in ids])
 
             intersects = request_json.get('intersects', None)
-
+            query = request_json.get('query', None)
             collections = request_json.get('collections', None)
             if collections is not None:
                 collections = ",".join([x for x in collections])
@@ -206,16 +220,17 @@ def stac_search():
     elif request.method == "GET":
         bbox = request.args.get('bbox', None)
         time = request.args.get('time', None)
-        ids = request.args.get('ids', None)
+        names = request.args.get('names', None)
         collections = request.args.get('collections', None)
         cubes = request.args.get('cubes', None)
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
 
-    items = get_collection_items(collections=collections, bbox=bbox,
-                                 time=time, ids=ids,
+    items = get_collection_items(collections=collections,
+                                 roles=roles, bbox=bbox,
+                                 time=time, names=names,
                                  page=page, limit=limit,
-                                 intersects=intersects)
+                                 intersects=intersects, query=query)
 
     links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
              {"href": f"{BASE_URL}/collections/", "rel": "parent"},
@@ -225,7 +240,7 @@ def stac_search():
     gjson = dict()
     gjson['type'] = 'FeatureCollection'
 
-    features = make_geojson(items.items, links)
+    features = make_geojson(items.items, links, access_token=access_token)
 
     gjson['links'] = []
 
@@ -260,6 +275,6 @@ def handle_exception(e):
 
 
 @current_app.errorhandler(InvalidBoundingBoxError)
-def handle_exception(e):
+def handle_exception_bbox(e):
     """Handle InvalidBoundingBoxError."""
     return {'code': '400', 'description': str(e)}, 400
