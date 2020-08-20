@@ -8,20 +8,16 @@
 """Routes for the BDC-STAC API."""
 
 import gzip
-from io import BytesIO
 
-from bdc_catalog import BDCCatalog
-from bdc_auth_client.decorators import oauth2 
-from flask import (abort, current_app, jsonify, make_response, request,
-                   send_file)
+from bdc_auth_client.decorators import oauth2
+from flask import abort, current_app, jsonify, request
 from werkzeug.exceptions import HTTPException, InternalServerError
 from werkzeug.urls import url_encode
 
+from .config import BDC_STAC_API_VERSION, BDC_STAC_BASE_URL
 from .data import (InvalidBoundingBoxError, get_collection,
                    get_collection_items, get_collections, make_geojson,
                    session)
-
-from .config import BDC_STAC_BASE_URL, BDC_STAC_API_VERSION
 
 BASE_URL = BDC_STAC_BASE_URL
 
@@ -193,7 +189,7 @@ def items_id(collection_id, item_id, roles=[], access_token=''):
 def stac_search(roles=[], access_token=''):
     """Search STAC items with simple filtering."""
     access_token = f"?access_token={access_token}" if access_token else ''
-    
+
     bbox, time, ids, collections, page, limit, intersects, query = None, None, None, None, None, None, None, None
     if request.method == "POST":
         if request.is_json:
@@ -230,7 +226,7 @@ def stac_search(roles=[], access_token=''):
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
 
-    items = get_collection_items(collections=collections, 
+    items = get_collection_items(collections=collections,
                                  roles=roles, bbox=bbox,
                                  time=time, names=names,
                                  page=page, limit=limit,
@@ -279,6 +275,6 @@ def handle_exception(e):
 
 
 @current_app.errorhandler(InvalidBoundingBoxError)
-def handle_exception(e):
+def handle_exception_bbox(e):
     """Handle InvalidBoundingBoxError."""
     return {'code': '400', 'description': str(e)}, 400

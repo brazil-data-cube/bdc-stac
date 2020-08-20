@@ -10,8 +10,9 @@ from bdc_catalog import BDCCatalog
 from flask import Flask
 from flask_redoc import Redoc
 
-from .version import __version__
 from . import config as _config
+from .data import db
+from .version import __version__
 
 __all__ = ('__version__')
 
@@ -31,7 +32,7 @@ def create_app():
     app.config['REDOC'] = {'title': 'BDC-STAC'}
 
     with app.app_context():
-        BDCCatalog(app)
+        db.init_app(app)
         Redoc(app, f'spec/api/{_config.BDC_STAC_API_VERSION}/STAC.yaml')
 
         from . import routes

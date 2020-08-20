@@ -1,29 +1,33 @@
 """Data module."""
 import json
 import warnings
-
 from copy import deepcopy
 from datetime import datetime
 from functools import lru_cache
-from bdc_catalog.models import (Band, Collection, CompositeFunction, Item, GridRefSys, Tile, Quicklook, db)
-from geoalchemy2.functions import GenericFunction
-from sqlalchemy import cast, create_engine, exc, func, or_, Float
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import sessionmaker
 
-from .config import (BDC_STAC_FILE_ROOT, BDC_STAC_API_VERSION,
+from bdc_catalog.models import (Band, Collection, CompositeFunction,
+                                GridRefSys, Item, Tile)
+from bdc_catalog.models.base_sql import db
+from flask_sqlalchemy import SQLAlchemy
+from geoalchemy2.functions import GenericFunction
+from sqlalchemy import Float, cast, exc, func, or_
+
+from .config import (BDC_STAC_API_VERSION, BDC_STAC_FILE_ROOT,
                      BDC_STAC_MAX_LIMIT)
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=exc.SAWarning)
 
-session = db.create_scoped_session({'autocommit': True})
+
+db = SQLAlchemy()
+
+session = db.create_scoped_session({"autocommit": True})
 
 
 class ST_Extent(GenericFunction):
     """Postgis ST_Extent function."""
 
-    name = 'ST_Extent'
+    name = "ST_Extent"
     type = None
 
 
@@ -38,7 +42,7 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
     :type item_id: str, optional
     :param bbox: bounding box for intersection [west, north, east, south], defaults to None
     :type bbox: list, optional
-    :param time: Single date+time, or a range ('/' seperator), formatted to RFC 3339, section 5.6, defaults to None
+    :param time: Single date+time, or a range ("/" seperator), formatted to RFC 3339, section 5.6, defaults to None
     :type time: str, optional
     :param names: Array of Item names to return. All other filter parameters that further restrict the
                 number of search results are ignored, defaults to None
@@ -58,48 +62,48 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
     :return: list of collectio items
     :rtype: list
     """
-    columns = [func.concat(Collection.name, ':', Collection.version).label('collection'),
-               Item.name.label('item'),
+    columns = [func.concat(Collection.name, ":", Collection.version).label("collection"),
+               Item.name.label("item"),
                Item.collection_id,
-               Item.start_date.label('start'),
-               Item.end_date.label('end'),
+               Item.start_date.label("start"),
+               Item.end_date.label("end"),
                Item.assets,
                Item.created,
                Item.updated,
-               cast(Item.cloud_cover, Float).label('cloud_cover'),
-               func.ST_AsGeoJSON(Item.geom).label('geom'),
-               func.Box2D(Item.geom).label('bbox'),
-               Tile.name.label('tile')]
+               cast(Item.cloud_cover, Float).label("cloud_cover"),
+               func.ST_AsGeoJSON(Item.geom).label("geom"),
+               func.Box2D(Item.geom).label("bbox"),
+               Tile.name.label("tile")]
 
     where = [Collection.id == Item.collection_id,
-              Item.tile_id == Tile.id,
-              or_(
-                Collection.is_public.is_(True),
-                Collection.id.in_([int(r.split(':')[0]) for r in roles])
+             Item.tile_id == Tile.id,
+             or_(
+                 Collection.is_public.is_(True),
+                 Collection.id.in_([int(r.split(":")[0]) for r in roles])
              )]
 
     if names is not None:
-        where += [Item.name.in_(names.split(','))]
+        where += [Item.name.in_(names.split(","))]
     elif item_id is not None:
         where += [Item.name.like(item_id)]
     else:
         if collections is not None:
-            where += [func.concat(Collection.name, ':', Collection.version).in_(collections.split(','))]
+            where += [func.concat(Collection.name, ":", Collection.version).in_(collections.split(","))]
         elif collection_id is not None:
-            where += [func.concat(Collection.name, ':', Collection.version) == collection_id]
+            where += [func.concat(Collection.name, ":", Collection.version) == collection_id]
 
         if intersects is not None:
             where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(
                 str(intersects)), Item.geom)]
 
         if query:
-           filters =  create_query_filter(query)
-           if filters:
-               where += filters
+            filters = create_query_filter(query)
+            if filters:
+                where += filters
 
         if bbox is not None:
             try:
-                split_bbox = [float(x) for x in bbox.split(',')]
+                split_bbox = [float(x) for x in bbox.split(",")]
 
                 where += [func.ST_Intersects(func.ST_MakeEnvelope(split_bbox[0],
                                                                   split_bbox[1],
@@ -109,7 +113,7 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
                                              Item.geom)]
             except:
                 raise (InvalidBoundingBoxError(
-                    f"'{bbox}' is not a valid bbox.'"))
+                    f"'{bbox}' is not a valid bbox."))
 
         if time is not None:
             if "/" in time:
@@ -120,8 +124,7 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
             else:
                 time_start = datetime.fromisoformat(time)
             where += [or_(Item.start_date >= time_start,
-                        Item.end_date >= time_start)]
-
+                          Item.end_date >= time_start)]
 
     query = session.query(*columns).filter(*where).order_by(Item.start_date.desc())
 
@@ -131,6 +134,7 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
                             max_per_page=int(BDC_STAC_MAX_LIMIT))
 
     return result
+
 
 @lru_cache()
 def get_collection_eo(collection_id):
@@ -142,22 +146,23 @@ def get_collection_eo(collection_id):
         eo_gsd, eo_bands (tuple(float, dict)):
     """
     bands = session.query(Band.name, Band.common_name,
-                          cast(Band.min, Float).label('min'), cast(Band.max, Float).label('max'),
-                          cast(Band.nodata, Float).label('nodata'), cast(Band.scale, Float).label('scale'),
-                          cast(Band.resolution_x, Float).label('gsd'), Band.data_type,
-                          cast(Band.center_wavelength, Float).label('center_wavelength'),
-                          cast(Band.full_width_half_max, Float).label('full_width_half_max')).filter(Band.collection_id == collection_id).all()
+                          cast(Band.min_value, Float).label("min"), cast(Band.max_value, Float).label("max"),
+                          cast(Band.nodata, Float).label("nodata"), cast(Band.scale, Float).label("scale"),
+                          cast(Band.resolution_x, Float).label("gsd"), Band.data_type,
+                          cast(Band.center_wavelength, Float).label("center_wavelength"),
+                          cast(Band.full_width_half_max, Float).label("full_width_half_max")).filter(Band.collection_id == collection_id).all()
     eo_bands = list()
     eo_gsd = 0.0
 
     for band in bands:
         eo_bands.append(dict(name=band.name, common_name=band.common_name, min=band.min,
-                             max=band.max,nodata=band.nodata, center_wavelength=band.center_wavelength,
+                             max=band.max, nodata=band.nodata, center_wavelength=band.center_wavelength,
                              full_width_half_max=band.full_width_half_max, data_type=band.data_type))
         if band.gsd > eo_gsd:
             eo_gsd = band.gsd
 
-    return {"eo:gsd":eo_gsd, "eo:bands":eo_bands}
+    return {"eo:gsd": eo_gsd, "eo:bands": eo_bands}
+
 
 def get_collection_bands(collection_id):
     """Retrive a dict of bands for a given collection.
@@ -168,14 +173,14 @@ def get_collection_bands(collection_id):
     :rtype: dict
     """
     bands = session.query(Band.name, Band.common_name,
-                          cast(Band.min, Float).label('min'), cast(Band.max, Float).label('max'),
-                          cast(Band.nodata, Float).label('nodata'), cast(Band.scale, Float).label('scale'),
-                               Band.data_type).filter(Band.collection_id == collection_id).all()
+                          cast(Band.min, Float).label("min"), cast(Band.max, Float).label("max"),
+                          cast(Band.nodata, Float).label("nodata"), cast(Band.scale, Float).label("scale"),
+                          Band.data_type).filter(Band.collection_id == collection_id).all()
     bands_json = dict()
 
     for b in bands:
         bands_json[b.common_name] = {k: v for k, v in b._asdict().items() if
-                                     k != 'common_name' and not k.startswith('_')}
+                                     k != "common_name" and not k.startswith("_")}
 
     return bands_json
 
@@ -193,6 +198,7 @@ def get_collection_tiles(collection_id):
                            Item.tile_id == Tile.id).group_by(Tile.name).all()
 
     return [t.name for t in tiles]
+
 
 @lru_cache()
 def get_collection_crs(collection_id):
@@ -214,6 +220,7 @@ def get_collection_crs(collection_id):
 
     return crs["proj"]
 
+
 def get_collection_timeline(collection_id):
     """Retrive a list of dates for a given collection.
 
@@ -227,32 +234,34 @@ def get_collection_timeline(collection_id):
 
     return [datetime.fromisoformat(str(t.start_date)).strftime("%Y-%m-%d") for t in timeline]
 
+
 def get_collection_extent(collection_id):
     """Retrive the extent as a BBOX for a given collection.
 
-        :param collection_id: collection identifier
-        :type collection_id: str
-        :return: list of coordinates for the collection extent
-        :rtype: lis
+    :param collection_id: collection identifier
+    :type collection_id: str
+    :return: list of coordinates for the collection extent
+    :rtype: list
     """
-    extent = session.query(func.ST_Extent(Item.geom).label('bbox'))\
+    extent = session.query(func.ST_Extent(Item.geom).label("bbox"))\
                     .filter(Collection.id == Item.collection_id,
                             Collection.id == collection_id).first()
 
     bbox = list()
     if extent.bbox:
         bbox = extent.bbox[extent.bbox.find(
-            "(") + 1:extent.bbox.find(")")].replace(' ', ',')
-        bbox = [float(coord) for coord in bbox.split(',')]
+            "(") + 1:extent.bbox.find(")")].replace(" ", ",")
+        bbox = [float(coord) for coord in bbox.split(",")]
     return bbox
+
 
 def get_collection_quicklook(collection_id):
     """Retrive a list of bands used to create the quicklooks for a given collection.
 
-        :param collection_id: collection identifier
-        :type collection_id: str
-        :return: list of bands
-        :rtype: lis
+    :param collection_id: collection identifier
+    :type collection_id: str
+    :return: list of bands
+    :rtype: list.
     """
     quicklook_bands = session.execute("SELECT  array[r.name, g.name, b.name] as quicklooks "
                                       "FROM bdc.quicklook q "
@@ -260,9 +269,10 @@ def get_collection_quicklook(collection_id):
                                       "INNER JOIN bdc.bands g ON q.green = g.id "
                                       "INNER JOIN bdc.bands b ON q.blue = b.id "
                                       "INNER JOIN bdc.collections c ON q.collection_id = c.id "
-                                      "WHERE c.id = :collection_id", {"collection_id":collection_id}).fetchone()
+                                      "WHERE c.id = :collection_id", {"collection_id": collection_id}).fetchone()
 
     return quicklook_bands["quicklooks"] if quicklook_bands else None
+
 
 def get_collection(collection_id, roles=[]):
     """Retrieve information of a given collection.
@@ -272,24 +282,26 @@ def get_collection(collection_id, roles=[]):
     :return: collection metadata
     :rtype: dict
     """
-    columns = [ST_Extent(Item.geom).label('bbox'),
+    columns = [ST_Extent(Item.geom).label("bbox"),
                Collection.id,
                Collection.is_public,
-               Collection.start_date.label('start'),
-               Collection.end_date.label('end'),
+               Collection.start_date.label("start"),
+               Collection.end_date.label("end"),
                Collection.description,
                Collection.name,
+               Collection.collection_type,
                Collection.version,
+               Collection.title,
                Collection.temporal_composition_schema,
-               CompositeFunction.name.label('composite_function'),
-               GridRefSys.name.label('grid_ref_sys')]
+               CompositeFunction.name.label("composite_function"),
+               GridRefSys.name.label("grid_ref_sys")]
 
     where = [Collection.id == Item.collection_id,
-             func.concat(Collection.name, ':', Collection.version) == collection_id,
+             func.concat(Collection.name, ":", Collection.version) == collection_id,
              Collection.grid_ref_sys_id == GridRefSys.id,
              or_(
-                Collection.is_public.is_(True),
-                Collection.id.in_([int(r.split(':')[0]) for r in roles])
+                 Collection.is_public.is_(True),
+                 Collection.id.in_([int(r.split(":")[0]) for r in roles])
              )]
 
     group_by = [Collection.id,
@@ -298,6 +310,7 @@ def get_collection(collection_id, roles=[]):
                 Collection.description,
                 Collection.name,
                 Collection.version,
+                Collection.title,
                 Collection.temporal_composition_schema,
                 CompositeFunction.name,
                 GridRefSys.name]
@@ -306,10 +319,11 @@ def get_collection(collection_id, roles=[]):
         .filter(*where).group_by(*group_by).first_or_404()
 
     collection = dict()
-    collection['id'] = collection_id
+    collection["id"] = collection_id
 
     collection["stac_version"] = BDC_STAC_API_VERSION
-    collection['stac_extensions'] = ["eo", "datacube"]
+    collection["stac_extensions"] = ["eo", "datacube"]
+    collection["title"] = result.title
     collection["description"] = result.description
     collection["license"] = ""
 
@@ -320,9 +334,9 @@ def get_collection(collection_id, roles=[]):
     start, end = None, None
 
     if result.start:
-        start = result.start.strftime("%Y-%m-%d")
+        start = result.start.strftime("%Y-%m-%dT%H:%M")
         if result.end:
-            end = result.end.strftime("%Y-%m-%d")
+            end = result.end.strftime("%Y-%m-%dT%H:%M")
 
     collection["extent"] = {"spatial": {"bbox": [bbox]},
                             "temporal": {"interval": [[start, end]]}}
@@ -335,20 +349,18 @@ def get_collection(collection_id, roles=[]):
     collection["properties"]["bdc:wrs"] = result.grid_ref_sys
     collection["properties"]["bdc:tiles"] = get_collection_tiles(result.id)
 
-    # collection["properties"]["proj:epsg"] =
-    # collection["properties"]["proj:geomtry"]
+    collection["properties"]["bdc:composite_function"] = result.composite_function
 
-    if result.temporal_composition_schema:
+    if result.collection_type == "cube":
         datacube = dict()
         datacube["x"] = dict(type="spatial", axis="x", extent=[bbox[0], bbox[2]])
         datacube["y"] = dict(type="spatial", axis="y", extent=[bbox[1], bbox[3]])
         datacube["temporal"] = dict(type="temporal", extent=[start, end],
                                     values=get_collection_timeline(result.id))
 
-        collection["properties"]["cube:dimension"] = datacube
         collection["properties"]["bdc:crs"] = get_collection_crs(result.id)
+        collection["properties"]["cube:dimension"] = datacube
         collection["properties"]["bdc:temporal_composition"] = result.temporal_composition_schema
-        collection["properties"]["bdc:composite_function"] = result.composite_function
 
     return collection
 
@@ -359,14 +371,14 @@ def get_collections(roles=[]):
     :return: a list of available collections
     :rtype: list
     """
-    collections = session.query(func.concat(Collection.name, ':', Collection.version).label('name'), Collection.id).filter(or_(
+    collections = session.query(func.concat(Collection.name, ":", Collection.version).label("name"), Collection.id).filter(or_(
         Collection.is_public.is_(True),
-        Collection.id.in_([int(r.split(':')[0]) for r in roles])
+        Collection.id.in_([int(r.split(":")[0]) for r in roles])
     )).all()
     return collections
 
 
-def make_geojson(items, links, access_token=''):
+def make_geojson(items, links, access_token=""):
     """Generate a list of STAC Items from a list of collection items.
 
     :param items: collection items to be formated as GeoJSON Features
@@ -381,67 +393,68 @@ def make_geojson(items, links, access_token=''):
     for i in items:
         feature = dict()
 
-        feature['type'] = 'Feature'
-        feature['id'] = i.item
-        feature['collection'] = i.collection
-        feature['stac_version'] = BDC_STAC_API_VERSION
-        feature['stac_extensions'] = ["eo"]
+        feature["type"] = "Feature"
+        feature["id"] = i.item
+        feature["collection"] = i.collection
+        feature["stac_version"] = BDC_STAC_API_VERSION
+        feature["stac_extensions"] = ["eo"]
 
-        feature['geometry'] = json.loads(i.geom)
+        feature["geometry"] = json.loads(i.geom)
 
         bbox = list()
         if i.bbox:
             bbox = i.bbox[i.bbox.find(
-                "(") + 1:i.bbox.find(")")].replace(' ', ',')
-            bbox = [float(coord) for coord in bbox.split(',')]
-        feature['bbox'] = bbox
+                "(") + 1:i.bbox.find(")")].replace(" ", ",")
+            bbox = [float(coord) for coord in bbox.split(",")]
+        feature["bbox"] = bbox
 
         bands = get_collection_eo(i.collection_id)
 
         properties = dict()
-        start = datetime.fromisoformat(str(i.start)).strftime("%Y-%m-%d")
-        properties['bdc:tile'] = i.tile
-        properties['datetime'] = start
-        properties['created'] = i.created
-        properties['updated'] = i.updated
+        start = datetime.fromisoformat(str(i.start)).strftime("%Y-%m-%dT%H:%M")
+        properties["bdc:tile"] = i.tile
+        properties["datetime"] = start
+        properties["created"] = i.created.strftime("%Y-%m-%dT%H:%M")
+        properties["updated"] = i.updated.strftime("%Y-%m-%dT%H:%M")
         properties.update(bands)
-        properties['eo:cloud_cover'] = i.cloud_cover
+        properties["eo:cloud_cover"] = i.cloud_cover
 
         for key, value in i.assets.items():
-            value['href'] = BDC_STAC_FILE_ROOT + value['href']
-            for index, band in enumerate(properties['eo:bands'], start=0):
-                if band['name'] == key:
-                    value['eo:bands'] = [index]
+            value["href"] = BDC_STAC_FILE_ROOT + value["href"]
+            for index, band in enumerate(properties["eo:bands"], start=0):
+                if band["name"] == key:
+                    value["eo:bands"] = [index]
 
-        feature['properties'] = properties
-        feature['assets'] = i.assets
+        feature["properties"] = properties
+        feature["assets"] = i.assets
 
-        feature['links'] = deepcopy(links)
-        feature['links'][0]['href'] += i.collection + "/items/" + i.item + access_token
-        feature['links'][1]['href'] += i.collection + access_token
-        feature['links'][2]['href'] += i.collection + access_token
+        feature["links"] = deepcopy(links)
+        feature["links"][0]["href"] += i.collection + "/items/" + i.item + access_token
+        feature["links"][1]["href"] += i.collection + access_token
+        feature["links"][2]["href"] += i.collection + access_token
 
         features.append(feature)
 
     return features
 
+
 def create_query_filter(query):
-    """Create STAC query filter for SQLAlchemy
+    """Create STAC query filter for SQLAlchemy.
+
     Notes:
         Queryable properties must be mapped in this functions.
     """
-
     mapping = {
-        'eq': '__eq__',
-        'neq': '__ne__',
-        'lt': '__lt__',
-        'lte': '__le__',
-        'gt': '__gt__',
-        'gte': '__ge__',
-        'startsWith': 'startswith',
-        'endsWith': 'endswith',
-        'contains':'contains',
-        'in': 'in_',
+        "eq": "__eq__",
+        "neq": "__ne__",
+        "lt": "__lt__",
+        "lte": "__le__",
+        "gt": "__gt__",
+        "gte": "__ge__",
+        "startsWith": "startswith",
+        "endsWith": "endswith",
+        "contains": "contains",
+        "in": "in_",
     }
 
     bdc_properties = {
@@ -457,6 +470,7 @@ def create_query_filter(query):
 
     return filters if len(filters) > 0 else None
 
+
 class InvalidBoundingBoxError(Exception):
     """Exception for malformed bounding box."""
 
@@ -466,6 +480,7 @@ class InvalidBoundingBoxError(Exception):
         :param description: exception description.
         :type description: str
         """
+        super(InvalidBoundingBoxError, self).__init__()
         self.description = description
 
     def __str__(self):
