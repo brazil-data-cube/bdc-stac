@@ -70,19 +70,52 @@ def index(roles=[], access_token=''):
 
     collections = get_catalog(roles=roles)
     catalog = dict()
-    catalog["description"] = "Brazil Data Cubes Catalog"
+    catalog["description"] = "Brazil Data Cube Catalog"
     catalog["id"] = "bdc"
     catalog["stac_version"] = BDC_STAC_API_VERSION
     links = list()
-    links += [{"href": f"{BASE_URL}/", "rel": "self"},
-              {"href": f"{BASE_URL}/docs", "rel": "service"},
-              {"href": f"{BASE_URL}/conformance", "rel": "conformance"},
-              {"href": f"{BASE_URL}/collections", "rel": "data"},
-              {"href": f"{BASE_URL}/search", "rel": "search"}]
+    links += [
+        {
+            "href": f"{BASE_URL}/",
+            "rel": "self",
+            "type": "application/json",
+            "title": "Link to this document"
+        },
+        {
+            "href": f"{BASE_URL}/docs",
+            "rel": "service-doc",
+            "type": "text/html",
+            "title": "API documentation in HTML"
+        },
+        {
+            "href": f"{BASE_URL}/conformance",
+            "rel": "conformance",
+            "type": "application/json",
+            "title": "OGC API conformance classes implemented by the server"
+        },
+        {
+            "href": f"{BASE_URL}/collections",
+            "rel": "data",
+            "type": "application/json",
+            "title": "Information about image collections"
+        },
+        {
+            "href": f"{BASE_URL}/search",
+            "rel": "search",
+            "type": "application/json",
+            "title": "STAC-Search endpoint"
+        }
+    ]
 
     for collection in collections:
-        links.append({"href": f"{BASE_URL}/collections/{collection.name}{access_token}",
-                      "rel": "child", "title": collection.name})
+        links.append(
+            {
+                "href": f"{BASE_URL}/collections/{collection.name}{access_token}",
+                "rel": "child",
+                "type": "application/json",
+                "title": collection.title
+            }
+        )
 
     catalog["links"] = links
 
@@ -99,10 +132,32 @@ def root(roles=[], access_token=''):
     response = dict()
 
     for collection in collections:
-        links = [{"href": f"{BASE_URL}/collections/{collection['id']}{access_token}", "rel": "self"},
-                 {"href": f"{BASE_URL}/collections/{collection['id']}/items{access_token}", "rel": "items"},
-                 {"href": f"{BASE_URL}/collections{access_token}", "rel": "parent"},
-                 {"href": f"{BASE_URL}/{access_token}", "rel": "root"}]
+        links = [
+            {
+                "href": f"{BASE_URL}/collections/{collection['id']}{access_token}",
+                "rel": "self",
+                "type": "application/json",
+                "title": "Link to this document"
+            },
+            {
+                "href": f"{BASE_URL}/collections/{collection['id']}/items{access_token}",
+                "rel": "items",
+                "type": "application/json",
+                "title": f"Items of the collection {collection['id']}"
+            },
+            {
+                "href": f"{BASE_URL}/collections{access_token}",
+                "rel": "parent",
+                "type": "application/json",
+                "title": "Link to catalog collections"
+            },
+            {
+                "href": f"{BASE_URL}/{access_token}",
+                "rel": "root",
+                "type": "application/json",
+                "title": "API landing page (root catalog)"
+            }
+        ]
         collection["links"] = links
 
     response["collections"] = collections
@@ -126,11 +181,32 @@ def collections_id(collection_id, roles=[], access_token=''):
 
     collection = collection[0]
 
-    links = [{"href": f"{BASE_URL}/collections/{collection_id}{access_token}", "rel": "self"},
-             {"href": f"{BASE_URL}/collections/{collection_id}/items{access_token}", "rel": "items"},
-             {"href": f"{BASE_URL}/collections{access_token}", "rel": "parent"},
-             {"href": f"{BASE_URL}/collections{access_token}", "rel": "root"},
-             {"href": f"{BASE_URL}/stac", "rel": "root"}]
+    links = [
+        {
+            "href": f"{BASE_URL}/collections/{collection['id']}{access_token}",
+            "rel": "self",
+            "type": "application/json",
+            "title": "Link to this document"
+        },
+        {
+            "href": f"{BASE_URL}/collections/{collection['id']}/items{access_token}",
+            "rel": "items",
+            "type": "application/json",
+            "title": f"Items of the collection {collection['id']}"
+        },
+        {
+            "href": f"{BASE_URL}/collections{access_token}",
+            "rel": "parent",
+            "type": "application/json",
+            "title": "Link to catalog collections"
+        },
+        {
+            "href": f"{BASE_URL}/{access_token}",
+            "rel": "root",
+            "type": "application/json",
+            "title": "API landing page (root catalog)"
+        }
+    ]
 
     collection['links'] = links
 
@@ -149,12 +225,36 @@ def collection_items(collection_id, roles=[], access_token=''):
     items = get_collection_items(
         collection_id=collection_id, roles=roles, **request.args.to_dict())
 
-    links = [{"href": f"{BASE_URL}/collections/", "rel": "self"},
-             {"href": f"{BASE_URL}/collections/", "rel": "parent"},
-             {"href": f"{BASE_URL}/collections/", "rel": "collection"},
-             {"href": f"{BASE_URL}/stac", "rel": "root"}]
+    links = [
+        {
+            "href": f"{BASE_URL}/collections/",
+            "rel": "self",
+            "type": "application/json",
+            "title": "Link to this document"
+        },
+        {
+            "href": f"{BASE_URL}/collections/",
+            "rel": "parent",
+            "type": "application/json",
+            "title": "The collection related to this item"
+        },
+        {
+            "href": f"{BASE_URL}/collections/",
+            "rel": "collection",
+            "type": "application/json",
+            "title": "The collection related to this item"
+        },
+        {
+            "href": f"{BASE_URL}/",
+            "rel": "root",
+            "type": "application/json",
+            "title": "API landing page (root catalog)"
+        }
+    ]
 
     gjson = dict()
+    gjson["stac_version"] = "0.9.0"
+    gjson["stac_extensions"] = ["commons", "context", "eo", "checksum"]
     gjson['type'] = 'FeatureCollection'
 
     features = make_geojson(items.items, links, access_token=access_token)
@@ -164,6 +264,7 @@ def collection_items(collection_id, roles=[], access_token=''):
     context = dict()
     context['matched'] = items.total
     context['returned'] = len(items.items)
+    context['limit'] = items.per_page
     gjson['context'] = context
 
     args = request.args.copy()

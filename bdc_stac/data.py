@@ -61,6 +61,7 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
     :rtype: list
     """
     columns = [func.concat(Collection.name, "-", Collection.version).label("collection"),
+               Collection.collection_type,
                Item.name.label("item"),
                Item.collection_id,
                Item.start_date.label("start"),
@@ -143,7 +144,7 @@ def get_collection_eo(collection_id):
     Returns:
         eo_gsd, eo_bands (tuple(float, dict)):
     """
-    bands = session.query(Band.name, Band.common_name,
+    bands = session.query(Band.name, Band.common_name, Band.description,
                           cast(Band.min_value, Float).label("min"), cast(Band.max_value, Float).label("max"),
                           cast(Band.nodata, Float).label("nodata"), cast(Band.scale, Float).label("scale"),
                           cast(Band.resolution_x, Float).label("gsd"), Band.data_type,
@@ -153,8 +154,9 @@ def get_collection_eo(collection_id):
     eo_gsd = 0.0
 
     for band in bands:
-        eo_bands.append(dict(name=band.name, common_name=band.common_name, min=band.min,
-                             max=band.max, nodata=band.nodata, center_wavelength=band.center_wavelength,
+        eo_bands.append(dict(name=band.name, common_name=band.common_name, description=band.description,
+                             min=band.min, max=band.max, nodata=band.nodata, scale=band.scale,
+                             center_wavelength=band.center_wavelength,
                              full_width_half_max=band.full_width_half_max, data_type=band.data_type))
         if band.gsd > eo_gsd:
             eo_gsd = band.gsd
@@ -286,6 +288,7 @@ def get_collections(collection_id=None, roles=[]):
                Collection.start_date.label("start"),
                Collection.end_date.label("end"),
                Collection.description,
+               Collection._metadata.label("meta"),
                func.concat(Collection.name, "-", Collection.version).label("name"),
                Collection.collection_type,
                Collection.version,
@@ -313,10 +316,18 @@ def get_collections(collection_id=None, roles=[]):
         collection["id"] = r.name
 
         collection["stac_version"] = BDC_STAC_API_VERSION
-        collection["stac_extensions"] = ["eo", "datacube", "version"]
+        collection["stac_extensions"] = ["commons", "datacube", "version"]
         collection["title"] = r.title
+        collection["version"] = r.version
+        collection["deprecated"] = False
         collection["description"] = r.description
-        collection["license"] = ""
+
+        if(r.meta and ("rightsList" in r.meta) and
+                (len(r.meta["rightsList"]) > 0)):
+
+            collection["license"] = r.meta["rightsList"][0].get("rights", "")
+        else:
+            collection["license"] = ""
 
         collection["properties"] = dict()
 
@@ -333,25 +344,36 @@ def get_collections(collection_id=None, roles=[]):
                                 "temporal": {"interval": [[start, end]]}}
 
         quicklooks = get_collection_quicklook(r.id)
-        if quicklooks is not None:
-            collection["properties"]["bdc:bands_quicklook"] = quicklooks
 
-        collection["properties"].update(get_collection_eo(r.id))
-        collection["properties"]["bdc:grs"] = r.grid_ref_sys
-        collection["properties"]["bdc:tiles"] = get_collection_tiles(r.id)
-        collection["properties"]["version"] = r.version
-        collection["properties"]["bdc:composite_function"] = r.composite_function
+        if quicklooks is not None:
+            collection["bdc:bands_quicklook"] = quicklooks
+
+        collection_eo = get_collection_eo(r.id)
+        collection["properties"].update(collection_eo)
+        collection["bdc:grs"] = r.grid_ref_sys
+        collection["bdc:tiles"] = get_collection_tiles(r.id)
+        collection["bdc:composite_function"] = r.composite_function
 
         if r.collection_type == "cube":
+            proj4text = get_collection_crs(r.id)
+
             datacube = dict()
-            datacube["x"] = dict(type="spatial", axis="x", extent=[bbox[0], bbox[2]])
-            datacube["y"] = dict(type="spatial", axis="y", extent=[bbox[1], bbox[3]])
+            datacube["x"] = dict(type="spatial", axis="x",
+                                 extent=[bbox[0], bbox[2]],
+                                 reference_system=proj4text)
+            datacube["y"] = dict(type="spatial", axis="y",
+                                 extent=[bbox[1], bbox[3]],
+                                 reference_system=proj4text)
             datacube["temporal"] = dict(type="temporal", extent=[start, end],
                                         values=get_collection_timeline(r.id))
 
-            collection["properties"]["bdc:crs"] = get_collection_crs(r.id)
-            collection["properties"]["cube:dimension"] = datacube
-            collection["properties"]["bdc:temporal_composition"] = r.temporal_composition_schema
+            datacube["bands"] = dict(type="bands",
+                                     values=[band["name"] for band in collection_eo["eo:bands"]])
+
+            collection["cube:dimensions"] = datacube
+            collection["bdc:crs"] = get_collection_crs(r.id)
+            collection["bdc:temporal_composition"] = r.temporal_composition_schema
+
         collections.append(collection)
 
     return collections
@@ -363,7 +385,9 @@ def get_catalog(roles=[]):
     :return: a list of available collections
     :rtype: list
     """
-    collections = session.query(func.concat(Collection.name, "-", Collection.version).label("name"), Collection.id).filter(or_(
+    collections = session.query(Collection.id,
+                                func.concat(Collection.name, "-", Collection.version).label("name"),
+                                Collection.title).filter(or_(
         Collection.is_public.is_(True),
         Collection.id.in_([int(r.split(":")[0]) for r in roles])
     )).all()
@@ -389,7 +413,7 @@ def make_geojson(items, links, access_token=""):
         feature["id"] = i.item
         feature["collection"] = i.collection
         feature["stac_version"] = BDC_STAC_API_VERSION
-        feature["stac_extensions"] = ["eo"]
+        feature["stac_extensions"] = ["commons", "eo", "checksum"]
 
         feature["geometry"] = json.loads(i.geom)
 
@@ -406,6 +430,11 @@ def make_geojson(items, links, access_token=""):
         start = datetime.fromisoformat(str(i.start)).strftime("%Y-%m-%dT%H:%M:%S")
         properties["bdc:tile"] = i.tile
         properties["datetime"] = start
+
+        if i.collection_type == "cube":
+            properties["start_datetime"] = start
+            properties["end_datetime"] = datetime.fromisoformat(str(i.end)).strftime("%Y-%m-%dT%H:%M:%S")
+
         properties["created"] = i.created.strftime("%Y-%m-%dT%H:%M:%S")
         properties["updated"] = i.updated.strftime("%Y-%m-%dT%H:%M:%S")
         properties.update(bands)
