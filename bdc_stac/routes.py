@@ -63,7 +63,7 @@ def conformance():
 
 
 @current_app.route("/", methods=["GET"])
-@oauth2(required=False)
+@oauth2(required=False, throw_exception=False)
 def index(roles=[], access_token=''):
     """Landing page of this API."""
     access_token = f"?access_token={access_token}" if access_token else ''
@@ -90,7 +90,7 @@ def index(roles=[], access_token=''):
 
 
 @current_app.route("/collections", methods=["GET"])
-@oauth2(required=False)
+@oauth2(required=False, throw_exception=False)
 def root(roles=[], access_token=''):
     """Return the root catalog or collection."""
     access_token = f"?access_token={access_token}" if access_token else ''
@@ -111,7 +111,7 @@ def root(roles=[], access_token=''):
 
 
 @current_app.route("/collections/<collection_id>", methods=["GET"])
-@oauth2(required=False)
+@oauth2(required=False, throw_exception=False)
 def collections_id(collection_id, roles=[], access_token=''):
     """Describe the given feature collection.
 
@@ -138,7 +138,7 @@ def collections_id(collection_id, roles=[], access_token=''):
 
 
 @current_app.route("/collections/<collection_id>/items", methods=["GET"])
-@oauth2(required=False)
+@oauth2(required=False, throw_exception=False)
 def collection_items(collection_id, roles=[], access_token=''):
     """Retrieve features of the given feature collection.
 
@@ -181,7 +181,7 @@ def collection_items(collection_id, roles=[], access_token=''):
 
 
 @current_app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
-@oauth2(required=False)
+@oauth2(required=False, throw_exception=False)
 def items_id(collection_id, item_id, roles=[], access_token=''):
     """Retrieve a given feature from a given feature collection.
 
@@ -205,7 +205,7 @@ def items_id(collection_id, item_id, roles=[], access_token=''):
 
 
 @current_app.route("/search", methods=["GET", "POST"])
-@oauth2(required=False)
+@oauth2(required=False, throw_exception=False)
 def stac_search(roles=[], access_token=''):
     """Search STAC items with simple filtering."""
     access_token = f"?access_token={access_token}" if access_token else ''
