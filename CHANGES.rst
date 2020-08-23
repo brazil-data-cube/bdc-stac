@@ -1,8 +1,8 @@
 ..
-    This file is part of Brazil Data Cube STAC.
-    Copyright (C) 2019 INPE.
+    This file is part of Brazil Data Cube STAC Service.
+    Copyright (C) 2019-2020 INPE.
 
-    Brazil Data Cube STAC is free software; you can redistribute it and/or modify it
+    Brazil Data Cube STAC Service is free software; you can redistribute it and/or modify it
     under the terms of the MIT License; see LICENSE file for more details.
 
 
@@ -10,13 +10,29 @@
 Changes
 =======
 
+
+Version 0.9.0-0
+---------------
+
+
+- Optimizations of database queries.
+- Review of metadata keys.
+- Support for STAC 0.9.0.
+- Support for STAC extensions: checksum, commons, context, datacube, eo, version.
+- Compatibility with `BDC-Catalog data model version 0.4.0 <https://github.com/brazil-data-cube/bdc-catalog>`_.
+- Compatibility with `BDC-Auth-Client version 0.2.0 <https://github.com/brazil-data-cube/bdc-auth-client>`_.
+- New Sphinx template.
+
+
 Version 0.8.1-1
 ---------------
+
 
 Released 2020-08-19
 
 - This is a special version based on STAC 0.8.1 and `BDC Catalog Version 0.4.0 <https://github.com/brazil-data-cube/bdc-catalog/tree/v0.4.0>`_
-- Added support for the following STAC Extension: datacube, eo, version
+- Added support for the following STAC Extension: datacube, eo, version.
+
 
 .. note::
 
@@ -26,6 +42,7 @@ Released 2020-08-19
 Version 0.8.1-0
 ---------------
 
+
 Released 2020-04-14
 
 - Support for the SpatioTemporal Asset Catalog (STAC) specification version 0.8.1.
@@ -34,6 +51,7 @@ Released 2020-04-14
 
 Version 0.8.0-0
 ---------------
+
 
 Released 2020-04-03
 
@@ -52,6 +70,7 @@ Released 2020-04-03
 
 Version 0.7.0-0
 ---------------
+
 
 Released 2020-02-21
 

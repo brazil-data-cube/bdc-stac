@@ -1,13 +1,25 @@
+#
+# This file is part of Brazil Data Cube STAC Service.
+# Copyright (C) 2019-2020 INPE.
+#
+# Brazil Data Cube STAC Service is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+
+# Git
 .git
 .gitignore
+
+
+# Environments
 .env
-.vscode
-.ideia
-README.md
-/spec
-/docs/build
-/docker
-/venv
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
 
 # Distribution / packaging
 .Python
@@ -23,6 +35,8 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -32,5 +46,15 @@ MANIFEST
 #PyCharm
 .idea/
 
+
+#vscode
+.vscode/
+
 # Sphinx documentation
 docs/sphinx/_build/
+
+# project files
+CHANGES.rst
+DEPLOY.rst
+INSTALL.rst
+README.rst
