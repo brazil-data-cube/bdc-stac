@@ -10,14 +10,13 @@
 import gzip
 
 from bdc_auth_client.decorators import oauth2
-from flask import abort, current_app, jsonify, request
+from flask import abort, current_app, request
 from werkzeug.exceptions import HTTPException, InternalServerError
 from werkzeug.urls import url_encode
 
 from .config import BDC_STAC_API_VERSION, BDC_STAC_BASE_URL
-from .data import (InvalidBoundingBoxError, get_catalog,
-                   get_collection_items, get_collections, make_geojson,
-                   session)
+from .data import (InvalidBoundingBoxError, get_catalog, get_collection_items,
+                   get_collections, make_geojson, session)
 
 BASE_URL = BDC_STAC_BASE_URL
 
@@ -254,7 +253,7 @@ def collection_items(collection_id, roles=[], access_token=''):
 
     gjson = dict()
     gjson["stac_version"] = "0.9.0"
-    gjson["stac_extensions"] = ["commons", "context", "eo", "checksum"]
+    gjson["stac_extensions"] = ["checksum", "commons", "context", "eo"]
     gjson['type'] = 'FeatureCollection'
 
     features = make_geojson(items.items, links, access_token=access_token)

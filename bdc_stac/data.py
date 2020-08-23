@@ -130,7 +130,7 @@ def get_collection_items(collection_id=None, roles=[], item_id=None, bbox=None, 
     result = query.paginate(page=int(page),
                             per_page=int(limit),
                             error_out=False,
-                            max_per_page=int(BDC_STAC_MAX_LIMIT))
+                            max_per_page=BDC_STAC_MAX_LIMIT)
 
     return result
 
@@ -413,7 +413,7 @@ def make_geojson(items, links, access_token=""):
         feature["id"] = i.item
         feature["collection"] = i.collection
         feature["stac_version"] = BDC_STAC_API_VERSION
-        feature["stac_extensions"] = ["commons", "eo", "checksum"]
+        feature["stac_extensions"] = ["checksum", "commons", "eo"]
 
         feature["geometry"] = json.loads(i.geom)
 
