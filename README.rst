@@ -57,9 +57,10 @@ For more information on the catalog data model, please, refer to `BDC-Catalog <h
 
 
 For full compliant STAC client libraries, please, check the following repositories:
-  - `stac.py <https://github.com/brazil-data-cube/stac.py>`_: Python Client Library for SpatioTemporal Asset Catalog.
 
-  - `rstac <https://github.com/brazil-data-cube/rstac>`_: R Client Library for SpatioTemporal Asset Catalog.
+ - `stac.py <https://github.com/brazil-data-cube/stac.py>`_: Python Client Library for SpatioTemporal Asset Catalog.
+
+ - `rstac <https://github.com/brazil-data-cube/rstac>`_: R Client Library for SpatioTemporal Asset Catalog.
 
 
 Installation
