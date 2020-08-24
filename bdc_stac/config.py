@@ -13,18 +13,17 @@ from packaging import version as _version
 
 from .version import __version__
 
-SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI',
-                                    'postgresql://postgres:postgres@localhost:5432/bdc')
-SQLALCHEMY_TRACK_MODIFICATIONS = os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', False)
-SQLALCHEMY_ECHO = os.getenv('SQLALCHEMY_ECHO', False)
+SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/bdc")
+SQLALCHEMY_TRACK_MODIFICATIONS = os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS", False)
+SQLALCHEMY_ECHO = os.getenv("SQLALCHEMY_ECHO", False)
 
 
 BDC_STAC_API_VERSION = _version.parse(__version__).base_version
-BDC_STAC_BASE_URL = os.getenv('BDC_STAC_BASE_URL', 'http://localhost:5000')
-BDC_STAC_FILE_ROOT = os.getenv('BDC_STAC_FILE_ROOT', 'http://localhost:5001')
-BDC_STAC_MAX_LIMIT = os.getenv('BDC_STAC_MAX_LIMIT', 1000)
+BDC_STAC_BASE_URL = os.getenv("BDC_STAC_BASE_URL", "http://localhost:5000")
+BDC_STAC_FILE_ROOT = os.getenv("BDC_STAC_FILE_ROOT", "http://localhost:5001")
+BDC_STAC_MAX_LIMIT = os.getenv("BDC_STAC_MAX_LIMIT", 1000)
 assert type(BDC_STAC_MAX_LIMIT) is int
 
-BDC_AUTH_CLIENT_SECRET = os.getenv('BDC_AUTH_CLIENT_SECRET', None)
-BDC_AUTH_CLIENT_ID = os.getenv('BDC_AUTH_CLIENT_ID', None)
-BDC_AUTH_ACCESS_TOKEN_URL = os.getenv('BDC_AUTH_ACCESS_TOKEN_URL', None)
+BDC_AUTH_CLIENT_SECRET = os.getenv("BDC_AUTH_CLIENT_SECRET", None)
+BDC_AUTH_CLIENT_ID = os.getenv("BDC_AUTH_CLIENT_ID", None)
+BDC_AUTH_ACCESS_TOKEN_URL = os.getenv("BDC_AUTH_ACCESS_TOKEN_URL", None)
