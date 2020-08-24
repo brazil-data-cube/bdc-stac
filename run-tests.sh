@@ -8,7 +8,7 @@
 #
 
 pydocstyle bdc_stac tests setup.py && \
-isort bdc_stac/*.py tests/*.py setup.py --check-only --diff && \
+isort bdc_stac tests setup.py --check-only --diff && \
 check-manifest --ignore ".travis-*" --ignore ".readthedocs.*" && \
 sphinx-build -qnW --color -b doctest docs/sphinx/ docs/sphinx/_build/doctest  && \
 black --check --diff -l 120 -t py37 bdc_stac tests setup.py  && \
