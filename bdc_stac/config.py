@@ -22,7 +22,6 @@ BDC_STAC_API_VERSION = _version.parse(__version__).base_version
 BDC_STAC_BASE_URL = os.getenv("BDC_STAC_BASE_URL", "http://localhost:5000")
 BDC_STAC_FILE_ROOT = os.getenv("BDC_STAC_FILE_ROOT", "http://localhost:5001")
 BDC_STAC_MAX_LIMIT = int(os.getenv("BDC_STAC_MAX_LIMIT", "1000"))
-assert type(BDC_STAC_MAX_LIMIT) is int
 
 BDC_AUTH_CLIENT_SECRET = os.getenv("BDC_AUTH_CLIENT_SECRET", None)
 BDC_AUTH_CLIENT_ID = os.getenv("BDC_AUTH_CLIENT_ID", None)
