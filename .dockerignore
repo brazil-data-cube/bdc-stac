@@ -54,7 +54,5 @@ MANIFEST
 docs/sphinx/_build/
 
 # project files
-CHANGES.rst
 DEPLOY.rst
 INSTALL.rst
-README.rst
