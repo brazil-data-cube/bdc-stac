@@ -1,49 +1,68 @@
 #
-# This file is part of Brazil Data Cube STAC.
-# Copyright (C) 2019 INPE.
+# This file is part of Brazil Data Cube STAC Service.
+# Copyright (C) 2019-2020 INPE.
 #
-# Brazil Data Cube STAC is free software; you can redistribute it and/or modify it
+# Brazil Data Cube STAC Service is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 #
 
 language: python
+
+os: linux
+
 cache:
-  directories:
-  - "$HOME/.cache/pip"
+    directories:
+        - "$HOME/.cache/pip"
+
+git:
+    quiet: true
+    submodules: false
+
 branches:
-  only:
-  - master
-  - b-0.7.0
-  - b-0.8.0
-  - b-0.8.1
-  - b-0.9.0
+    only:
+        - master
+        - b-0.7.0
+        - b-0.8.0
+        - b-0.8.1
+        - b-0.9.0
+
 dist: bionic
-python:
-- '3.7'
-env:
-  matrix:
-  - SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@127.0.0.1:5432/bdc_catalog"
-  global:
-  - secure: zBpGvesnFU+bzWCeIzlCNvPE4IvxuewLppfyHjSaI8pFR3BW7kxH8cN5WKd0i158XiwHdIRhhtAK6WnJNBrsbd7KkeciIC7x4S74ggpCdAu+N2odRU/VW9d70DSnLPXFcLAZCxShtdw+zHeQBWKGp7hNcVtP6f9JNVLJxcqT2z4xh7aTMpQwOVVX7wpmLV7LN2LoyWR6l/zwej4Znlq0sWYhur1KJndLhhWA+cTtQq9jMS1191OIdrEK6Ro1eTHNHzshQrVrgIRJpMgn6/uh600CsTP35Ep8a3unX36ORYX4Dd6svma9Z4V/ne75SRTHXk1CDbD/nkdC0b7UjqHX6koVxLUl5qt01bUX1WV4ErNf7kRTfYChrJygB/OlNHRttkTpxv/rVM0uu5zo3Or0H126Aq87nBg5EzQkeAZU0NySR2jNFL+CQC1qR9b0XsNUg2SXd4M9FjZeDmZeBvIRGNPHx90/LV6nZf5NtNYmlIC7jYbarz24CjzOhnSnIACLlXZk71+TJNMHiASvkZof7cTBxjHDXs0I8RMBeroLse3ymwgXe1QB+spySg/qZeFqmJtwOMIqof0H1L/lzUKvPEkgCSfZ/IPvQbMIq+B3E1JqN3/22SjcYuZ1FNoEIkSZeOmye9QY4v4anh/D4VZXBYiHCaxZcb+D94fdVnykBqU=
-  - secure: ra3l9Ao7O7Uh2c80AdcdjleypBCOG8e65wgaOndjqCB8lghsdNhT9HDJPNvM2YCmViL9m4Avm3N4NkNOUKO8vaxfVK91Nz31315u5oVn8VBGzBxB+5Cc0rxV2b2DB05QfSbW3uGLP4HswycRc8a3WoM+M7Dyx46T0kqbSEbNi5Bwpt02Vxm1FuIPNJmWfIoAvrSJu8v1/aPqt+tq4uppK+KvhiXdXAeCgjjEOMmf87pRjZjqmDsfMS8V/xfgyX0tjc1pGehjwuHbF0VGReOVpg3Bj3jmyrvG9g/HnfPAmI02Viv+NosbcIEo6Bv3Dy7LbN7iLnMbXbgc5raPAvZSv3xDsewQCq8U+j5+rojI8KixN3f5onAy1l+k0u/UT2G/P97v+erfxqsqly4KMT0K4YkJ/ToNoC5Nu0d59Io+kR4Of8VeQMEq8n2jtge8X11UblV0eJBT0V/Fd1ABmeksk6LUFoAHd0NochdrtzwlOhdyNMGjNd9ThWYhoKmV5pG59dljqt44ZpNIV2OF9l7WADjx4/1ymzvFD/KRTIuLEovm+/pyv9UtumVI8fBgVlAmQ8WEokP5rBwNUGMmHXa01XisB8OIM/KXCY0/fvQE+zG4hZXRa3riyp9qLTUQwdEXazCkZRAMKs6KaMB6m7D1FRdmXjCy6qs263gf9esdIaM=
+
 services:
-- docker
+    - docker
+
+python:
+    - 3.7
+
+env:
+    matrix:
+        - SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@127.0.0.1:5432/bdc_catalog"
+
+    global:
+        - secure: zBpGvesnFU+bzWCeIzlCNvPE4IvxuewLppfyHjSaI8pFR3BW7kxH8cN5WKd0i158XiwHdIRhhtAK6WnJNBrsbd7KkeciIC7x4S74ggpCdAu+N2odRU/VW9d70DSnLPXFcLAZCxShtdw+zHeQBWKGp7hNcVtP6f9JNVLJxcqT2z4xh7aTMpQwOVVX7wpmLV7LN2LoyWR6l/zwej4Znlq0sWYhur1KJndLhhWA+cTtQq9jMS1191OIdrEK6Ro1eTHNHzshQrVrgIRJpMgn6/uh600CsTP35Ep8a3unX36ORYX4Dd6svma9Z4V/ne75SRTHXk1CDbD/nkdC0b7UjqHX6koVxLUl5qt01bUX1WV4ErNf7kRTfYChrJygB/OlNHRttkTpxv/rVM0uu5zo3Or0H126Aq87nBg5EzQkeAZU0NySR2jNFL+CQC1qR9b0XsNUg2SXd4M9FjZeDmZeBvIRGNPHx90/LV6nZf5NtNYmlIC7jYbarz24CjzOhnSnIACLlXZk71+TJNMHiASvkZof7cTBxjHDXs0I8RMBeroLse3ymwgXe1QB+spySg/qZeFqmJtwOMIqof0H1L/lzUKvPEkgCSfZ/IPvQbMIq+B3E1JqN3/22SjcYuZ1FNoEIkSZeOmye9QY4v4anh/D4VZXBYiHCaxZcb+D94fdVnykBqU=
+        - secure: ra3l9Ao7O7Uh2c80AdcdjleypBCOG8e65wgaOndjqCB8lghsdNhT9HDJPNvM2YCmViL9m4Avm3N4NkNOUKO8vaxfVK91Nz31315u5oVn8VBGzBxB+5Cc0rxV2b2DB05QfSbW3uGLP4HswycRc8a3WoM+M7Dyx46T0kqbSEbNi5Bwpt02Vxm1FuIPNJmWfIoAvrSJu8v1/aPqt+tq4uppK+KvhiXdXAeCgjjEOMmf87pRjZjqmDsfMS8V/xfgyX0tjc1pGehjwuHbF0VGReOVpg3Bj3jmyrvG9g/HnfPAmI02Viv+NosbcIEo6Bv3Dy7LbN7iLnMbXbgc5raPAvZSv3xDsewQCq8U+j5+rojI8KixN3f5onAy1l+k0u/UT2G/P97v+erfxqsqly4KMT0K4YkJ/ToNoC5Nu0d59Io+kR4Of8VeQMEq8n2jtge8X11UblV0eJBT0V/Fd1ABmeksk6LUFoAHd0NochdrtzwlOhdyNMGjNd9ThWYhoKmV5pG59dljqt44ZpNIV2OF9l7WADjx4/1ymzvFD/KRTIuLEovm+/pyv9UtumVI8fBgVlAmQ8WEokP5rBwNUGMmHXa01XisB8OIM/KXCY0/fvQE+zG4hZXRa3riyp9qLTUQwdEXazCkZRAMKs6KaMB6m7D1FRdmXjCy6qs263gf9esdIaM=
+
 before_install:
-- make before_install
+    - make before_install
+
 install:
-- make install
+    - make install
+
 script:
-- make tests
+    - make tests
+
 before_deploy:
-- openssl aes-256-cbc -K $encrypted_3b9f0b9d36d1_key -iv $encrypted_3b9f0b9d36d1_iv
-  -in secrets.tar.enc -out secrets.tar -d
-- tar xvf secrets.tar
+    - openssl aes-256-cbc -K $encrypted_3b9f0b9d36d1_key -iv $encrypted_3b9f0b9d36d1_iv
+        -in secrets.tar.enc -out secrets.tar -d
+    - tar xvf secrets.tar
+
 deploy:
-- provider: script
-  script: make deploy
-  on:
-    branch: master
-    condition: fork = false
-    tags: true
+    - provider: script
+      script: make deploy
+      on:
+        branch: master
+        condition: fork = false
+        tags: true
+
 after_success:
-- coveralls
+    - coveralls

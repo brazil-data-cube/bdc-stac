@@ -1,16 +1,14 @@
 ..
-    This file is part of Brazil Data Cube STAC.
-    Copyright (C) 2019 INPE.
+    This file is part of Brazil Data Cube STAC Service.
+    Copyright (C) 2019-2020 INPE.
 
-    Brazil Data Cube STAC is free software; you can redistribute it and/or modify it
+    Brazil Data Cube STAC Service is free software; you can redistribute it and/or modify it
     under the terms of the MIT License; see LICENSE file for more details.
+
 
 .. include:: ../../README.rst
    :end-before: Installation
 
-
-Documentation
-=============
 
 .. toctree::
     :hidden:
@@ -20,11 +18,13 @@ Documentation
 
 .. toctree::
    :maxdepth: 2
-   :caption: API Reference
+   :caption: Documentation
 
    installation
+   configurations
    deploy
    api
+
 
 .. toctree::
     :maxdepth: 2
@@ -35,6 +35,7 @@ Documentation
 
 Indices and tables
 ==================
+
 
 * :ref:`genindex`
 * :ref:`modindex`

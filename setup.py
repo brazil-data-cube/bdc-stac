@@ -1,14 +1,15 @@
 #
-# This file is part of Brazil Data Cube STAC.
-# Copyright (C) 2019 INPE.
+# This file is part of Brazil Data Cube STAC Service.
+# Copyright (C) 2019-2020 INPE.
 #
-# Brazil Data Cube STAC is free software; you can redistribute it and/or modify it
+# Brazil Data Cube STAC Service is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 #
 
-"""STAC Implementation for the Brazil Data Cube"""
+"""STAC Implementation for the Brazil Data Cube."""
 
 import os
+
 from setuptools import find_packages, setup
 
 readme = open('README.rst').read()
@@ -51,8 +52,9 @@ install_requires = [
     'GeoAlchemy2>=0.6.3',
     'SQLAlchemy>=1.3.11',
     'psycopg2-binary>=2.8.4',
-    'bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog',
-    'bdc-auth-client @ git+https://github.com/brazil-data-cube/bdc-auth-client'
+    'packaging>=20.4',
+    'bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog@v0.4.0',
+    'bdc-auth-client @ git+https://github.com/brazil-data-cube/bdc-auth-client@v0.2.0'
 ]
 
 packages = find_packages()

@@ -1,10 +1,11 @@
 #
-# This file is part of Brazil Data Cube STAC.
-# Copyright (C) 2019 INPE.
+# This file is part of Brazil Data Cube STAC Service.
+# Copyright (C) 2019-2020 INPE.
 #
-# Brazil Data Cube STAC is free software; you can redistribute it and/or modify it
+# Brazil Data Cube STAC Service is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 #
+
 SHELL := /bin/bash
 
 .PHONY: all tests docs doc
@@ -23,8 +24,7 @@ docs:
 before_install:
 	pip install --upgrade pip
 	pip install --upgrade setuptools
-	pip install --upgrade wheel
-	docker run --name postgres -e POSTGRES_PASSWORD=postgres -p 127.0.0.1:5432:5432 -d mdillon/postgis
+	docker run --name bdc-pg -p 127.0.0.1:5432:5432 -e POSTGRES_PASSWORD=postgres -d postgis/postgis:12-3.0
 	virtualenv venv -p python3
 	source venv/bin/activate
 	git clone -b b-0.2 --depth 1 https://github.com/brazil-data-cube/bdc-db
