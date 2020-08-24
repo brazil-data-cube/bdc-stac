@@ -32,6 +32,10 @@ paths:
       tags:
         - Capabilities
       summary: landing page
+      security:
+        - {}
+        - AcessTokenAuth: []
+        - ApiKeyAuth: []
       description: |-
         Returns the root STAC Catalog or STAC Collection that is the entry point
         for users to browse with STAC Browser or for search engines to crawl.
@@ -65,6 +69,10 @@ paths:
       tags:
         - Capabilities
       summary: the feature collections in the dataset
+      security:
+        - {}
+        - AcessTokenAuth: []
+        - ApiKeyAuth: []
       operationId: getCollections
       responses:
         '200':
@@ -76,6 +84,10 @@ paths:
       tags:
         - Capabilities
       summary: describe the feature collection with id `collectionId`
+      security:
+        - {}
+        - AcessTokenAuth: []
+        - ApiKeyAuth: []
       operationId: describeCollection
       parameters:
         - $ref: '#/components/parameters/collectionId'
@@ -91,6 +103,10 @@ paths:
       tags:
         - Data
       summary: fetch features
+      security:
+        - {}
+        - AcessTokenAuth: []
+        - ApiKeyAuth: []
       description: |-
         Fetch features of the feature collection with id `collectionId`.
 
@@ -119,6 +135,10 @@ paths:
       tags:
         - Data
       summary: fetch a single feature
+      security:
+        - {}
+        - AcessTokenAuth: []
+        - ApiKeyAuth: []
       description: |-
         Fetch the feature with id `featureId` in the feature collection
         with id `collectionId`.
@@ -138,6 +158,10 @@ paths:
   /search:
     get:
       summary: Search STAC items with simple filtering.
+      security:
+        - {}
+        - AcessTokenAuth: []
+        - ApiKeyAuth: []
       description: |-
         Retrieve Items matching filters. Intended as a shorthand API for simple
         queries.
@@ -179,6 +203,10 @@ paths:
                 type: string
     post:
       summary: Search STAC items with full-featured filtering.
+      security:
+        - {}
+        - AcessTokenAuth: []
+        - ApiKeyAuth: []
       description: |-
         retrieve items matching filters. Intended as the standard, full-featured
         query API.
@@ -1739,6 +1767,16 @@ components:
         text/html:
           schema:
             type: string
+  securitySchemas:
+    AcessTokenAuth:
+      type: apiKey
+      in: query
+      name: access_token
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+
 servers:
   - url: 'http://brazildatacube.dpi.inpe.br/dev/bdc-stac/'
     description: Development server
