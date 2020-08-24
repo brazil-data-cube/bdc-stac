@@ -7,15 +7,13 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 #
 
-set -eou pipefail
-
 echo
 echo "Build started..."
 echo
 
 echo "NEW TAG - BDC-STAC:"
 read BDC_STAC_TAG
-IMAGE_BDC_STAC="registry.dpi.inpe.br/brazildatacube/bdc-stac/0.9.0"
+IMAGE_BDC_STAC="registry.dpi.inpe.br/brazildatacube/dev/bdc-stac"
 IMAGE_BDC_STAC_FULL="${IMAGE_BDC_STAC}:${BDC_STAC_TAG}"
 docker build -t ${IMAGE_BDC_STAC_FULL} . --no-cache
 docker push ${IMAGE_BDC_STAC_FULL}

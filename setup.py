@@ -54,7 +54,7 @@ install_requires = [
     "SQLAlchemy>=1.3.11",
     "psycopg2-binary>=2.8.4",
     "packaging>=20.4",
-    "bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog@v0.4.0",
+    "bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog",
     "bdc-auth-client @ git+https://github.com/brazil-data-cube/bdc-auth-client@v0.2.0",
 ]
 
