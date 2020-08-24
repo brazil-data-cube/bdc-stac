@@ -14,7 +14,7 @@ from . import config as _config
 from .data import db
 from .version import __version__
 
-__all__ = "__version__"
+__all__ = ("__version__",)
 
 
 def create_app():
