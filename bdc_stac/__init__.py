@@ -18,6 +18,7 @@ __all__ = "__version__"
 
 
 def create_app():
+    """Flask create app function."""
     app = Flask(__name__)
 
     app.config["SQLALCHEMY_DATABASE_URI"] = _config.SQLALCHEMY_DATABASE_URI
