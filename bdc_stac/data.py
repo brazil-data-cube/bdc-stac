@@ -492,7 +492,7 @@ def make_geojson(items, links, access_token=""):
         properties["eo:cloud_cover"] = i.cloud_cover
 
         for key, value in i.assets.items():
-            value["href"] = BDC_STAC_FILE_ROOT + value["href"]
+            value["href"] = BDC_STAC_FILE_ROOT + value["href"] + access_token
             for index, band in enumerate(properties["eo:bands"], start=0):
                 if band["name"] == key:
                     value["eo:bands"] = [index]
