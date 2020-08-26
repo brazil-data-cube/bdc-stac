@@ -20,7 +20,7 @@ Version 0.9.0-0
 - Support for STAC 0.9.0.
 - Support for STAC extensions: checksum, commons, context, datacube, eo, version.
 - Compatibility with `BDC-Catalog data model version 0.4.0 <https://github.com/brazil-data-cube/bdc-catalog>`_.
-- Compatibility with `BDC-Auth-Client version 0.2.0 <https://github.com/brazil-data-cube/bdc-auth-client>`_.
+- Compatibility with `BDC-Auth-Client version 0.2.1 <https://github.com/brazil-data-cube/bdc-auth-client>`_.
 - New Sphinx template.
 
 
