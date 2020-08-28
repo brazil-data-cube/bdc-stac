@@ -34,7 +34,7 @@ def get_collection_items(
     roles=[],
     item_id=None,
     bbox=None,
-    time=None,
+    datetime=None,
     ids=None,
     collections=None,
     intersects=None,
@@ -52,8 +52,8 @@ def get_collection_items(
     :type item_id: str, optional
     :param bbox: bounding box for intersection [west, north, east, south], defaults to None
     :type bbox: list, optional
-    :param time: Single date+time, or a range ("/" seperator), formatted to RFC 3339, section 5.6, defaults to None
-    :type time: str, optional
+    :param datetime: Single date+time, or a range ("/" seperator), formatted to RFC 3339, section 5.6, defaults to None
+    :type datetime: str, optional
     :param ids: Array of Item ids to return. All other filter parameters that further restrict the
                 number of search results are ignored, defaults to None
     :type ids: list, optional
@@ -125,13 +125,13 @@ def get_collection_items(
             except:
                 raise (InvalidBoundingBoxError(f"'{bbox}' is not a valid bbox."))
 
-        if time is not None:
-            if "/" in time:
-                time_start, time_end = time.split("/")
+        if datetime is not None:
+            if "/" in datetime:
+                time_start, time_end = datetime.split("/")
                 time_end = datetime.fromisoformat(time_end)
                 where += [or_(Item.end_date <= time_end, Item.start_date <= time_end)]
             else:
-                time_start = datetime.fromisoformat(time)
+                time_start = datetime.fromisoformat(datetime)
             where += [or_(Item.start_date >= time_start, Item.end_date >= time_start)]
 
     query = session.query(*columns).filter(*where).order_by(Item.start_date.desc())
