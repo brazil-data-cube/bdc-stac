@@ -88,7 +88,6 @@ def get_collection_items(
 
     where = [
         Collection.id == Item.collection_id,
-        Item.tile_id == Tile.id,
         or_(Collection.is_public.is_(True), Collection.id.in_([int(r.split(":")[0]) for r in roles])),
     ]
 
@@ -133,8 +132,8 @@ def get_collection_items(
             else:
                 time_start = datetime.fromisoformat(datetime)
             where += [or_(Item.start_date >= time_start, Item.end_date >= time_start)]
-
-    query = session.query(*columns).filter(*where).order_by(Item.start_date.desc())
+    outer = [Item.tile_id == Tile.id]
+    query = session.query(*columns).outerjoin(Tile, *outer).filter(*where).order_by(Item.start_date.desc())
 
     result = query.paginate(page=int(page), per_page=int(limit), error_out=False, max_per_page=BDC_STAC_MAX_LIMIT)
 
