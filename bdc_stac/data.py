@@ -2,7 +2,7 @@
 import json
 import warnings
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime as dt
 from functools import lru_cache
 
 from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, Item, Tile
@@ -127,10 +127,10 @@ def get_collection_items(
         if datetime is not None:
             if "/" in datetime:
                 time_start, time_end = datetime.split("/")
-                time_end = datetime.fromisoformat(time_end)
+                time_end = dt.fromisoformat(time_end)
                 where += [or_(Item.end_date <= time_end, Item.start_date <= time_end)]
             else:
-                time_start = datetime.fromisoformat(datetime)
+                time_start = dt.fromisoformat(datetime)
             where += [or_(Item.start_date >= time_start, Item.end_date >= time_start)]
     outer = [Item.tile_id == Tile.id]
     query = session.query(*columns).outerjoin(Tile, *outer).filter(*where).order_by(Item.start_date.desc())
@@ -279,7 +279,7 @@ def get_collection_timeline(collection_id):
         .all()
     )
 
-    return [datetime.fromisoformat(str(t.start_date)).strftime("%Y-%m-%d") for t in timeline]
+    return [dt.fromisoformat(str(t.start_date)).strftime("%Y-%m-%d") for t in timeline]
 
 
 def get_collection_extent(collection_id):
@@ -477,13 +477,13 @@ def make_geojson(items, links, access_token=""):
         bands = get_collection_eo(i.collection_id)
 
         properties = dict()
-        start = datetime.fromisoformat(str(i.start)).strftime("%Y-%m-%dT%H:%M:%S")
+        start = dt.fromisoformat(str(i.start)).strftime("%Y-%m-%dT%H:%M:%S")
         properties["bdc:tile"] = i.tile
         properties["datetime"] = start
 
         if i.collection_type == "cube":
             properties["start_datetime"] = start
-            properties["end_datetime"] = datetime.fromisoformat(str(i.end)).strftime("%Y-%m-%dT%H:%M:%S")
+            properties["end_datetime"] = dt.fromisoformat(str(i.end)).strftime("%Y-%m-%dT%H:%M:%S")
 
         properties["created"] = i.created.strftime("%Y-%m-%dT%H:%M:%S")
         properties["updated"] = i.updated.strftime("%Y-%m-%dT%H:%M:%S")
