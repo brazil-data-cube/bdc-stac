@@ -11,6 +11,13 @@ Changes
 =======
 
 
+Version 0.9.0-1
+---------------
+
+
+- Compatibility with `BDC-Catalog data model version 0.6.0 <https://github.com/brazil-data-cube/bdc-catalog>`_.
+
+
 Version 0.9.0-0
 ---------------
 
