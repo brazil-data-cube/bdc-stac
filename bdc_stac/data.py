@@ -117,7 +117,11 @@ def get_collection_items(
                 where += [
                     func.ST_Intersects(
                         func.ST_MakeEnvelope(
-                            split_bbox[0], split_bbox[1], split_bbox[2], split_bbox[3], func.ST_SRID(Item.geom),
+                            split_bbox[0],
+                            split_bbox[1],
+                            split_bbox[2],
+                            split_bbox[3],
+                            func.ST_SRID(Item.geom),
                         ),
                         Item.geom,
                     )
@@ -438,9 +442,16 @@ def get_catalog(roles=[]):
     """
     collections = (
         session.query(
-            Collection.id, func.concat(Collection.name, "-", Collection.version).label("name"), Collection.title,
+            Collection.id,
+            func.concat(Collection.name, "-", Collection.version).label("name"),
+            Collection.title,
         )
-        .filter(or_(Collection.is_public.is_(True), Collection.id.in_([int(r.split(":")[0]) for r in roles]),))
+        .filter(
+            or_(
+                Collection.is_public.is_(True),
+                Collection.id.in_([int(r.split(":")[0]) for r in roles]),
+            )
+        )
         .all()
     )
     return collections
