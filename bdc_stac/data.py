@@ -116,11 +116,7 @@ def get_collection_items(
                 where += [
                     func.ST_Intersects(
                         func.ST_MakeEnvelope(
-                            split_bbox[0],
-                            split_bbox[1],
-                            split_bbox[2],
-                            split_bbox[3],
-                            func.ST_SRID(Item.geom),
+                            split_bbox[0], split_bbox[1], split_bbox[2], split_bbox[3], func.ST_SRID(Item.geom),
                         ),
                         Item.geom,
                     )
@@ -250,21 +246,15 @@ def get_collection_crs(collection_id):
     :param collection_id: collection identifier
     :type collection_id: str
     :return: CRS for the collection
-    :rtype: list
+    :rtype: str
     """
-    crs = session.execute(
-        "SELECT spatial_ref_sys.proj4text as proj "
-        "FROM grid_ref_sys, pg_class, geometry_columns, spatial_ref_sys, collections "
-        "WHERE grid_ref_sys.table_id = pg_class.oid "
-        "AND geometry_columns.f_table_name = relname "
-        "AND geometry_columns.f_table_schema = relnamespace::regnamespace::text "
-        "AND spatial_ref_sys.srid = geometry_columns.srid "
-        "AND collections.grid_ref_sys_id = grid_ref_sys.id "
-        "AND collections.id = :collection_id",
-        {"collection_id": collection_id},
-    ).first()
+    grs = (
+        session.query(GridRefSys)
+        .filter(Collection.id == collection_id, Collection.grid_ref_sys_id == GridRefSys.id)
+        .first()
+    )
 
-    return crs["proj"]
+    return grs.crs
 
 
 def get_collection_timeline(collection_id):
@@ -441,16 +431,9 @@ def get_catalog(roles=[]):
     """
     collections = (
         session.query(
-            Collection.id,
-            func.concat(Collection.name, "-", Collection.version).label("name"),
-            Collection.title,
+            Collection.id, func.concat(Collection.name, "-", Collection.version).label("name"), Collection.title,
         )
-        .filter(
-            or_(
-                Collection.is_public.is_(True),
-                Collection.id.in_([int(r.split(":")[0]) for r in roles]),
-            )
-        )
+        .filter(or_(Collection.is_public.is_(True), Collection.id.in_([int(r.split(":")[0]) for r in roles]),))
         .all()
     )
     return collections
