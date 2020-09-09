@@ -17,7 +17,7 @@ Version 0.9.0-1
 Released 2020-09-09
 
 
-- Bug fix: retrieva fo grid CRS (#104)
+- Bug fix: retrieval of the grid CRS (#104)
 
 - Compatibility with `BDC-Catalog data model version 0.6.1 <https://github.com/brazil-data-cube/bdc-catalog>`_.
 
