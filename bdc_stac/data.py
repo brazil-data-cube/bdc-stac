@@ -9,8 +9,7 @@ from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, 
 from bdc_catalog.models.base_sql import db
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2.functions import GenericFunction
-from sqlalchemy import Float, cast, exc, func, or_
-
+from sqlalchemy import Float, and_, cast, exc, func, or_
 from .config import BDC_STAC_API_VERSION, BDC_STAC_FILE_ROOT, BDC_STAC_MAX_LIMIT
 
 with warnings.catch_warnings():
@@ -101,17 +100,18 @@ def get_collection_items(
         elif collection_id is not None:
             where += [func.concat(Collection.name, "-", Collection.version) == collection_id]
 
-        if intersects is not None:
-            where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(str(intersects)), Item.geom)]
-
         if query:
             filters = create_query_filter(query)
             if filters:
                 where += filters
 
-        if bbox is not None:
+        if intersects is not None:
+            where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(str(intersects)), Item.geom)]
+        elif bbox is not None:
             try:
                 split_bbox = [float(x) for x in bbox.split(",")]
+                if split_bbox[0] == split_bbox[2] or split_bbox[1] == split_bbox[3]:
+                    raise InvalidBoundingBoxError("")
 
                 where += [
                     func.ST_Intersects(
@@ -125,13 +125,19 @@ def get_collection_items(
                 raise (InvalidBoundingBoxError(f"'{bbox}' is not a valid bbox."))
 
         if datetime is not None:
+            date_filter = None
             if "/" in datetime:
                 time_start, time_end = datetime.split("/")
-                time_end = dt.fromisoformat(time_end)
-                where += [or_(Item.end_date <= time_end, Item.start_date <= time_end)]
+                date_filter = [
+                    or_(
+                        and_(Item.start_date >= time_start, Item.start_date <= time_end),
+                        and_(Item.end_date >= time_start, Item.end_date <= time_end),
+                    )
+                ]
             else:
-                time_start = dt.fromisoformat(datetime)
-            where += [or_(Item.start_date >= time_start, Item.end_date >= time_start)]
+                date_filter = [or_(Item.start_date <= datetime, Item.end_date <= datetime)]
+
+            where += date_filter
     outer = [Item.tile_id == Tile.id]
     query = session.query(*columns).outerjoin(Tile, *outer).filter(*where).order_by(Item.start_date.desc())
 
