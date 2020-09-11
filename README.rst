@@ -85,7 +85,7 @@ License
 =======
 
 .. admonition::
-    Copyright (C) 2019 INPE.
+    Copyright (C) 2019-2020 INPE.
 
     Brazil Data Cube STAC is a free software; you can redistribute it and/or modify it
     under the terms of the MIT License; see LICENSE file for more details.

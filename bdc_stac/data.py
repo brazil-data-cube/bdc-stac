@@ -2,15 +2,14 @@
 import json
 import warnings
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime as dt
 from functools import lru_cache
 
 from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, Item, Tile
 from bdc_catalog.models.base_sql import db
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2.functions import GenericFunction
-from sqlalchemy import Float, cast, exc, func, or_
-
+from sqlalchemy import Float, and_, cast, exc, func, or_
 from .config import BDC_STAC_API_VERSION, BDC_STAC_FILE_ROOT, BDC_STAC_MAX_LIMIT
 
 with warnings.catch_warnings():
@@ -34,7 +33,7 @@ def get_collection_items(
     roles=[],
     item_id=None,
     bbox=None,
-    time=None,
+    datetime=None,
     ids=None,
     collections=None,
     intersects=None,
@@ -52,8 +51,8 @@ def get_collection_items(
     :type item_id: str, optional
     :param bbox: bounding box for intersection [west, north, east, south], defaults to None
     :type bbox: list, optional
-    :param time: Single date+time, or a range ("/" seperator), formatted to RFC 3339, section 5.6, defaults to None
-    :type time: str, optional
+    :param datetime: Single date+time, or a range ("/" seperator), formatted to RFC 3339, section 5.6, defaults to None
+    :type datetime: str, optional
     :param ids: Array of Item ids to return. All other filter parameters that further restrict the
                 number of search results are ignored, defaults to None
     :type ids: list, optional
@@ -88,7 +87,6 @@ def get_collection_items(
 
     where = [
         Collection.id == Item.collection_id,
-        Item.tile_id == Tile.id,
         or_(Collection.is_public.is_(True), Collection.id.in_([int(r.split(":")[0]) for r in roles])),
     ]
 
@@ -102,17 +100,18 @@ def get_collection_items(
         elif collection_id is not None:
             where += [func.concat(Collection.name, "-", Collection.version) == collection_id]
 
-        if intersects is not None:
-            where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(str(intersects)), Item.geom)]
-
         if query:
             filters = create_query_filter(query)
             if filters:
                 where += filters
 
-        if bbox is not None:
+        if intersects is not None:
+            where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(str(intersects)), Item.geom)]
+        elif bbox is not None:
             try:
                 split_bbox = [float(x) for x in bbox.split(",")]
+                if split_bbox[0] == split_bbox[2] or split_bbox[1] == split_bbox[3]:
+                    raise InvalidBoundingBoxError("")
 
                 where += [
                     func.ST_Intersects(
@@ -125,16 +124,22 @@ def get_collection_items(
             except:
                 raise (InvalidBoundingBoxError(f"'{bbox}' is not a valid bbox."))
 
-        if time is not None:
-            if "/" in time:
-                time_start, time_end = time.split("/")
-                time_end = datetime.fromisoformat(time_end)
-                where += [or_(Item.end_date <= time_end, Item.start_date <= time_end)]
+        if datetime is not None:
+            date_filter = None
+            if "/" in datetime:
+                time_start, time_end = datetime.split("/")
+                date_filter = [
+                    or_(
+                        and_(Item.start_date >= time_start, Item.start_date <= time_end),
+                        and_(Item.end_date >= time_start, Item.end_date <= time_end),
+                    )
+                ]
             else:
-                time_start = datetime.fromisoformat(time)
-            where += [or_(Item.start_date >= time_start, Item.end_date >= time_start)]
+                date_filter = [or_(Item.start_date <= datetime, Item.end_date <= datetime)]
 
-    query = session.query(*columns).filter(*where).order_by(Item.start_date.desc())
+            where += date_filter
+    outer = [Item.tile_id == Tile.id]
+    query = session.query(*columns).outerjoin(Tile, *outer).filter(*where).order_by(Item.start_date.desc())
 
     result = query.paginate(page=int(page), per_page=int(limit), error_out=False, max_per_page=BDC_STAC_MAX_LIMIT)
 
@@ -247,21 +252,15 @@ def get_collection_crs(collection_id):
     :param collection_id: collection identifier
     :type collection_id: str
     :return: CRS for the collection
-    :rtype: list
+    :rtype: str
     """
-    crs = session.execute(
-        "SELECT spatial_ref_sys.proj4text as proj "
-        "FROM grid_ref_sys, pg_class, geometry_columns, spatial_ref_sys, collections "
-        "WHERE grid_ref_sys.table_id = pg_class.oid "
-        "AND geometry_columns.f_table_name = relname "
-        "AND geometry_columns.f_table_schema = relnamespace::regnamespace::text "
-        "AND spatial_ref_sys.srid = geometry_columns.srid "
-        "AND collections.grid_ref_sys_id = grid_ref_sys.id "
-        "AND collections.id = :collection_id",
-        {"collection_id": collection_id},
-    ).first()
+    grs = (
+        session.query(GridRefSys)
+        .filter(Collection.id == collection_id, Collection.grid_ref_sys_id == GridRefSys.id)
+        .first()
+    )
 
-    return crs["proj"]
+    return grs.crs
 
 
 def get_collection_timeline(collection_id):
@@ -280,7 +279,7 @@ def get_collection_timeline(collection_id):
         .all()
     )
 
-    return [datetime.fromisoformat(str(t.start_date)).strftime("%Y-%m-%d") for t in timeline]
+    return [dt.fromisoformat(str(t.start_date)).strftime("%Y-%m-%d") for t in timeline]
 
 
 def get_collection_extent(collection_id):
@@ -478,13 +477,13 @@ def make_geojson(items, links, access_token=""):
         bands = get_collection_eo(i.collection_id)
 
         properties = dict()
-        start = datetime.fromisoformat(str(i.start)).strftime("%Y-%m-%dT%H:%M:%S")
+        start = dt.fromisoformat(str(i.start)).strftime("%Y-%m-%dT%H:%M:%S")
         properties["bdc:tile"] = i.tile
         properties["datetime"] = start
 
         if i.collection_type == "cube":
             properties["start_datetime"] = start
-            properties["end_datetime"] = datetime.fromisoformat(str(i.end)).strftime("%Y-%m-%dT%H:%M:%S")
+            properties["end_datetime"] = dt.fromisoformat(str(i.end)).strftime("%Y-%m-%dT%H:%M:%S")
 
         properties["created"] = i.created.strftime("%Y-%m-%dT%H:%M:%S")
         properties["updated"] = i.updated.strftime("%Y-%m-%dT%H:%M:%S")

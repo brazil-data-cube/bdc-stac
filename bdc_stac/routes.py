@@ -297,7 +297,7 @@ def stac_search(roles=[], access_token=""):
     """Search STAC items with simple filtering."""
     access_token = f"?access_token={access_token}" if access_token else ""
 
-    bbox, time, ids, collections, page, limit, intersects, query = None, None, None, None, None, None, None, None
+    bbox, datetime, ids, collections, page, limit, intersects, query = None, None, None, None, None, None, None, None
     if request.method == "POST":
         if request.is_json:
             request_json = request.get_json()
@@ -306,7 +306,7 @@ def stac_search(roles=[], access_token=""):
             if bbox is not None:
                 bbox = ",".join([str(x) for x in bbox])
 
-            time = request_json.get("time", None)
+            datetime = request_json.get("datetime", None)
 
             ids = request_json.get("ids", None)
             if ids is not None:
@@ -325,7 +325,7 @@ def stac_search(roles=[], access_token=""):
 
     elif request.method == "GET":
         bbox = request.args.get("bbox", None)
-        time = request.args.get("time", None)
+        datetime = request.args.get("datetime", None)
         ids = request.args.get("ids", None)
         collections = request.args.get("collections", None)
         page = int(request.args.get("page", 1))
@@ -335,7 +335,7 @@ def stac_search(roles=[], access_token=""):
         collections=collections,
         roles=roles,
         bbox=bbox,
-        time=time,
+        datetime=datetime,
         ids=ids,
         page=page,
         limit=limit,
