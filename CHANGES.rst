@@ -11,16 +11,44 @@ Changes
 =======
 
 
+Version 0.9.0-2
+---------------
+
+Released 2020-09-11
+
+
+- Bug fix: Check if parameter ``bbox`` is valid (an area object) (#105)
+
+
+Version 0.9.0-1
+---------------
+
+Released 2020-09-09
+
+
+- Bug fix: retrieval of the grid CRS (#104)
+
+- Compatibility with `BDC-Catalog data model version 0.6.1 <https://github.com/brazil-data-cube/bdc-catalog>`_.
+
+
 Version 0.9.0-0
 ---------------
 
 
+Released 2020-08-26
+
 - Optimizations of database queries.
+
 - Review of metadata keys.
+
 - Support for STAC 0.9.0.
+
 - Support for STAC extensions: checksum, commons, context, datacube, eo, version.
+
 - Compatibility with `BDC-Catalog data model version 0.4.0 <https://github.com/brazil-data-cube/bdc-catalog>`_.
+
 - Compatibility with `BDC-Auth-Client version 0.2.1 <https://github.com/brazil-data-cube/bdc-auth-client>`_.
+
 - New Sphinx template.
 
 

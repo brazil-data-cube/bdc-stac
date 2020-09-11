@@ -10,8 +10,6 @@ import os
 import pytest
 import stac
 
-from werkzeug.exceptions import HTTPException
-
 os.environ["DB_HOST"] = "localhost:5432"
 os.environ["DB_NAME"] = "bdcdb"
 os.environ["DB_USER"] = "postgres"

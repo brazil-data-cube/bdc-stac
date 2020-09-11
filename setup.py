@@ -32,8 +32,8 @@ tests_require = [
     "pydocstyle>=4.0",
     "isort>4.3",
     "check-manifest>=0.40",
-    "black>=19.10",
-    "stac @ git+https://github.com/brazil-data-cube/stac.py@b-0.8.1",
+    "black>=19.10a",
+    "stac @ git+https://github.com/brazil-data-cube/stac.py@b-0.9.0",
 ]
 
 extras_require = {
@@ -54,7 +54,7 @@ install_requires = [
     "SQLAlchemy>=1.3.11",
     "psycopg2-binary>=2.8.4",
     "packaging>=20.4",
-    "bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog@v0.4.0",
+    "bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog@v0.6.1",
     "bdc-auth-client @ git+https://github.com/brazil-data-cube/bdc-auth-client@v0.2.1",
 ]
 
@@ -72,8 +72,8 @@ setup(
     long_description=readme + "\n\n" + history,
     keywords="STAC RESTful Web Service",
     license="MIT",
-    author="INPE",
-    author_email="brazildatacube@dpi.inpe.br",
+    author="Brazil Data Cube Team",
+    author_email="brazildatacube@inpe.br",
     url="https://github.com/brazil-data-cube/bdc-stac",
     packages=packages,
     zip_safe=False,
