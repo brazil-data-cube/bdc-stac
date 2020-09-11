@@ -11,6 +11,15 @@ Changes
 =======
 
 
+Version 0.9.0-2
+---------------
+
+Released 2020-09-11
+
+
+- Bug fix: Check if parameter ``bbox`` is valid (an area object) (#105)
+
+
 Version 0.9.0-1
 ---------------
 
