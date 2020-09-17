@@ -280,7 +280,7 @@ def items_id(collection_id, item_id, roles=[], access_token=""):
         {"href": f"{BASE_URL}/collections/", "rel": "self"},
         {"href": f"{BASE_URL}/collections/", "rel": "parent"},
         {"href": f"{BASE_URL}/collections/", "rel": "collection"},
-        {"href": f"{BASE_URL}/stac", "rel": "root"},
+        {"href": f"{BASE_URL}/", "rel": "root"},
     ]
 
     gjson = make_geojson(item.items, links, access_token=access_token)
@@ -347,7 +347,7 @@ def stac_search(roles=[], access_token=""):
         {"href": f"{BASE_URL}/collections/", "rel": "self"},
         {"href": f"{BASE_URL}/collections/", "rel": "parent"},
         {"href": f"{BASE_URL}/collections/", "rel": "collection"},
-        {"href": f"{BASE_URL}/stac", "rel": "root"},
+        {"href": f"{BASE_URL}/", "rel": "root"},
     ]
 
     gjson = dict()
@@ -364,10 +364,10 @@ def stac_search(roles=[], access_token=""):
     args = request.args.copy()
     if items.has_next:
         args["page"] = items.next_num
-        gjson["links"].append({"href": f"{BASE_URL}/stac/search?" + url_encode(args), "rel": "next"})
+        gjson["links"].append({"href": f"{BASE_URL}/search?" + url_encode(args), "rel": "next"})
     if items.has_prev:
         args["page"] = items.prev_num
-        gjson["links"].append({"href": f"{BASE_URL}/stac/search?" + url_encode(args), "rel": "prev"})
+        gjson["links"].append({"href": f"{BASE_URL}/search?" + url_encode(args), "rel": "prev"})
 
     gjson["features"] = features
 
