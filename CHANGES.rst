@@ -11,6 +11,16 @@ Changes
 =======
 
 
+Version 0.9.0-4
+---------------
+
+
+Released 2020-10-05
+
+
+- Add instrument and platform to collections and items.
+
+
 Version 0.9.0-3
 ---------------
 
