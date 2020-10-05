@@ -72,6 +72,7 @@ def get_collection_items(
     columns = [
         func.concat(Collection.name, "-", Collection.version).label("collection"),
         Collection.collection_type,
+        Collection._metadata.label("meta"),
         Item.name.label("item"),
         Item.collection_id,
         Item.start_date.label("start"),
@@ -406,6 +407,11 @@ def get_collections(collection_id=None, roles=[]):
 
         collection_eo = get_collection_eo(r.id)
         collection["properties"].update(collection_eo)
+
+        if r.meta:
+            collection["properties"]["instruments"] = r.meta["platform"]["instruments"]
+            collection["properties"]["platform"] = r.meta["platform"]["code"]
+
         collection["bdc:grs"] = r.grid_ref_sys
         collection["bdc:tiles"] = get_collection_tiles(r.id)
         collection["bdc:composite_function"] = r.composite_function
@@ -481,7 +487,7 @@ def make_geojson(items, links, access_token=""):
         properties["bdc:tile"] = i.tile
         properties["datetime"] = start
 
-        if i.collection_type == "cube":
+        if i.collection_type == "cube" and i.start != i.end:
             properties["start_datetime"] = start
             properties["end_datetime"] = dt.fromisoformat(str(i.end)).strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -495,6 +501,10 @@ def make_geojson(items, links, access_token=""):
             for index, band in enumerate(properties["eo:bands"], start=0):
                 if band["name"] == key:
                     value["eo:bands"] = [index]
+
+        if i.meta:
+            properties["instruments"] = i.meta["platform"]["instruments"]
+            properties["platform"] = i.meta["platform"]["code"]
 
         feature["properties"] = properties
         feature["assets"] = i.assets
