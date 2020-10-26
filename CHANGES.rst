@@ -14,7 +14,10 @@ Version 0.9.0-5
 ---------------
 
 
-- Fix collection with no associated grid.
+Released 2020-10-26
+
+
+- Fix collection with no associated grid (#112).
 
 
 Version 0.9.0-4
