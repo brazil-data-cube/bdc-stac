@@ -10,6 +10,12 @@
 Changes
 =======
 
+Version 0.9.0-5
+---------------
+
+
+- Fix collection with no associated grid.
+
 
 Version 0.9.0-4
 ---------------

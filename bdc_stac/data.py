@@ -351,7 +351,6 @@ def get_collections(collection_id=None, roles=[]):
     ]
 
     where = [
-        Collection.grid_ref_sys_id == GridRefSys.id,
         or_(Collection.is_public.is_(True), Collection.id.in_([int(r.split(":")[0]) for r in roles])),
     ]
 
@@ -361,6 +360,7 @@ def get_collections(collection_id=None, roles=[]):
     result = (
         session.query(*columns)
         .outerjoin(CompositeFunction, Collection.composite_function_id == CompositeFunction.id)
+        .outerjoin(GridRefSys, Collection.grid_ref_sys_id == GridRefSys.id)
         .filter(*where)
         .all()
     )
