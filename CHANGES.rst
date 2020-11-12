@@ -15,7 +15,7 @@ Version 0.9.0-6
 ---------------
 
 
-- Display all metadata in collection.
+- Display all metadata in collection (`#115 <https://github.com/brazil-data-cube/bdc-stac/pull/115>`_).
 
 
 Version 0.9.0-5
@@ -25,7 +25,7 @@ Version 0.9.0-5
 Released 2020-10-26
 
 
-- Fix collection with no associated grid (#112).
+- Fix collection with no associated grid (`#112 <https://github.com/brazil-data-cube/bdc-stac/pull/112>`_).
 
 
 Version 0.9.0-4
@@ -45,7 +45,7 @@ Version 0.9.0-3
 Released 2020-09-18
 
 
-- Bug fix: Review some links in the service routes (#110)
+- Bug fix: Review some links in the service routes (`#110 <https://github.com/brazil-data-cube/bdc-stac/pull/110>`_)
 
 
 
@@ -56,7 +56,7 @@ Version 0.9.0-2
 Released 2020-09-11
 
 
-- Bug fix: Check if parameter ``bbox`` is valid (an area object) (#105)
+- Bug fix: Check if parameter ``bbox`` is valid (an area object) (`#105 <https://github.com/brazil-data-cube/bdc-stac/issues/105>`_)
 
 
 Version 0.9.0-1
@@ -66,7 +66,7 @@ Version 0.9.0-1
 Released 2020-09-09
 
 
-- Bug fix: retrieval of the grid CRS (#104)
+- Bug fix: retrieval of the grid CRS (`#104 <https://github.com/brazil-data-cube/bdc-stac/issues/104>`_)
 
 - Compatibility with `BDC-Catalog data model version 0.6.1 <https://github.com/brazil-data-cube/bdc-catalog>`_.
 
