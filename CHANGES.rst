@@ -10,6 +10,14 @@
 Changes
 =======
 
+
+Version 0.9.0-6
+---------------
+
+
+- Display all metadata in collection.
+
+
 Version 0.9.0-5
 ---------------
 
