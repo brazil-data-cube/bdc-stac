@@ -10,10 +10,15 @@
 Changes
 =======
 
+Version 0.9.0-7
+---------------
+
+- Check if platform exists in collection.
 
 Version 0.9.0-6
 ---------------
 
+Released 2020-11-12
 
 - Display all metadata in collection.
 
