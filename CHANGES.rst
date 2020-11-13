@@ -13,7 +13,7 @@ Changes
 Version 0.9.0-7
 ---------------
 
-- Check if platform exists in collection.
+- Check if platform exists in collection (`#116 <https://github.com/brazil-data-cube/bdc-stac/pull/116>`_).
 
 Version 0.9.0-6
 ---------------
