@@ -409,10 +409,11 @@ def get_collections(collection_id=None, roles=[]):
         collection["properties"].update(collection_eo)
 
         if r.meta:
-            collection["properties"]["instruments"] = r.meta["platform"]["instruments"]
-            collection["properties"]["platform"] = r.meta["platform"]["code"]
+            if "platform" in r.meta:
+                collection["properties"]["instruments"] = r.meta["platform"]["instruments"]
+                collection["properties"]["platform"] = r.meta["platform"]["code"]
 
-            r.meta.pop("platform") # platform info is displayed on properties
+                r.meta.pop("platform") # platform info is displayed on properties
             collection["bdc:metadata"] = r.meta
 
         collection["bdc:grs"] = r.grid_ref_sys
