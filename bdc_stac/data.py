@@ -508,8 +508,12 @@ def make_geojson(items, links, access_token=""):
                     value["eo:bands"] = [index]
 
         if i.meta:
-            properties["instruments"] = i.meta["platform"]["instruments"]
-            properties["platform"] = i.meta["platform"]["code"]
+            if "platform" in r.meta:
+                properties["instruments"] = i.meta["platform"]["instruments"]
+                properties["platform"] = i.meta["platform"]["code"]
+
+                i.meta.pop("platform") # platform info is displayed on properties
+            properties["bdc:metadata"] = i.meta
 
         feature["properties"] = properties
         feature["assets"] = i.assets
