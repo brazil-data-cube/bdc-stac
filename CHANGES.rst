@@ -14,12 +14,19 @@ Changes
 Version 0.9.0-8
 ---------------
 
+
+Released 2020-11-16
+
+
 - Fix item metadata (`#117 <https://github.com/brazil-data-cube/bdc-stac/pull/117>`_).
+
 
 Version 0.9.0-7
 ---------------
 
+
 Released 2020-11-13
+
 
 - Check if platform exists in collection (`#116 <https://github.com/brazil-data-cube/bdc-stac/pull/116>`_).
 
@@ -27,7 +34,9 @@ Released 2020-11-13
 Version 0.9.0-6
 ---------------
 
+
 Released 2020-11-12
+
 
 - Display all metadata in collection (`#115 <https://github.com/brazil-data-cube/bdc-stac/pull/115>`_).
 
