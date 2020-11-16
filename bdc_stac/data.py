@@ -508,7 +508,7 @@ def make_geojson(items, links, access_token=""):
                     value["eo:bands"] = [index]
 
         if i.meta:
-            if "platform" in r.meta:
+            if "platform" in i.meta:
                 properties["instruments"] = i.meta["platform"]["instruments"]
                 properties["platform"] = i.meta["platform"]["code"]
 
