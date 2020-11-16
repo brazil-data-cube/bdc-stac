@@ -14,7 +14,7 @@ Changes
 Version 0.9.0-8
 ---------------
 
-- Fix item metadata.
+- Fix item metadata (`#117 <https://github.com/brazil-data-cube/bdc-stac/pull/117>`_).
 
 Version 0.9.0-7
 ---------------
