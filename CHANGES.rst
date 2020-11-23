@@ -11,6 +11,18 @@ Changes
 =======
 
 
+Version 0.9.0-9
+---------------
+
+
+Released 2020-11-23
+
+
+- Use timeline table. Close #87
+- Fix datetime parameter to work as specified in (`OGC API <http://docs.opengeospatial.org/is/17-069r3/17-069r3.html#_parameter_datetime>`_).
+- Improve documentation on datetime parameter (`#114 <https://github.com/brazil-data-cube/bdc-stac/issues/114>`_).
+
+
 Version 0.9.0-8
 ---------------
 
