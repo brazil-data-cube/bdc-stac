@@ -5,7 +5,7 @@ from copy import deepcopy
 from datetime import datetime as dt
 from functools import lru_cache
 
-from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, Item, Tile
+from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, Item, Tile, Timeline
 from bdc_catalog.models.base_sql import db
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2.functions import GenericFunction
@@ -273,14 +273,13 @@ def get_collection_timeline(collection_id):
     :rtype: list
     """
     timeline = (
-        session.query(Item.start_date)
-        .filter(Item.collection_id == collection_id)
-        .group_by(Item.start_date)
-        .order_by(Item.start_date.asc())
+        session.query(Timeline.time_inst)
+        .filter(Timeline.collection_id == collection_id)
+        .order_by(Timeline.time_inst.asc())
         .all()
     )
 
-    return [dt.fromisoformat(str(t.start_date)).strftime("%Y-%m-%d") for t in timeline]
+    return [dt.fromisoformat(str(t.time_inst)).strftime("%Y-%m-%d") for t in timeline]
 
 
 def get_collection_extent(collection_id):

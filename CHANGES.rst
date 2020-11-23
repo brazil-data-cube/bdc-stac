@@ -11,6 +11,13 @@ Changes
 =======
 
 
+Version 0.9.0-9
+---------------
+
+
+- Use timeline table. Close #87
+
+
 Version 0.9.0-8
 ---------------
 
