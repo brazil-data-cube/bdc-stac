@@ -10,6 +10,16 @@
 Changes
 =======
 
+Version 0.9.0-10
+---------------
+
+
+Released 2020-11-26
+
+
+- Add bdc extension schema. Close #89
+_ Add route to serve jsonschemas. Close #90
+
 
 Version 0.9.0-9
 ---------------
