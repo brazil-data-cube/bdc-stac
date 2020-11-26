@@ -1,0 +1,144 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "bdc_extension.json#",
+  "title": "Brazil Data Cube Extension",
+  "description": "STAC BDC Extension to a STAC Item or STAC Collection.",
+  "oneOf": [
+    {
+      "allOf": [
+        {
+          "$ref": "https://raw.githubusercontent.com/radiantearth/stac-spec/v0.9.0/item-spec/json-schema/item.json"
+        },
+        {
+          "type": "object",
+          "required": [
+            "properties"
+          ],
+          "properties": {
+            "properties": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/objects/bdc:tiles"
+                  },
+                  {
+                    "$ref": "#/definitions/objects/bdc:metadata"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "https://raw.githubusercontent.com/radiantearth/stac-spec/v0.9.0/collection-spec/json-schema/collection.json"
+        },
+        {
+          "$ref": "#/definitions/bdc"
+        }
+      ]
+    }
+  ],
+  "definitions": {
+    "bdc": {
+      "type": "object",
+      "properties": {
+        "properties": {
+          "type": "object",
+          "required": [
+            "bdc:bands_quicklook"
+          ],
+          "properties": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/objects/bdc:tiles"
+                },
+                {
+                  "$ref": "#/definitions/objects/bdc:metadata"
+                },
+                {
+                  "$ref": "#/definitions/objects/bdc:tiles"
+                },
+                {
+                  "$ref": "#/definitions/objects/bdc:bands_quicklook"
+                },
+                {
+                  "$ref": "#/definitions/objects/bdc:composite_function"
+                },
+                {
+                  "$ref": "#/definitions/objects/bdc:grs"
+                },
+                {
+                  "$ref": "#/definitions/objects/bdc:crs"
+                },
+                {
+                  "$ref": "#/definitions/objects/bdc:temporal_composition"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "objects": {
+      "bdc:tiles": {
+        "title": "Tiles",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "bdc:metadata": {
+        "type": "object",
+        "title": "BDC Metadata",
+        "description": "Additional metadata",
+        "additionalProperties": true
+      },
+      "bdc:bands_quicklook": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "bdc:composite_function": {
+        "type": "string"
+      },
+      "bdc:grs": {
+        "title": "Grid ref system",
+        "type": "string"
+      },
+      "bdc:crs": {
+        "type": "string"
+      },
+      "bdc:temporal_composition": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "cycle": {
+            "type": "object",
+            "properties": {
+              "step": {
+                "type": "integer"
+              },
+              "unit": {
+                "type": "string"
+              }
+            }
+          },
+          "schema": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

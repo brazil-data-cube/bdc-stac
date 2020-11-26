@@ -495,7 +495,7 @@ def make_geojson(items, links, access_token=""):
 
         properties = dict()
         start = dt.fromisoformat(str(i.start)).strftime("%Y-%m-%dT%H:%M:%S")
-        properties["bdc:tile"] = i.tile
+        properties["bdc:tiles"] = [i.tile]
         properties["datetime"] = start
 
         if i.collection_type == "cube" and i.start != i.end:
