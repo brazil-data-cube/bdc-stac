@@ -18,8 +18,9 @@ Released 2020-12-01
 
 
 - Add bdc extension schema. Close #89
-_ Add route to serve jsonschemas. Close #90
+- Add route to serve jsonschemas. Close #90
 - Add collection_type to collection. Close #120
+- Fix duplicated item on pagination. Close #121
 
 
 Version 0.9.0-9
