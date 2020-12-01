@@ -4,7 +4,6 @@ import warnings
 from copy import deepcopy
 from datetime import datetime as dt
 from functools import lru_cache
-
 from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, Item, Tile, Timeline
 from bdc_catalog.models.base_sql import db
 from flask_sqlalchemy import SQLAlchemy
@@ -77,6 +76,7 @@ def get_collection_items(
         Collection.collection_type,
         Collection._metadata.label("meta"),
         Item.name.label("item"),
+        Item.id,
         Item.collection_id,
         Item.start_date.label("start"),
         Item.end_date.label("end"),
@@ -148,7 +148,7 @@ def get_collection_items(
                 date_filter = [and_(Item.start_date <= datetime, Item.end_date >= datetime)]
             where += date_filter
     outer = [Item.tile_id == Tile.id]
-    query = session.query(*columns).outerjoin(Tile, *outer).filter(*where).order_by(Item.start_date.desc())
+    query = session.query(*columns).outerjoin(Tile, *outer).filter(*where).order_by(Item.start_date.desc(), Item.id)
 
     result = query.paginate(page=int(page), per_page=int(limit), error_out=False, max_per_page=BDC_STAC_MAX_LIMIT)
 
@@ -426,6 +426,7 @@ def get_collections(collection_id=None, roles=[]):
         collection["bdc:grs"] = r.grid_ref_sys
         collection["bdc:tiles"] = get_collection_tiles(r.id)
         collection["bdc:composite_function"] = r.composite_function
+        collection["bdc:type"] = r.collection_type
 
         if r.collection_type == "cube":
             proj4text = get_collection_crs(r.id)
@@ -495,7 +496,7 @@ def make_geojson(items, links, access_token=""):
 
         properties = dict()
         start = dt.fromisoformat(str(i.start)).strftime("%Y-%m-%dT%H:%M:%S")
-        properties["bdc:tile"] = i.tile
+        properties["bdc:tiles"] = [i.tile]
         properties["datetime"] = start
 
         if i.collection_type == "cube" and i.start != i.end:

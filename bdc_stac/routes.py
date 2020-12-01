@@ -10,7 +10,7 @@
 import gzip
 
 from bdc_auth_client.decorators import oauth2
-from flask import abort, current_app, request
+from flask import abort, current_app, request, send_from_directory
 from werkzeug.exceptions import HTTPException, InternalServerError
 from werkzeug.urls import url_encode
 
@@ -372,6 +372,11 @@ def stac_search(roles=[], access_token=""):
     gjson["features"] = features
 
     return gjson
+
+
+@current_app.route("/schemas/<string:schema_name>")
+def list_schema(schema_name):
+    return send_from_directory("spec/jsonschemas", schema_name)
 
 
 @current_app.errorhandler(Exception)
