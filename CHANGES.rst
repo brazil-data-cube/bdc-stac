@@ -14,11 +14,12 @@ Version 0.9.0-10
 ---------------
 
 
-Released 2020-11-26
+Released 2020-12-01
 
 
 - Add bdc extension schema. Close #89
 _ Add route to serve jsonschemas. Close #90
+- Add collection_type to collection. Close #120
 
 
 Version 0.9.0-9

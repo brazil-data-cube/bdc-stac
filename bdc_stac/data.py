@@ -426,6 +426,7 @@ def get_collections(collection_id=None, roles=[]):
         collection["bdc:grs"] = r.grid_ref_sys
         collection["bdc:tiles"] = get_collection_tiles(r.id)
         collection["bdc:composite_function"] = r.composite_function
+        collection["bdc:type"] = r.collection_type
 
         if r.collection_type == "cube":
             proj4text = get_collection_crs(r.id)
