@@ -77,6 +77,9 @@
                 },
                 {
                   "$ref": "#/definitions/objects/bdc:temporal_composition"
+                },
+                {
+                  "$ref": "#/definitions/objects/bdc:type"
                 }
               ]
             }
@@ -138,6 +141,9 @@
             "type": "string"
           }
         }
+      },
+      "bdc:type": {
+        "type": "string"
       }
     }
   }
