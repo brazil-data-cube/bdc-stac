@@ -10,23 +10,110 @@
 Changes
 =======
 
+Version 0.9.0-10
+---------------
+
+
+Released 2020-12-01
+
+
+- Add bdc extension schema. Close #89
+- Add route to serve jsonschemas. Close #90
+- Add collection_type to collection. Close #120
+- Fix duplicated item on pagination. Close #121
+
+
+Version 0.9.0-9
+---------------
+
+
+Released 2020-11-23
+
+
+- Use timeline table. Close #87
+- Fix datetime parameter to work as specified in (`OGC API <http://docs.opengeospatial.org/is/17-069r3/17-069r3.html#_parameter_datetime>`_).
+- Improve documentation on datetime parameter (`#114 <https://github.com/brazil-data-cube/bdc-stac/issues/114>`_).
+
+
+Version 0.9.0-8
+---------------
+
+
+Released 2020-11-16
+
+
+- Fix item metadata (`#117 <https://github.com/brazil-data-cube/bdc-stac/pull/117>`_).
+
+
+Version 0.9.0-7
+---------------
+
+
+Released 2020-11-13
+
+
+- Check if platform exists in collection (`#116 <https://github.com/brazil-data-cube/bdc-stac/pull/116>`_).
+
+
+Version 0.9.0-6
+---------------
+
+
+Released 2020-11-12
+
+
+- Display all metadata in collection (`#115 <https://github.com/brazil-data-cube/bdc-stac/pull/115>`_).
+
+
+Version 0.9.0-5
+---------------
+
+
+Released 2020-10-26
+
+
+- Fix collection with no associated grid (`#112 <https://github.com/brazil-data-cube/bdc-stac/pull/112>`_).
+
+
+Version 0.9.0-4
+---------------
+
+
+Released 2020-10-05
+
+
+- Add instrument and platform to collections and items.
+
+
+Version 0.9.0-3
+---------------
+
+
+Released 2020-09-18
+
+
+- Bug fix: Review some links in the service routes (`#110 <https://github.com/brazil-data-cube/bdc-stac/pull/110>`_)
+
+
 
 Version 0.9.0-2
 ---------------
 
+
 Released 2020-09-11
 
 
-- Bug fix: Check if parameter ``bbox`` is valid (an area object) (#105)
+- Bug fix: Check if parameter ``bbox`` is valid (an area object) (`#105 <https://github.com/brazil-data-cube/bdc-stac/issues/105>`_)
 
 
 Version 0.9.0-1
 ---------------
 
+
 Released 2020-09-09
 
 
-- Bug fix: retrieval of the grid CRS (#104)
+- Bug fix: retrieval of the grid CRS (`#104 <https://github.com/brazil-data-cube/bdc-stac/issues/104>`_)
 
 - Compatibility with `BDC-Catalog data model version 0.6.1 <https://github.com/brazil-data-cube/bdc-catalog>`_.
 
@@ -59,6 +146,7 @@ Version 0.8.1-1
 Released 2020-08-19
 
 - This is a special version based on STAC 0.8.1 and `BDC Catalog Version 0.4.0 <https://github.com/brazil-data-cube/bdc-catalog/tree/v0.4.0>`_
+
 - Added support for the following STAC Extension: datacube, eo, version.
 
 
@@ -74,6 +162,7 @@ Version 0.8.1-0
 Released 2020-04-14
 
 - Support for the SpatioTemporal Asset Catalog (STAC) specification version 0.8.1.
+
 - Compatibility with `Brazil Data Cube Database module Version 0.2.0 <https://github.com/brazil-data-cube/bdc-db/tree/v0.2.0>`_.
 
 
@@ -84,15 +173,25 @@ Version 0.8.0-0
 Released 2020-04-03
 
 - Support for the SpatioTemporal Asset Catalog (STAC) specification version 0.8.0.
+
 - Database query improvements for fast asset retrieval.
+
 - Compatibility with `Brazil Data Cube Database module Version 0.2.0 <https://github.com/brazil-data-cube/bdc-db/tree/v0.2.0>`_.
+
 - Improved system documentation.
+
 - Improved test system, integration with stac.py version 0.8.
+
 - Improved Travis CI, use of PostgreSQL in the test system.
+
 - Added Zappa scripts for deploying the service in the AWS Lambda.
+
 - More robust implementation.
+
 - Use Flask-Redoc to display online the OpenAPI 3 documentation.
+
 - Added new keys based on BDC metadata: timeline, crs and composite_function.
+
 - Added gunicorn to Dockerfile.
 
 
@@ -103,13 +202,23 @@ Version 0.7.0-0
 Released 2020-02-21
 
 - First experimental version.
+
 - Support for the SpatioTemporal Asset Catalog (STAC) specification version 0.7.0.
+
 - Support for Brazil Data Cube Image Collections and Data Cube Collections.
+
 - Documentation system based on Sphinx.
+
 - Documentation integrated to ``Read the Docs``.
+
 - Package support through Setuptools.
+
 - Deploy on Docker containers.
+
 - Installation and Deployment instructions.
+
 - Source code versioning based on `Semantic Versioning 2.0.0 <https://semver.org/>`_.
+
 - License: `MIT <https://raw.githubusercontent.com/brazil-data-cube/bdc-stac/v0.7.0-0/LICENSE>`_.
+
 - Compatibility with `Brazil Data Cube Database module Version 0.2.0 <https://github.com/brazil-data-cube/bdc-db/tree/v0.2.0>`_.
