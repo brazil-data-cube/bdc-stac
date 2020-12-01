@@ -4,7 +4,6 @@ import warnings
 from copy import deepcopy
 from datetime import datetime as dt
 from functools import lru_cache
-
 from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, Item, Tile, Timeline
 from bdc_catalog.models.base_sql import db
 from flask_sqlalchemy import SQLAlchemy
@@ -77,6 +76,7 @@ def get_collection_items(
         Collection.collection_type,
         Collection._metadata.label("meta"),
         Item.name.label("item"),
+        Item.id,
         Item.collection_id,
         Item.start_date.label("start"),
         Item.end_date.label("end"),
@@ -148,7 +148,7 @@ def get_collection_items(
                 date_filter = [and_(Item.start_date <= datetime, Item.end_date >= datetime)]
             where += date_filter
     outer = [Item.tile_id == Tile.id]
-    query = session.query(*columns).outerjoin(Tile, *outer).filter(*where).order_by(Item.start_date.desc())
+    query = session.query(*columns).outerjoin(Tile, *outer).filter(*where).order_by(Item.start_date.desc(), Item.id)
 
     result = query.paginate(page=int(page), per_page=int(limit), error_out=False, max_per_page=BDC_STAC_MAX_LIMIT)
 
