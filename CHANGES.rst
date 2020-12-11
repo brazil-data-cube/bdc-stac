@@ -10,117 +10,82 @@
 Changes
 =======
 
-Version 0.9.0-10
----------------
+Version 0.9.0-10 (2020-12-11)
+-----------------------------
 
 
-Released 2020-12-11
+- Display end_datetime in every item. (`#124 <https://github.com/brazil-data-cube/bdc-stac/issues/124>`_)
 
 
-- Display end_datetime in every item. #Close 124
+Version 0.9.0-10 (2020-12-01)
+-----------------------------
+
+- Add bdc extension schema. (`#89 <https://github.com/brazil-data-cube/bdc-stac/issues/89>`_)
+- Add route to serve jsonschemas. (`#90 <https://github.com/brazil-data-cube/bdc-stac/issues/90>`_)
+- Add collection_type to collection. (`#120 <https://github.com/brazil-data-cube/bdc-stac/issues/120>`_)
+- Fix duplicated item on pagination. (`#121 <https://github.com/brazil-data-cube/bdc-stac/issues/121>`_)
 
 
-Version 0.9.0-10
----------------
+Version 0.9.0-9 (2020-11-23)
+-----------------------------
 
-
-Released 2020-12-01
-
-
-- Add bdc extension schema. Close #89
-- Add route to serve jsonschemas. Close #90
-- Add collection_type to collection. Close #120
-- Fix duplicated item on pagination. Close #121
-
-
-Version 0.9.0-9
----------------
-
-
-Released 2020-11-23
-
-
-- Use timeline table. Close #87
+- Use timeline table. (`#87 <https://github.com/brazil-data-cube/bdc-stac/issues/87>`_)
 - Fix datetime parameter to work as specified in (`OGC API <http://docs.opengeospatial.org/is/17-069r3/17-069r3.html#_parameter_datetime>`_).
 - Improve documentation on datetime parameter (`#114 <https://github.com/brazil-data-cube/bdc-stac/issues/114>`_).
 
 
-Version 0.9.0-8
----------------
-
-
-Released 2020-11-16
+Version 0.9.0-8 (2020-11-16)
+----------------------------
 
 
 - Fix item metadata (`#117 <https://github.com/brazil-data-cube/bdc-stac/pull/117>`_).
 
 
-Version 0.9.0-7
----------------
-
-
-Released 2020-11-13
+Version 0.9.0-7 (2020-11-13)
+----------------------------
 
 
 - Check if platform exists in collection (`#116 <https://github.com/brazil-data-cube/bdc-stac/pull/116>`_).
 
 
-Version 0.9.0-6
----------------
-
-
-Released 2020-11-12
+Version 0.9.0-6 (2020-11-12)
+----------------------------
 
 
 - Display all metadata in collection (`#115 <https://github.com/brazil-data-cube/bdc-stac/pull/115>`_).
 
 
-Version 0.9.0-5
----------------
-
-
-Released 2020-10-26
+Version 0.9.0-5 (2020-10-26)
+----------------------------
 
 
 - Fix collection with no associated grid (`#112 <https://github.com/brazil-data-cube/bdc-stac/pull/112>`_).
 
 
-Version 0.9.0-4
----------------
-
-
-Released 2020-10-05
+Version 0.9.0-4 (2020-10-05)
+----------------------------
 
 
 - Add instrument and platform to collections and items.
 
 
-Version 0.9.0-3
----------------
-
-
-Released 2020-09-18
+Version 0.9.0-3 (2020-09-18)
+----------------------------
 
 
 - Bug fix: Review some links in the service routes (`#110 <https://github.com/brazil-data-cube/bdc-stac/pull/110>`_)
 
 
 
-Version 0.9.0-2
----------------
-
-
-Released 2020-09-11
+Version 0.9.0-2 (2020-09-11)
+----------------------------
 
 
 - Bug fix: Check if parameter ``bbox`` is valid (an area object) (`#105 <https://github.com/brazil-data-cube/bdc-stac/issues/105>`_)
 
 
-Version 0.9.0-1
----------------
-
-
-Released 2020-09-09
+Version 0.9.0-1 (2020-09-09)
+----------------------------
 
 
 - Bug fix: retrieval of the grid CRS (`#104 <https://github.com/brazil-data-cube/bdc-stac/issues/104>`_)
@@ -128,11 +93,9 @@ Released 2020-09-09
 - Compatibility with `BDC-Catalog data model version 0.6.1 <https://github.com/brazil-data-cube/bdc-catalog>`_.
 
 
-Version 0.9.0-0
----------------
+Version 0.9.0-0 (2020-08-26)
+----------------------------
 
-
-Released 2020-08-26
 
 - Optimizations of database queries.
 
@@ -149,11 +112,9 @@ Released 2020-08-26
 - New Sphinx template.
 
 
-Version 0.8.1-1
----------------
+Version 0.8.1-1 (2020-08-19)
+----------------------------
 
-
-Released 2020-08-19
 
 - This is a special version based on STAC 0.8.1 and `BDC Catalog Version 0.4.0 <https://github.com/brazil-data-cube/bdc-catalog/tree/v0.4.0>`_
 
@@ -165,22 +126,18 @@ Released 2020-08-19
     The tag 0.8.1-0 and below depends on previous version of `BDC Catalog Version 0.2.0 <https://github.com/brazil-data-cube/bdc-catalog/tree/v0.2.0>`_
 
 
-Version 0.8.1-0
----------------
+Version 0.8.1-0 (2020-04-14)
+----------------------------
 
-
-Released 2020-04-14
 
 - Support for the SpatioTemporal Asset Catalog (STAC) specification version 0.8.1.
 
 - Compatibility with `Brazil Data Cube Database module Version 0.2.0 <https://github.com/brazil-data-cube/bdc-db/tree/v0.2.0>`_.
 
 
-Version 0.8.0-0
----------------
+Version 0.8.0-0 (2020-04-03)
+----------------------------
 
-
-Released 2020-04-03
 
 - Support for the SpatioTemporal Asset Catalog (STAC) specification version 0.8.0.
 
@@ -205,11 +162,9 @@ Released 2020-04-03
 - Added gunicorn to Dockerfile.
 
 
-Version 0.7.0-0
----------------
+Version 0.7.0-0 (2020-02-21)
+----------------------------
 
-
-Released 2020-02-21
 
 - First experimental version.
 
