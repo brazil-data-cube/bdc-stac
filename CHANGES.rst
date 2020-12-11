@@ -14,6 +14,16 @@ Version 0.9.0-10
 ---------------
 
 
+Released 2020-12-11
+
+
+- Display end_datetime in every item. #Close 124
+
+
+Version 0.9.0-10
+---------------
+
+
 Released 2020-12-01
 
 
