@@ -495,13 +495,11 @@ def make_geojson(items, links, access_token=""):
         bands = get_collection_eo(i.collection_id)
 
         properties = dict()
-        start = dt.fromisoformat(str(i.start)).strftime("%Y-%m-%dT%H:%M:%S")
         properties["bdc:tiles"] = [i.tile]
-        properties["datetime"] = start
 
-        if i.collection_type == "cube" and i.start != i.end:
-            properties["start_datetime"] = start
-            properties["end_datetime"] = dt.fromisoformat(str(i.end)).strftime("%Y-%m-%dT%H:%M:%S")
+        properties["datetime"] = i.start.strftime("%Y-%m-%dT%H:%M:%S")
+        properties["start_datetime"] = i.start.strftime("%Y-%m-%dT%H:%M:%S")
+        properties["end_datetime"] = i.end.strftime("%Y-%m-%dT%H:%M:%S")
 
         properties["created"] = i.created.strftime("%Y-%m-%dT%H:%M:%S")
         properties["updated"] = i.updated.strftime("%Y-%m-%dT%H:%M:%S")
