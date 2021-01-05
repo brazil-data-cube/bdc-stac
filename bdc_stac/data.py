@@ -142,6 +142,7 @@ def get_collection_items(
                         or_(
                             and_(Item.start_date >= time_start, Item.start_date <= time_end),
                             and_(Item.end_date >= time_start, Item.end_date <= time_end),
+                            and_(Item.start_date < time_start, Item.end_date > time_end),
                         )
                     ]
             else:

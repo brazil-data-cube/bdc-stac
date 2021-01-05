@@ -10,11 +10,12 @@
 Changes
 =======
 
-Version 0.9.0-11 (2020-12-11)
+Version 0.9.0-11 (2021-01-05)
 -----------------------------
 
 
 - Display end_datetime in every item. (`#124 <https://github.com/brazil-data-cube/bdc-stac/issues/124>`_)
+- Fix datetime filter. (`#127 <https://github.com/brazil-data-cube/bdc-stac/issues/127>`_)
 
 
 Version 0.9.0-10 (2020-12-01)
