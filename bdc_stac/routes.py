@@ -14,7 +14,7 @@ from flask import abort, current_app, request, send_from_directory
 from werkzeug.exceptions import HTTPException, InternalServerError
 from werkzeug.urls import url_encode
 
-from .config import BDC_STAC_API_VERSION, BDC_STAC_BASE_URL
+from .config import BDC_STAC_API_VERSION, BDC_STAC_BASE_URL, BDC_STAC_ID, BDC_STAC_TITLE
 from .data import InvalidBoundingBoxError, get_catalog, get_collection_items, get_collections, make_geojson, session
 
 BASE_URL = BDC_STAC_BASE_URL
@@ -73,8 +73,8 @@ def index(roles=[], access_token=""):
 
     collections = get_catalog(roles=roles)
     catalog = dict()
-    catalog["description"] = "Brazil Data Cube Catalog"
-    catalog["id"] = "bdc"
+    catalog["description"] = BDC_STAC_TITLE
+    catalog["id"] = BDC_STAC_ID
     catalog["stac_version"] = BDC_STAC_API_VERSION
     links = list()
     links += [
