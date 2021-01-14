@@ -123,6 +123,10 @@ You may need to replace the definition of some environment variables:
 
     - ``BDC_STAC_MAX_LIMIT``: Set number of maximum items fetched per request. Default is ``1000``.
 
+    - ``BDC_STAC_TITLE``: Set the catalog title.
+
+    - ``BDC_STAC_ID``: Set the catalog identifier.
+
 To add authentication support with Brazil Data Cube OAuth 2.0, use the following:
 
     - ``BDC_AUTH_CLIENT_ID``: The OAuth 2.0 client identification
