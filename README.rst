@@ -16,8 +16,8 @@ SpatioTemporal Asset Catalog for Brazil Data Cube
         :alt: Software License
 
 
-.. image:: https://travis-ci.com/brazil-data-cube/bdc-stac.svg?branch=master
-        :target: https://travis-ci.com/brazil-data-cube/bdc-stac
+.. image:: https://drone.dpi.inpe.br/api/badges/brazil-data-cube/bdc-stac/status.svg
+        :target: https://drone.dpi.inpe.br/api/badges/brazil-data-cube/bdc-stac
         :alt: Build Status
 
 
