@@ -33,7 +33,7 @@ tests_require = [
     "isort>4.3",
     "check-manifest>=0.40",
     "black>=19.10a",
-    "stac @ git+https://github.com/brazil-data-cube/stac.py@b-0.9.0",
+    "stac.py>=0.9.0",
 ]
 
 extras_require = {

@@ -26,6 +26,7 @@ recursive-include docs *.py
 recursive-include docs *.rst
 recursive-include docs Makefile
 recursive-include tests *.py
+recursive-include bdc_stac *.json
 recursive-include bdc_stac *.yaml
 recursive-include bdc_stac *.py
 recursive-include bdc_stac *.png

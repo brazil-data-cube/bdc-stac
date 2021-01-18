@@ -1,0 +1,33 @@
+kind: pipeline
+name: default
+
+steps:
+- name: test
+  image: python:3.7
+  commands:
+    - pip install --upgrade pip
+    - pip install --upgrade setuptools
+    - pip install -e.[all]
+    - isort bdc_stac tests setup.py --check-only --diff
+    - check-manifest --ignore ".drone.yml,.readthedocs.yml"
+    - sphinx-build -qnW --color -b doctest docs/sphinx/ docs/sphinx/_build/doctest
+    # - pytest -v TODO: Review tests
+
+- name: docker-registry
+  image: plugins/docker
+  network_mode: bridge
+  settings:
+    repo: registry.dpi.inpe.br/brazildatacube/bdc-stac
+    registry: registry.dpi.inpe.br
+    insecure: true
+    username:
+      from_secret: registry_user
+    password:
+      from_secret: registry_pass
+    tags:
+      - latest
+      - ${DRONE_SEMVER}
+  when:
+    event:
+      - tag
+
