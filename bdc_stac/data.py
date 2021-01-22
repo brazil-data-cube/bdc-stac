@@ -77,6 +77,7 @@ def get_collection_items(
         func.concat(Collection.name, "-", Collection.version).label("collection"),
         Collection.collection_type,
         Collection._metadata.label("meta"),
+        Item._metadata.label("item_meta"),
         Item.name.label("item"),
         Item.id,
         Item.collection_id,
@@ -521,6 +522,8 @@ def make_geojson(items, links, access_token=""):
                 properties["platform"] = i.meta["platform"]["code"]
 
                 i.meta.pop("platform")  # platform info is displayed on properties
+
+        if i.item_meta:
             properties["bdc:metadata"] = i.meta
 
         feature["properties"] = properties
