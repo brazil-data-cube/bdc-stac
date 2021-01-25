@@ -524,7 +524,7 @@ def make_geojson(items, links, access_token=""):
                 i.meta.pop("platform")  # platform info is displayed on properties
 
         if i.item_meta:
-            properties["bdc:metadata"] = i.meta
+            properties["bdc:metadata"] = i.item_meta
 
         feature["properties"] = properties
         feature["assets"] = i.assets
