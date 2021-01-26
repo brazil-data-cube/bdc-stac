@@ -30,6 +30,8 @@ def teardown_appcontext(exceptions=None):
 def after_request(response):
     """Enable CORS and compress response."""
     response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+    response.headers.add("Access-Control-Allow-Methods", "GET, POST")
 
     accept_encoding = request.headers.get("Accept-Encoding", "")
 
