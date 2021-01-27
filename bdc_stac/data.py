@@ -99,13 +99,14 @@ def get_collection_items(
 
     if ids is not None:
         where += [Item.name.in_(ids.split(","))]
-    elif item_id is not None:
-        where += [Item.name.like(item_id)]
     else:
         if collections is not None:
             where += [func.concat(Collection.name, "-", Collection.version).in_(collections.split(","))]
         elif collection_id is not None:
             where += [func.concat(Collection.name, "-", Collection.version) == collection_id]
+
+        if item_id is not None:
+            where += [Item.name.like(item_id)]
 
         if query:
             filters = create_query_filter(query)
