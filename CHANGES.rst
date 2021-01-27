@@ -10,7 +10,7 @@
 Changes
 =======
 
-Version 0.9.0-13 (2021-01-26)
+Version 0.9.0-13 (2021-01-28)
 ----------------------------
 
 - Add drone support (`#133 <https://github.com/brazil-data-cube/bdc-stac/issues/133>`_)
