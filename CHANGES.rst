@@ -10,11 +10,14 @@
 Changes
 =======
 
-Version 0.9.0-13 (2021-01-22)
+Version 0.9.0-13 (2021-01-28)
 ----------------------------
 
 - Add drone support (`#133 <https://github.com/brazil-data-cube/bdc-stac/issues/133>`_)
 - Remove collection metadata from item (`#136 <https://github.com/brazil-data-cube/bdc-stac/issues/136>`_)
+- Add missing CORS headers (`#138 <https://github.com/brazil-data-cube/bdc-stac/issues/138>`_
+- Pass auth parameters to asset url (`#130 <https://github.com/brazil-data-cube/bdc-stac/issues/130>`_
+- Fix bug when access collection item id directly (`#140 <https://github.com/brazil-data-cube/bdc-stac/issues/140>`_
 
 Version 0.9.0-12 (2021-01-14)
 ----------------------------
