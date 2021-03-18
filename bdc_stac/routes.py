@@ -7,8 +7,8 @@
 #
 """Routes for the BDC-STAC API."""
 
-from copy import deepcopy
 import gzip
+from copy import deepcopy
 
 from bdc_auth_client.decorators import oauth2
 from flask import abort, current_app, request, send_from_directory
