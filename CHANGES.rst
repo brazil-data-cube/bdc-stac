@@ -10,6 +10,13 @@
 Changes
 =======
 
+
+
+Version 0.9.0-14
+----------------
+
+- Improve pagination when using POST in /search (`#141 <https://github.com/brazil-data-cube/bdc-stac/pull/141>`_)
+
 Version 0.9.0-13 (2021-01-28)
 ----------------------------
 
