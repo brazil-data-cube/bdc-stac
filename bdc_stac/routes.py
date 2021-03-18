@@ -7,6 +7,7 @@
 #
 """Routes for the BDC-STAC API."""
 
+from copy import deepcopy
 import gzip
 
 from bdc_auth_client.decorators import oauth2
@@ -400,12 +401,37 @@ def stac_search(roles=[], access_token=""):
     gjson["context"] = context
 
     args = request.args.copy()
+
     if items.has_next:
-        args["page"] = items.next_num
-        gjson["links"].append({"href": f"{BASE_URL}/search?" + url_encode(args), "rel": "next"})
+        if request.method == "GET":
+            args["page"] = items.next_num
+
+        next_links = {
+            "href": f"{BASE_URL}/search{f'?{url_encode(args)}' if len(args) > 0 else ''}",
+            "rel": "next",
+        }
+
+        if request.method == "POST":
+            next_links["body"] = deepcopy(request_json)
+            next_links["body"]["page"] = items.next_num
+            next_links["method"] = "POST"
+            next_links["merge"] = True
+        gjson["links"].append(next_links)
     if items.has_prev:
-        args["page"] = items.prev_num
-        gjson["links"].append({"href": f"{BASE_URL}/search?" + url_encode(args), "rel": "prev"})
+        if request.method == "GET":
+            args["page"] = items.prev_num
+
+        prev_links = {
+            "href": f"{BASE_URL}/search{f'?{url_encode(args)}' if len(args) > 0 else ''}",
+            "rel": "prev",
+        }
+
+        if request.method == "POST":
+            prev_links["body"] = deepcopy(request_json)
+            prev_links["body"]["page"] = items.prev_num
+            prev_links["method"] = "POST"
+            prev_links["merge"] = True
+        gjson["links"].append(prev_links)
 
     gjson["features"] = features
 
