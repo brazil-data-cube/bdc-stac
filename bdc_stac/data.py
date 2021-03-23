@@ -11,7 +11,7 @@ from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2.functions import GenericFunction
 from sqlalchemy import Float, and_, cast, exc, func, or_
 
-from .config import BDC_STAC_API_VERSION, BDC_STAC_FILE_ROOT, BDC_STAC_MAX_LIMIT
+from .config import BDC_STAC_API_VERSION, BDC_STAC_FILE_ROOT, BDC_STAC_PNG_ROOT, BDC_STAC_MAX_LIMIT
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=exc.SAWarning)
@@ -510,7 +510,11 @@ def make_geojson(items, links, access_token=""):
         properties["eo:cloud_cover"] = i.cloud_cover
 
         for key, value in i.assets.items():
-            value["href"] = BDC_STAC_FILE_ROOT + value["href"] + access_token
+            if key == 'thumbnail':
+                value["href"] = BDC_STAC_PNG_ROOT + value["href"]
+            else:
+                value["href"] = BDC_STAC_FILE_ROOT + value["href"] + access_token
+
             for index, band in enumerate(properties["eo:bands"], start=0):
                 if band["name"] == key:
                     value["eo:bands"] = [index]
