@@ -21,6 +21,7 @@ SQLALCHEMY_ECHO = os.getenv("SQLALCHEMY_ECHO", False)
 BDC_STAC_API_VERSION = _version.parse(__version__).base_version
 BDC_STAC_BASE_URL = os.getenv("BDC_STAC_BASE_URL", "http://localhost:5000")
 BDC_STAC_FILE_ROOT = os.getenv("BDC_STAC_FILE_ROOT", "http://localhost:5001")
+BDC_STAC_PNG_ROOT = os.getenv("BDC_STAC_PNG_ROOT", "http://localhost:5001")
 BDC_STAC_MAX_LIMIT = int(os.getenv("BDC_STAC_MAX_LIMIT", "1000"))
 BDC_STAC_TITLE = os.getenv("BDC_STAC_TITLE", "Brazil Data Cube Catalog")
 BDC_STAC_ID = os.getenv("BDC_STAC_ID", "bdc")

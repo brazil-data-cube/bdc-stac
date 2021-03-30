@@ -43,7 +43,7 @@ SpatioTemporal Asset Catalog for Brazil Data Cube
 
 .. image:: https://img.shields.io/discord/689541907621085198?logo=discord&logoColor=ffffff&color=7389D8
         :target: https://discord.com/channels/689541907621085198#
-        :alt: Join us at Discord
+        :alt: Join us on Discord
 
 
 About

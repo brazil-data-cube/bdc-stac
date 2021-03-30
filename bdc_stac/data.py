@@ -11,7 +11,7 @@ from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2.functions import GenericFunction
 from sqlalchemy import Float, and_, cast, exc, func, or_
 
-from .config import BDC_STAC_API_VERSION, BDC_STAC_FILE_ROOT, BDC_STAC_MAX_LIMIT
+from .config import BDC_STAC_API_VERSION, BDC_STAC_FILE_ROOT, BDC_STAC_PNG_ROOT, BDC_STAC_MAX_LIMIT
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=exc.SAWarning)
@@ -375,10 +375,11 @@ def get_collections(collection_id=None, roles=[]):
 
     result = (
         session.query(*columns)
-        .outerjoin(CompositeFunction, Collection.composite_function_id == CompositeFunction.id)
-        .outerjoin(GridRefSys, Collection.grid_ref_sys_id == GridRefSys.id)
-        .filter(*where)
-        .all()
+            .outerjoin(CompositeFunction, Collection.composite_function_id == CompositeFunction.id)
+            .outerjoin(GridRefSys, Collection.grid_ref_sys_id == GridRefSys.id)
+            .filter(*where)
+            .order_by(Collection.name)
+            .all()
     )
 
     collections = list()
@@ -523,7 +524,10 @@ def make_geojson(items, links, assets_kwargs=""):
         properties["eo:cloud_cover"] = i.cloud_cover
 
         for key, value in i.assets.items():
-            value["href"] = BDC_STAC_FILE_ROOT + value["href"] + assets_kwargs
+            if key == 'thumbnail':
+                value["href"] = BDC_STAC_PNG_ROOT + value["href"]
+            else:
+                value["href"] = BDC_STAC_FILE_ROOT + value["href"] + assets_kwargs
 
             for index, band in enumerate(properties["eo:bands"], start=0):
                 if band["name"] == key:
