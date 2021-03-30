@@ -20,6 +20,25 @@ from .data import InvalidBoundingBoxError, get_catalog, get_collection_items, ge
 BASE_URL = BDC_STAC_BASE_URL
 
 
+def get_assets_kwargs(access_token):
+    assets_kwargs = ""
+
+    if BDC_STAC_ASSETS_ARGS:
+        assets_kwargs = {arg: request.args.get(arg) \
+                            for arg in BDC_STAC_ASSETS_ARGS.split(",") \
+                                if request.args.get(arg) is not None}
+
+        if access_token:
+            assets_kwargs["access_token"] = access_token
+
+        if not assets_kwargs:
+            return ""
+
+        assets_kwargs = "?" + url_encode(assets_kwargs)
+
+    return assets_kwargs
+
+
 @current_app.teardown_appcontext
 def teardown_appcontext(exceptions=None):
     """Teardown appcontext."""
@@ -71,13 +90,6 @@ def conformance():
 @oauth2(required=False, throw_exception=False)
 def index(roles=[], access_token=""):
     """Landing page of this API."""
-    assets_kwargs = None
-
-    if BDC_STAC_ASSETS_ARGS:
-        assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
-        if access_token:
-            assets_kwargs["access_token"] = access_token
-        assets_kwargs = "?" + url_encode(assets_kwargs)
 
     collections = get_catalog(roles=roles)
     catalog = dict()
@@ -106,7 +118,7 @@ def index(roles=[], access_token=""):
     for collection in collections:
         links.append(
             {
-                "href": f"{BASE_URL}/collections/{collection.name}{assets_kwargs}",
+                "href": f"{BASE_URL}/collections/{collection.name}{get_assets_kwargs(access_token)}",
                 "rel": "child",
                 "type": "application/json",
                 "title": collection.title,
@@ -122,13 +134,7 @@ def index(roles=[], access_token=""):
 @oauth2(required=False, throw_exception=False)
 def root(roles=[], access_token=""):
     """Return the root catalog or collection."""
-    assets_kwargs = None
-
-    if BDC_STAC_ASSETS_ARGS:
-        assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
-        if access_token:
-            assets_kwargs["access_token"] = access_token
-        assets_kwargs = "?" + url_encode(assets_kwargs)
+    assets_kwargs = get_assets_kwargs(access_token)
 
     collections = get_collections(roles=roles)
     response = dict()
@@ -174,13 +180,7 @@ def collections_id(collection_id, roles=[], access_token=""):
 
     :param collection_id: identifier (name) of a specific collection
     """
-    assets_kwargs = None
-
-    if BDC_STAC_ASSETS_ARGS:
-        assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
-        if access_token:
-            assets_kwargs["access_token"] = access_token
-        assets_kwargs = "?" + url_encode(assets_kwargs)
+    assets_kwargs = get_assets_kwargs(access_token)
 
     collection = get_collections(collection_id, roles=roles)
 
@@ -257,15 +257,7 @@ def collection_items(collection_id, roles=[], access_token=""):
     gjson["stac_extensions"] = ["checksum", "commons", "context", "eo"]
     gjson["type"] = "FeatureCollection"
 
-    assets_kwargs = None
-
-    if BDC_STAC_ASSETS_ARGS:
-        assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
-        if access_token:
-            assets_kwargs["access_token"] = access_token
-        assets_kwargs = "?" + url_encode(assets_kwargs)
-
-    features = make_geojson(items.items, links, assets_kwargs=assets_kwargs)
+    features = make_geojson(items.items, links, assets_kwargs=get_assets_kwargs(access_token))
 
     gjson["links"] = []
 
@@ -307,15 +299,7 @@ def items_id(collection_id, item_id, roles=[], access_token=""):
         {"href": f"{BASE_URL}/", "rel": "root"},
     ]
 
-    assets_kwargs = None
-
-    if BDC_STAC_ASSETS_ARGS:
-        assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
-        if access_token:
-            assets_kwargs["access_token"] = access_token
-        assets_kwargs = "?" + url_encode(assets_kwargs)
-
-    gjson = make_geojson(item.items, links, assets_kwargs=assets_kwargs)
+    gjson = make_geojson(item.items, links, assets_kwargs=get_assets_kwargs(access_token))
 
     if len(gjson) > 0:
         return gjson[0]
@@ -383,15 +367,7 @@ def stac_search(roles=[], access_token=""):
     gjson = dict()
     gjson["type"] = "FeatureCollection"
 
-    assets_kwargs = None
-
-    if BDC_STAC_ASSETS_ARGS:
-        assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
-        if access_token:
-            assets_kwargs["access_token"] = access_token
-        assets_kwargs = "?" + url_encode(assets_kwargs)
-
-    features = make_geojson(items.items, links, assets_kwargs=assets_kwargs)
+    features = make_geojson(items.items, links, assets_kwargs=get_assets_kwargs(access_token))
 
     gjson["links"] = []
     context = dict()
