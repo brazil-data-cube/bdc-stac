@@ -78,7 +78,7 @@ def index(roles=[], access_token=""):
         assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
         if access_token:
             assets_kwargs["access_token"] = access_token
-        assets_kwargs = "?" + url_encode(assets_kwargs)
+        assets_kwargs = "?" + url_encode(assets_kwargs) if url_encode(assets_kwargs) else ""
 
     collections = get_catalog(roles=roles)
     catalog = dict()
@@ -129,7 +129,7 @@ def root(roles=[], access_token=""):
         assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
         if access_token:
             assets_kwargs["access_token"] = access_token
-        assets_kwargs = "?" + url_encode(assets_kwargs)
+        assets_kwargs = "?" + url_encode(assets_kwargs) if url_encode(assets_kwargs) else ""
 
     collections = get_collections(roles=roles)
     response = dict()
@@ -181,7 +181,7 @@ def collections_id(collection_id, roles=[], access_token=""):
         assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
         if access_token:
             assets_kwargs["access_token"] = access_token
-        assets_kwargs = "?" + url_encode(assets_kwargs)
+        assets_kwargs = "?" + url_encode(assets_kwargs) if url_encode(assets_kwargs) else ""
 
     collection = get_collections(collection_id, roles=roles)
 
@@ -264,7 +264,7 @@ def collection_items(collection_id, roles=[], access_token=""):
         assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
         if access_token:
             assets_kwargs["access_token"] = access_token
-        assets_kwargs = "?" + url_encode(assets_kwargs)
+        assets_kwargs = "?" + url_encode(assets_kwargs) if url_encode(assets_kwargs) else ""
 
     features = make_geojson(items.items, links, assets_kwargs=assets_kwargs)
 
@@ -277,16 +277,14 @@ def collection_items(collection_id, roles=[], access_token=""):
     gjson["context"] = context
 
     args = request.args.copy()
+    args = "?" + url_encode(args) if len(args) > 0 else ""
+
     if items.has_next:
         args["page"] = items.next_num
-        gjson["links"].append(
-            {"href": f"{BASE_URL}/collections/{collection_id}/items?" + url_encode(args), "rel": "next"}
-        )
+        gjson["links"].append({"href": f"{BASE_URL}/collections/{collection_id}/items" + args, "rel": "next"})
     if items.has_prev:
         args["page"] = items.prev_num
-        gjson["links"].append(
-            {"href": f"{BASE_URL}/collections/{collection_id}/items?" + url_encode(args), "rel": "prev"}
-        )
+        gjson["links"].append({"href": f"{BASE_URL}/collections/{collection_id}/items" + args, "rel": "prev"})
 
     gjson["features"] = features
     return gjson
@@ -314,7 +312,7 @@ def items_id(collection_id, item_id, roles=[], access_token=""):
         assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
         if access_token:
             assets_kwargs["access_token"] = access_token
-        assets_kwargs = "?" + url_encode(assets_kwargs)
+        assets_kwargs = "?" + url_encode(assets_kwargs) if url_encode(assets_kwargs) else ""
 
     gjson = make_geojson(item.items, links, assets_kwargs=assets_kwargs)
 
@@ -390,7 +388,7 @@ def stac_search(roles=[], access_token=""):
         assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
         if access_token:
             assets_kwargs["access_token"] = access_token
-        assets_kwargs = "?" + url_encode(assets_kwargs)
+        assets_kwargs = "?" + url_encode(assets_kwargs) if url_encode(assets_kwargs) else ""
 
     features = make_geojson(items.items, links, assets_kwargs=assets_kwargs)
 
