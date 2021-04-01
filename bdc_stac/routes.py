@@ -277,17 +277,14 @@ def collection_items(collection_id, roles=[], access_token=""):
     gjson["context"] = context
 
     args = request.args.copy()
-    args = "?" + url_encode(args) if url_encode(args) else ""
+    args = "?" + url_encode(args) if len(args) > 0 else ""
+
     if items.has_next:
         args["page"] = items.next_num
-        gjson["links"].append(
-            {"href": f"{BASE_URL}/collections/{collection_id}/items" + args, "rel": "next"}
-        )
+        gjson["links"].append({"href": f"{BASE_URL}/collections/{collection_id}/items" + args, "rel": "next"})
     if items.has_prev:
         args["page"] = items.prev_num
-        gjson["links"].append(
-            {"href": f"{BASE_URL}/collections/{collection_id}/items" + args, "rel": "prev"}
-        )
+        gjson["links"].append({"href": f"{BASE_URL}/collections/{collection_id}/items" + args, "rel": "prev"})
 
     gjson["features"] = features
     return gjson
