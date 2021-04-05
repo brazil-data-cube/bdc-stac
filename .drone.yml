@@ -21,18 +21,6 @@ steps:
       - failure
       - success
 
-- name: coverage
-  image: plugins/codecov
-  settings:
-    token:
-      from_secret: codecov_token
-    files:
-      - coverage.xml
-      - .coverage
-  when:
-    event:
-      - push
-
 - name: docker-registry
   image: plugins/docker
   network_mode: bridge
