@@ -1,4 +1,5 @@
 kind: pipeline
+type: docker
 name: default
 
 steps:
@@ -8,26 +9,26 @@ steps:
     - pip install --upgrade pip
     - pip install --upgrade setuptools
     - pip install -e.[all]
-    - isort bdc_stac tests setup.py --check-only --diff
-    - check-manifest --ignore ".drone.yml,.readthedocs.yml"
-    - sphinx-build -qnW --color -b doctest docs/sphinx/ docs/sphinx/_build/doctest
-    # - pytest -v TODO: Review tests
+    - ./run-tests.sh
+
+- name: discord-notify
+  image: brazildatacube/bdc-drone-discord
+  settings:
+    webhook:
+      from_secret: discord_webhook
+  when:
+    status:
+      - failure
+      - success
 
 - name: docker-registry
   image: plugins/docker
   network_mode: bridge
   settings:
-    repo: registry.dpi.inpe.br/brazildatacube/bdc-stac
+    repo: registry.dpi.inpe.br/${DRONE_REPO}
     registry: registry.dpi.inpe.br
-    insecure: true
     username:
       from_secret: registry_user
     password:
       from_secret: registry_pass
-    tags:
-      - latest
-      - ${DRONE_SEMVER}
-  when:
-    event:
-      - tag
-
+    auto_tag: true

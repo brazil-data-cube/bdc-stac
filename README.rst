@@ -17,7 +17,7 @@ SpatioTemporal Asset Catalog for Brazil Data Cube
 
 
 .. image:: https://drone.dpi.inpe.br/api/badges/brazil-data-cube/bdc-stac/status.svg
-        :target: https://drone.dpi.inpe.br/api/badges/brazil-data-cube/bdc-stac
+        :target: https://drone.dpi.inpe.br/brazil-data-cube/bdc-stac
         :alt: Build Status
 
 

@@ -77,6 +77,7 @@ def get_collection_items(
         func.concat(Collection.name, "-", Collection.version).label("collection"),
         Collection.collection_type,
         Collection._metadata.label("meta"),
+        Item._metadata.label("item_meta"),
         Item.name.label("item"),
         Item.id,
         Item.collection_id,
@@ -98,13 +99,14 @@ def get_collection_items(
 
     if ids is not None:
         where += [Item.name.in_(ids.split(","))]
-    elif item_id is not None:
-        where += [Item.name.like(item_id)]
     else:
         if collections is not None:
             where += [func.concat(Collection.name, "-", Collection.version).in_(collections.split(","))]
         elif collection_id is not None:
             where += [func.concat(Collection.name, "-", Collection.version) == collection_id]
+
+        if item_id is not None:
+            where += [Item.name.like(item_id)]
 
         if query:
             filters = create_query_filter(query)
@@ -122,7 +124,11 @@ def get_collection_items(
                 where += [
                     func.ST_Intersects(
                         func.ST_MakeEnvelope(
-                            split_bbox[0], split_bbox[1], split_bbox[2], split_bbox[3], func.ST_SRID(Item.geom),
+                            split_bbox[0],
+                            split_bbox[1],
+                            split_bbox[2],
+                            split_bbox[3],
+                            func.ST_SRID(Item.geom),
                         ),
                         Item.geom,
                     )
@@ -458,15 +464,22 @@ def get_catalog(roles=[]):
     """
     collections = (
         session.query(
-            Collection.id, func.concat(Collection.name, "-", Collection.version).label("name"), Collection.title,
+            Collection.id,
+            func.concat(Collection.name, "-", Collection.version).label("name"),
+            Collection.title,
         )
-        .filter(or_(Collection.is_public.is_(True), Collection.id.in_([int(r.split(":")[0]) for r in roles]),))
+        .filter(
+            or_(
+                Collection.is_public.is_(True),
+                Collection.id.in_([int(r.split(":")[0]) for r in roles]),
+            )
+        )
         .all()
     )
     return collections
 
 
-def make_geojson(items, links, access_token=""):
+def make_geojson(items, links, assets_kwargs=""):
     """Generate a list of STAC Items from a list of collection items.
 
     :param items: collection items to be formated as GeoJSON Features
@@ -510,7 +523,8 @@ def make_geojson(items, links, access_token=""):
         properties["eo:cloud_cover"] = i.cloud_cover
 
         for key, value in i.assets.items():
-            value["href"] = BDC_STAC_FILE_ROOT + value["href"] + access_token
+            value["href"] = BDC_STAC_FILE_ROOT + value["href"] + assets_kwargs
+
             for index, band in enumerate(properties["eo:bands"], start=0):
                 if band["name"] == key:
                     value["eo:bands"] = [index]
@@ -521,15 +535,17 @@ def make_geojson(items, links, access_token=""):
                 properties["platform"] = i.meta["platform"]["code"]
 
                 i.meta.pop("platform")  # platform info is displayed on properties
-            properties["bdc:metadata"] = i.meta
+
+        if i.item_meta:
+            properties["bdc:metadata"] = i.item_meta
 
         feature["properties"] = properties
         feature["assets"] = i.assets
 
         feature["links"] = deepcopy(links)
-        feature["links"][0]["href"] += i.collection + "/items/" + i.item + access_token
-        feature["links"][1]["href"] += i.collection + access_token
-        feature["links"][2]["href"] += i.collection + access_token
+        feature["links"][0]["href"] += i.collection + "/items/" + i.item + assets_kwargs
+        feature["links"][1]["href"] += i.collection + assets_kwargs
+        feature["links"][2]["href"] += i.collection + assets_kwargs
 
         features.append(feature)
 

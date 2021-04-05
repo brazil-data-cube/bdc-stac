@@ -10,6 +10,7 @@
 pydocstyle bdc_stac tests setup.py && \
 isort bdc_stac tests setup.py --check-only --diff && \
 black --check --diff -l 120 -t py37 bdc_stac tests setup.py  && \
-check-manifest --ignore ".travis-*" --ignore ".readthedocs.*" && \
-sphinx-build -qnW --color -b doctest docs/sphinx/ docs/sphinx/_build/doctest  && \
-pytest
+check-manifest --ignore ".drone.yml,.readthedocs.yml" && \
+sphinx-build -qnW --color -b doctest docs/sphinx/ docs/sphinx/_build/doctest
+# pytest Fix tests
+
