@@ -21,6 +21,7 @@ BASE_URL = BDC_STAC_BASE_URL
 
 
 def get_assets_kwargs(access_token):
+    """Generates `assets_kwargs` based on `BDC_STAC_ASSETS_ARGS` environment variable."""
     assets_kwargs = ""
 
     if BDC_STAC_ASSETS_ARGS:
