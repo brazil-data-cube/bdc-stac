@@ -23,7 +23,6 @@ steps:
 
 - name: docker-registry
   image: plugins/docker
-  network_mode: bridge
   settings:
     repo: registry.dpi.inpe.br/${DRONE_REPO}
     registry: registry.dpi.inpe.br
@@ -32,3 +31,10 @@ steps:
     password:
       from_secret: registry_pass
     auto_tag: true
+    custom_dns: 150.163.2.4
+
+
+services:
+  - name: database
+    image: brazildatacube/bdc-catalog-sample
+    pull: always

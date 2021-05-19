@@ -13,9 +13,9 @@ Python API
     :members:
 
 
-.. automodule:: bdc_stac.data
+.. automodule:: bdc_stac.controller
     :members:
 
 
-.. automodule:: bdc_stac.routes
+.. automodule:: bdc_stac.views
     :members:
