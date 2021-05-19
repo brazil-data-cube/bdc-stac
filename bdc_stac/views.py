@@ -12,24 +12,11 @@ import gzip
 
 from bdc_auth_client.decorators import oauth2
 from flask import abort, current_app, request
-from spectree import SpecTree, Response
 from werkzeug.exceptions import HTTPException, InternalServerError
 from werkzeug.urls import url_encode
-from stac_pydantic import Collection, ItemCollection, Item
-from stac_pydantic.api import ConformanceClasses, LandingPage
 
 from .config import BDC_STAC_API_VERSION, BDC_STAC_ASSETS_ARGS, BDC_STAC_BASE_URL, BDC_STAC_ID, BDC_STAC_TITLE
 from .controller import get_catalog, get_collection_items, get_collections, make_geojson, session
-from .models import Collections, HTTPError, OGCSearch, STACSearchGET, STACSearchPOST
-
-
-def after_validation_handler(req, resp, resp_validation_error, instance):
-    """Custom validation handler for spectree."""
-    if resp_validation_error:
-        raise resp_validation_error
-
-
-api = SpecTree("flask", after=after_validation_handler, annotations=True)
 
 
 @current_app.teardown_appcontext
@@ -40,6 +27,7 @@ def teardown_appcontext(exceptions=None):
 
 @current_app.before_request
 def before_request():
+    """Handle for before request processing."""
     request.assets_kwargs = None
 
     if BDC_STAC_ASSETS_ARGS:
@@ -79,7 +67,6 @@ def after_request(response):
 
 
 @current_app.route("/conformance", methods=["GET"])
-@api.validate(resp=Response(HTTP_200=ConformanceClasses))
 def conformance():
     """Information about standards that this API conforms to."""
     return {
@@ -94,10 +81,8 @@ def conformance():
 
 @current_app.route("/", methods=["GET"])
 @oauth2(required=False)
-@api.validate(resp=Response(HTTP_200=LandingPage, HTTP_500=HTTPError))
-def index(roles=list()):
+def index(roles=None):
     """Landing page of this API."""
-
     catalog = get_catalog(roles=roles)
 
     links = [
@@ -138,15 +123,25 @@ def index(roles=list()):
             }
         )
 
-    return {"description": BDC_STAC_TITLE, "id": BDC_STAC_ID, "stac_version": BDC_STAC_API_VERSION, "links": links}
+    return {
+        "description": BDC_STAC_TITLE,
+        "id": BDC_STAC_ID,
+        "stac_version": BDC_STAC_API_VERSION,
+        "links": links,
+        "conformsTo": [
+            "https://api.stacspec.org/v1.0.0-beta.1/core",
+            "https://api.stacspec.org/v1.0.0-beta.1/item-search",
+            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
+            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
+            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
+        ],
+    }
 
 
 @current_app.route("/collections", methods=["GET"])
 @oauth2(required=False)
-@api.validate(resp=Response(HTTP_200=Collections, HTTP_500=HTTPError))
-def root(roles=list()):
+def root(roles=None):
     """Object with a list of Collections contained in the catalog and links."""
-
     collections = get_collections(roles=roles, assets_kwargs=request.assets_kwargs)
 
     links = [
@@ -169,13 +164,11 @@ def root(roles=list()):
 
 @current_app.route("/collections/<collection_id>", methods=["GET"])
 @oauth2(required=False)
-@api.validate(resp=Response(HTTP_200=Collection, HTTP_404=HTTPError, HTTP_500=HTTPError))
-def collections_id(collection_id, roles=list()):
+def collections_id(collection_id, roles=None):
     """Describe the given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
     """
-
     collection = get_collections(collection_id, roles=roles, assets_kwargs=request.assets_kwargs)
 
     if not len(collection):
@@ -186,16 +179,12 @@ def collections_id(collection_id, roles=list()):
 
 @current_app.route("/collections/<collection_id>/items", methods=["GET"])
 @oauth2(required=False)
-@api.validate(resp=Response(HTTP_200=ItemCollection, HTTP_404=HTTPError, HTTP_500=HTTPError))
-def collection_items(query: OGCSearch, collection_id, roles=list()):
+def collection_items(collection_id, roles=None):
     """Retrieve features of the given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
     """
-    items = get_collection_items(
-        collection_id=collection_id, roles=roles, **query.dict()
-    )
-
+    items = get_collection_items(collection_id=collection_id, roles=roles, **request.args)
 
     features = make_geojson(items.items, assets_kwargs=request.assets_kwargs)
 
@@ -232,8 +221,7 @@ def collection_items(query: OGCSearch, collection_id, roles=list()):
 
 @current_app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
 @oauth2(required=False)
-@api.validate(resp=Response(HTTP_200=Item, HTTP_404=HTTPError, HTTP_500=HTTPError))
-def items_id(collection_id, item_id, roles=list()):
+def items_id(collection_id, item_id, roles=None):
     """Retrieve a given feature from a given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
@@ -241,27 +229,26 @@ def items_id(collection_id, item_id, roles=list()):
     """
     item = get_collection_items(collection_id=collection_id, roles=roles, item_id=item_id)
 
-    if not len(item):
+    if not item.total:
         abort(404, f"Invalid item id '{item_id}' for collection '{collection_id}'")
 
-    item = make_geojson(item.items,  assets_kwargs=request.assets_kwargs)
+    item = make_geojson(item.items, assets_kwargs=request.assets_kwargs)[0]
 
     return item
 
 
 @current_app.route("/search", methods=["POST"])
 @oauth2(required=False)
-@api.validate(resp=Response(HTTP_200=ItemCollection, HTTP_500=HTTPError))
-def stac_search_post(json: STACSearchPOST, roles=None):
+def stac_search_post(roles=None):
     """Search STAC items with simple filtering."""
     assets_kwargs = None
 
     if request.is_json:
-        items = get_collection_items(**json.dict(), roles=roles)
+        items = get_collection_items(**request.json, roles=roles)
     else:
         abort(400, "POST Request must be an application/json")
 
-    features = make_geojson(items.items,  assets_kwargs=request.assets_kwargs)
+    features = make_geojson(items.items, assets_kwargs=request.assets_kwargs)
 
     response = {
         "type": "FeatureCollection",
@@ -278,7 +265,7 @@ def stac_search_post(json: STACSearchPOST, roles=None):
             "rel": "next",
         }
 
-        next_links["body"] = json.dict().copy()
+        next_links["body"] = request.json.copy()
         next_links["body"]["page"] = items.next_num
         next_links["method"] = "POST"
         next_links["merge"] = True
@@ -289,7 +276,7 @@ def stac_search_post(json: STACSearchPOST, roles=None):
             "rel": "prev",
         }
 
-        prev_links["body"] = json.dict().copy()
+        prev_links["body"] = request.json.copy()
         prev_links["body"]["page"] = items.prev_num
         prev_links["method"] = "POST"
         prev_links["merge"] = True
@@ -300,11 +287,9 @@ def stac_search_post(json: STACSearchPOST, roles=None):
 
 @current_app.route("/search", methods=["GET"])
 @oauth2(required=False, throw_exception=False)
-@api.validate(resp=Response(HTTP_200=ItemCollection, HTTP_404=HTTPError, HTTP_500=HTTPError))
-def stac_search_get(query: STACSearchGET, roles=list()):
+def stac_search_get(roles=None):
     """Search STAC items with simple filtering."""
-
-    items = get_collection_items(**query.dict(), roles=roles)
+    items = get_collection_items(**request.args, roles=roles)
 
     features = make_geojson(items.items, assets_kwargs=request.assets_kwargs)
 
@@ -318,7 +303,7 @@ def stac_search_get(query: STACSearchGET, roles=list()):
         "features": features,
     }
 
-    args = query.copy()
+    args = request.args.copy()
 
     if items.has_next:
 

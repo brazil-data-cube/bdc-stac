@@ -1,16 +1,15 @@
 """Data module."""
 import json
 import warnings
-from copy import deepcopy
-from datetime import datetime as dt, timezone
+from datetime import datetime as dt
 from functools import lru_cache
 
 from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, Item, Tile, Timeline
-from bdc_catalog.models.base_sql import db
+from flask import abort
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2.functions import GenericFunction
 from sqlalchemy import Float, and_, cast, exc, func, or_
-from stac_pydantic.shared import DATETIME_RFC339
+
 from .config import BDC_STAC_API_VERSION, BDC_STAC_BASE_URL, BDC_STAC_FILE_ROOT, BDC_STAC_MAX_LIMIT
 
 with warnings.catch_warnings():
@@ -20,6 +19,9 @@ with warnings.catch_warnings():
 db = SQLAlchemy()
 
 session = db.create_scoped_session({"autocommit": True})
+
+DATETIME_RFC339 = "%Y-%m-%dT%H:%M:%SZ"
+
 
 class ST_Extent(GenericFunction):
     """Postgis ST_Extent function."""
@@ -91,7 +93,7 @@ def get_collection_items(
         Tile.name.label("tile"),
     ]
 
-    if not roles:
+    if roles is None:
         roles = []
 
     where = [
@@ -100,14 +102,16 @@ def get_collection_items(
     ]
 
     if ids is not None:
-        where += [Item.name.in_(ids.split(","))]
+        if isinstance(ids, str):
+            ids = ids.split(",")
+        where += [Item.name.in_(ids)]
     else:
-        if collections is not None:
+        if collection_id is not None:
+            where += [func.concat(Collection.name, "-", Collection.version) == collection_id]
+        elif collections is not None:
             if isinstance(collections, str):
                 collections = collections.split(",")
             where += [func.concat(Collection.name, "-", Collection.version).in_(collections)]
-        elif collection_id is not None:
-            where += [func.concat(Collection.name, "-", Collection.version) == collection_id]
 
         if item_id is not None:
             where += [Item.name.like(item_id)]
@@ -122,9 +126,12 @@ def get_collection_items(
         elif bbox is not None:
             try:
                 if isinstance(bbox, str):
-                    bbox = [float(x) for x in bbox.split(",")]
-                    if bbox[0] == bbox[2] or bbox[1] == bbox[3]:
-                        raise InvalidBoundingBoxError("")
+                    bbox = bbox.split(",")
+
+                bbox = [float(x) for x in bbox]
+
+                if bbox[0] == bbox[2] or bbox[1] == bbox[3]:
+                    raise InvalidBoundingBoxError("")
 
                 where += [
                     func.ST_Intersects(
@@ -138,8 +145,8 @@ def get_collection_items(
                         Item.geom,
                     )
                 ]
-            except:
-                raise (InvalidBoundingBoxError(f"'{bbox}' is not a valid bbox."))
+            except (ValueError, InvalidBoundingBoxError) as e:
+                abort(400, f"'{bbox}' is not a valid bbox.")
 
         if datetime is not None:
             date_filter = None
@@ -347,7 +354,7 @@ def get_collection_quicklook(collection_id):
     return quicklook_bands["quicklooks"] if quicklook_bands else None
 
 
-def get_collections(collection_id=None, roles=list(), assets_kwargs=None):
+def get_collections(collection_id=None, roles=None, assets_kwargs=None):
     """Retrieve information of all collections or one if an id is given.
 
     :param collection_id: collection identifier
@@ -370,6 +377,9 @@ def get_collections(collection_id=None, roles=list(), assets_kwargs=None):
         CompositeFunction.name.label("composite_function"),
         GridRefSys.name.label("grid_ref_sys"),
     ]
+
+    if roles is None:
+        roles = []
 
     where = [
         or_(Collection.is_public.is_(True), Collection.id.in_([int(r.split(":")[0]) for r in roles])),
@@ -440,7 +450,6 @@ def get_collections(collection_id=None, roles=list(), assets_kwargs=None):
                 r.meta.pop("platform")  # platform info is displayed on properties
             collection["bdc:metadata"] = r.meta
 
-
         if r.collection_type == "cube":
             proj4text = get_collection_crs(r.id)
 
@@ -448,14 +457,12 @@ def get_collections(collection_id=None, roles=list(), assets_kwargs=None):
                 "x": dict(type="spatial", axis="x", extent=[bbox[0], bbox[2]], reference_system=proj4text),
                 "y": dict(type="spatial", axis="y", extent=[bbox[1], bbox[3]], reference_system=proj4text),
                 "temporal": dict(type="temporal", extent=[start, end], values=get_collection_timeline(r.id)),
-
                 "bands": dict(type="bands", values=[band["name"] for band in collection_eo["eo:bands"]]),
             }
 
             collection["cube:dimensions"] = datacube
             collection["bdc:crs"] = get_collection_crs(r.id)
             collection["bdc:temporal_composition"] = r.temporal_composition_schema
-
 
         collection["links"] = [
             {
@@ -489,12 +496,15 @@ def get_collections(collection_id=None, roles=list(), assets_kwargs=None):
     return collections
 
 
-def get_catalog(roles=[]):
+def get_catalog(roles=None):
     """Retrive all available collections.
 
     :return: a list of available collections
     :rtype: list
     """
+    if not roles:
+        roles = []
+
     collections = (
         session.query(
             Collection.id,

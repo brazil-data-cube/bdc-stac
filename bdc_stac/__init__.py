@@ -40,6 +40,4 @@ def create_app():
 
         from . import views
 
-        views.api.register(app)
-
     return app
