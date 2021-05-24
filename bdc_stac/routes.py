@@ -8,6 +8,7 @@
 """Routes for the BDC-STAC API."""
 
 import gzip
+from copy import deepcopy
 
 from bdc_auth_client.decorators import oauth2
 from flask import abort, current_app, request, send_from_directory
@@ -35,7 +36,7 @@ def get_assets_kwargs(access_token):
         if not assets_kwargs:
             return ""
 
-        assets_kwargs = "?" + url_encode(assets_kwargs)
+        assets_kwargs = "?" + url_encode(assets_kwargs) if url_encode(assets_kwargs) else ""
 
     return assets_kwargs
 
@@ -269,15 +270,22 @@ def collection_items(collection_id, roles=[], access_token=""):
     gjson["context"] = context
 
     args = request.args.copy()
+
     if items.has_next:
         args["page"] = items.next_num
         gjson["links"].append(
-            {"href": f"{BASE_URL}/collections/{collection_id}/items?" + url_encode(args), "rel": "next"}
+            {
+                "href": f"{BASE_URL}/collections/{collection_id}/items{f'?{url_encode(args)}' if len(args) > 0 else ''}",
+                "rel": "next",
+            }
         )
     if items.has_prev:
         args["page"] = items.prev_num
         gjson["links"].append(
-            {"href": f"{BASE_URL}/collections/{collection_id}/items?" + url_encode(args), "rel": "prev"}
+            {
+                "href": f"{BASE_URL}/collections/{collection_id}/items{f'?{url_encode(args)}' if len(args) > 0 else ''}",
+                "rel": "prev",
+            }
         )
 
     gjson["features"] = features
@@ -377,12 +385,37 @@ def stac_search(roles=[], access_token=""):
     gjson["context"] = context
 
     args = request.args.copy()
+
     if items.has_next:
-        args["page"] = items.next_num
-        gjson["links"].append({"href": f"{BASE_URL}/search?" + url_encode(args), "rel": "next"})
+        if request.method == "GET":
+            args["page"] = items.next_num
+
+        next_links = {
+            "href": f"{BASE_URL}/search{f'?{url_encode(args)}' if len(args) > 0 else ''}",
+            "rel": "next",
+        }
+
+        if request.method == "POST":
+            next_links["body"] = deepcopy(request_json)
+            next_links["body"]["page"] = items.next_num
+            next_links["method"] = "POST"
+            next_links["merge"] = True
+        gjson["links"].append(next_links)
     if items.has_prev:
-        args["page"] = items.prev_num
-        gjson["links"].append({"href": f"{BASE_URL}/search?" + url_encode(args), "rel": "prev"})
+        if request.method == "GET":
+            args["page"] = items.prev_num
+
+        prev_links = {
+            "href": f"{BASE_URL}/search{f'?{url_encode(args)}' if len(args) > 0 else ''}",
+            "rel": "prev",
+        }
+
+        if request.method == "POST":
+            prev_links["body"] = deepcopy(request_json)
+            prev_links["body"]["page"] = items.prev_num
+            prev_links["method"] = "POST"
+            prev_links["merge"] = True
+        gjson["links"].append(prev_links)
 
     gjson["features"] = features
 

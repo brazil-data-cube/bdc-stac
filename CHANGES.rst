@@ -10,6 +10,14 @@
 Changes
 =======
 
+
+
+Version 0.9.0-14 (2021-04-01)
+----------------------------
+
+- Improve pagination when using POST in /search (`#141 <https://github.com/brazil-data-cube/bdc-stac/pull/141>`_)
+- remove the question mark if there are no args in the url (`#147 <https://github.com/brazil-data-cube/bdc-stac/pull/147>`_)
+
 Version 0.9.0-13 (2021-01-28)
 ----------------------------
 
