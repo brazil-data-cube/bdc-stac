@@ -1,17 +1,16 @@
 """Data module."""
 import json
 import warnings
-from copy import deepcopy
 from datetime import datetime as dt
 from functools import lru_cache
 
 from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, Item, Tile, Timeline
-from bdc_catalog.models.base_sql import db
+from flask import abort
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2.functions import GenericFunction
 from sqlalchemy import Float, and_, cast, exc, func, or_
 
-from .config import BDC_STAC_API_VERSION, BDC_STAC_FILE_ROOT, BDC_STAC_MAX_LIMIT
+from .config import BDC_STAC_API_VERSION, BDC_STAC_BASE_URL, BDC_STAC_FILE_ROOT, BDC_STAC_MAX_LIMIT
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=exc.SAWarning)
@@ -20,6 +19,8 @@ with warnings.catch_warnings():
 db = SQLAlchemy()
 
 session = db.create_scoped_session({"autocommit": True})
+
+DATETIME_RFC339 = "%Y-%m-%dT%H:%M:%SZ"
 
 
 class ST_Extent(GenericFunction):
@@ -31,7 +32,7 @@ class ST_Extent(GenericFunction):
 
 def get_collection_items(
     collection_id=None,
-    roles=[],
+    roles=None,
     item_id=None,
     bbox=None,
     datetime=None,
@@ -92,18 +93,25 @@ def get_collection_items(
         Tile.name.label("tile"),
     ]
 
+    if roles is None:
+        roles = []
+
     where = [
         Collection.id == Item.collection_id,
         or_(Collection.is_public.is_(True), Collection.id.in_([int(r.split(":")[0]) for r in roles])),
     ]
 
     if ids is not None:
-        where += [Item.name.in_(ids.split(","))]
+        if isinstance(ids, str):
+            ids = ids.split(",")
+        where += [Item.name.in_(ids)]
     else:
-        if collections is not None:
-            where += [func.concat(Collection.name, "-", Collection.version).in_(collections.split(","))]
-        elif collection_id is not None:
+        if collection_id is not None:
             where += [func.concat(Collection.name, "-", Collection.version) == collection_id]
+        elif collections is not None:
+            if isinstance(collections, str):
+                collections = collections.split(",")
+            where += [func.concat(Collection.name, "-", Collection.version).in_(collections)]
 
         if item_id is not None:
             where += [Item.name.like(item_id)]
@@ -117,24 +125,28 @@ def get_collection_items(
             where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(str(intersects)), Item.geom)]
         elif bbox is not None:
             try:
-                split_bbox = [float(x) for x in bbox.split(",")]
-                if split_bbox[0] == split_bbox[2] or split_bbox[1] == split_bbox[3]:
+                if isinstance(bbox, str):
+                    bbox = bbox.split(",")
+
+                bbox = [float(x) for x in bbox]
+
+                if bbox[0] == bbox[2] or bbox[1] == bbox[3]:
                     raise InvalidBoundingBoxError("")
 
                 where += [
                     func.ST_Intersects(
                         func.ST_MakeEnvelope(
-                            split_bbox[0],
-                            split_bbox[1],
-                            split_bbox[2],
-                            split_bbox[3],
+                            bbox[0],
+                            bbox[1],
+                            bbox[2],
+                            bbox[3],
                             func.ST_SRID(Item.geom),
                         ),
                         Item.geom,
                     )
                 ]
-            except:
-                raise (InvalidBoundingBoxError(f"'{bbox}' is not a valid bbox."))
+            except (ValueError, InvalidBoundingBoxError) as e:
+                abort(400, f"'{bbox}' is not a valid bbox.")
 
         if datetime is not None:
             date_filter = None
@@ -342,7 +354,7 @@ def get_collection_quicklook(collection_id):
     return quicklook_bands["quicklooks"] if quicklook_bands else None
 
 
-def get_collections(collection_id=None, roles=[]):
+def get_collections(collection_id=None, roles=None, assets_kwargs=None):
     """Retrieve information of all collections or one if an id is given.
 
     :param collection_id: collection identifier
@@ -366,6 +378,9 @@ def get_collections(collection_id=None, roles=[]):
         GridRefSys.name.label("grid_ref_sys"),
     ]
 
+    if roles is None:
+        roles = []
+
     where = [
         or_(Collection.is_public.is_(True), Collection.id.in_([int(r.split(":")[0]) for r in roles])),
     ]
@@ -384,15 +399,20 @@ def get_collections(collection_id=None, roles=[]):
     collections = list()
 
     for r in result:
-        collection = dict()
-        collection["id"] = r.name
-
-        collection["stac_version"] = BDC_STAC_API_VERSION
-        collection["stac_extensions"] = ["commons", "datacube", "version"]
-        collection["title"] = r.title
-        collection["version"] = r.version
-        collection["deprecated"] = False
-        collection["description"] = r.description
+        collection = {
+            "id": r.name,
+            "stac_version": BDC_STAC_API_VERSION,
+            "stac_extensions": ["bdc", "commons", "datacube", "version"],
+            "title": r.title,
+            "version": r.version,
+            "deprecated": False,
+            "description": r.description,
+            "properties": {},
+            "bdc:grs": r.grid_ref_sys,
+            "bdc:tiles": get_collection_tiles(r.id),
+            "bdc:composite_function": r.composite_function,
+            "bdc:type": r.collection_type,
+        }
 
         if r.meta and ("rightsList" in r.meta) and (len(r.meta["rightsList"]) > 0):
 
@@ -400,16 +420,14 @@ def get_collections(collection_id=None, roles=[]):
         else:
             collection["license"] = ""
 
-        collection["properties"] = dict()
-
         bbox = get_collection_extent(r.id)
 
         start, end = None, None
 
         if r.start:
-            start = r.start.strftime("%Y-%m-%dT%H:%M:%S")
+            start = r.start.strftime(DATETIME_RFC339)
             if r.end:
-                end = r.end.strftime("%Y-%m-%dT%H:%M:%S")
+                end = r.end.strftime(DATETIME_RFC339)
 
         collection["extent"] = {
             "spatial": {"bbox": [bbox]},
@@ -432,36 +450,61 @@ def get_collections(collection_id=None, roles=[]):
                 r.meta.pop("platform")  # platform info is displayed on properties
             collection["bdc:metadata"] = r.meta
 
-        collection["bdc:grs"] = r.grid_ref_sys
-        collection["bdc:tiles"] = get_collection_tiles(r.id)
-        collection["bdc:composite_function"] = r.composite_function
-        collection["bdc:type"] = r.collection_type
-
         if r.collection_type == "cube":
             proj4text = get_collection_crs(r.id)
 
-            datacube = dict()
-            datacube["x"] = dict(type="spatial", axis="x", extent=[bbox[0], bbox[2]], reference_system=proj4text)
-            datacube["y"] = dict(type="spatial", axis="y", extent=[bbox[1], bbox[3]], reference_system=proj4text)
-            datacube["temporal"] = dict(type="temporal", extent=[start, end], values=get_collection_timeline(r.id))
-
-            datacube["bands"] = dict(type="bands", values=[band["name"] for band in collection_eo["eo:bands"]])
+            datacube = {
+                "x": dict(type="spatial", axis="x", extent=[bbox[0], bbox[2]], reference_system=proj4text),
+                "y": dict(type="spatial", axis="y", extent=[bbox[1], bbox[3]], reference_system=proj4text),
+                "temporal": dict(type="temporal", extent=[start, end], values=get_collection_timeline(r.id)),
+                "bands": dict(type="bands", values=[band["name"] for band in collection_eo["eo:bands"]]),
+            }
 
             collection["cube:dimensions"] = datacube
             collection["bdc:crs"] = get_collection_crs(r.id)
             collection["bdc:temporal_composition"] = r.temporal_composition_schema
+
+        collection["links"] = [
+            {
+                "href": f"{BDC_STAC_BASE_URL}/collections/{r.name}{assets_kwargs}",
+                "rel": "self",
+                "type": "application/json",
+                "title": "Link to this document",
+            },
+            {
+                "href": f"{BDC_STAC_BASE_URL}/collections/{r.name}/items{assets_kwargs}",
+                "rel": "items",
+                "type": "application/json",
+                "title": f"Items of the collection {r.name}",
+            },
+            {
+                "href": f"{BDC_STAC_BASE_URL}/collections{assets_kwargs}",
+                "rel": "parent",
+                "type": "application/json",
+                "title": "Link to catalog collections",
+            },
+            {
+                "href": f"{BDC_STAC_BASE_URL}/{assets_kwargs}",
+                "rel": "root",
+                "type": "application/json",
+                "title": "API landing page (root catalog)",
+            },
+        ]
 
         collections.append(collection)
 
     return collections
 
 
-def get_catalog(roles=[]):
+def get_catalog(roles=None):
     """Retrive all available collections.
 
     :return: a list of available collections
     :rtype: list
     """
+    if not roles:
+        roles = []
+
     collections = (
         session.query(
             Collection.id,
@@ -479,7 +522,7 @@ def get_catalog(roles=[]):
     return collections
 
 
-def make_geojson(items, links, assets_kwargs=""):
+def make_geojson(items, assets_kwargs=""):
     """Generate a list of STAC Items from a list of collection items.
 
     :param items: collection items to be formated as GeoJSON Features
@@ -492,15 +535,23 @@ def make_geojson(items, links, assets_kwargs=""):
     features = list()
 
     for i in items:
-        feature = dict()
-
-        feature["type"] = "Feature"
-        feature["id"] = i.item
-        feature["collection"] = i.collection
-        feature["stac_version"] = BDC_STAC_API_VERSION
-        feature["stac_extensions"] = ["checksum", "commons", "eo"]
-
-        feature["geometry"] = json.loads(i.geom)
+        feature = {
+            "type": "Feature",
+            "id": i.item,
+            "collection": i.collection,
+            "stac_version": BDC_STAC_API_VERSION,
+            "stac_extensions": ["bdc", "checksum", "commons", "eo"],
+            "geometry": json.loads(i.geom),
+            "links": [
+                {
+                    "href": f"{BDC_STAC_BASE_URL}/collections/{i.collection}/items/{i.item}{assets_kwargs}",
+                    "rel": "self",
+                },
+                {"href": f"{BDC_STAC_BASE_URL}/collections/{i.collection}{assets_kwargs}", "rel": "parent"},
+                {"href": f"{BDC_STAC_BASE_URL}/collections/{i.collection}{assets_kwargs}", "rel": "collection"},
+                {"href": f"{BDC_STAC_BASE_URL}/", "rel": "root"},
+            ],
+        }
 
         bbox = list()
         if i.bbox:
@@ -510,24 +561,22 @@ def make_geojson(items, links, assets_kwargs=""):
 
         bands = get_collection_eo(i.collection_id)
 
-        properties = dict()
-        properties["bdc:tiles"] = [i.tile]
-
-        properties["datetime"] = i.start.strftime("%Y-%m-%dT%H:%M:%S")
-        properties["start_datetime"] = i.start.strftime("%Y-%m-%dT%H:%M:%S")
-        properties["end_datetime"] = i.end.strftime("%Y-%m-%dT%H:%M:%S")
-
-        properties["created"] = i.created.strftime("%Y-%m-%dT%H:%M:%S")
-        properties["updated"] = i.updated.strftime("%Y-%m-%dT%H:%M:%S")
-        properties.update(bands)
-        properties["eo:cloud_cover"] = i.cloud_cover
+        properties = {
+            "bdc:tiles": [i.tile],
+            "datetime": i.start.strftime(DATETIME_RFC339),
+            "start_datetime": i.start.strftime(DATETIME_RFC339),
+            "end_datetime": i.end.strftime(DATETIME_RFC339),
+            "created": i.created.strftime(DATETIME_RFC339),
+            "updated": i.updated.strftime(DATETIME_RFC339),
+            "eo:cloud_cover": i.cloud_cover,
+        }
 
         for key, value in i.assets.items():
             value["href"] = BDC_STAC_FILE_ROOT + value["href"] + assets_kwargs
 
-            for index, band in enumerate(properties["eo:bands"], start=0):
+            for band in bands["eo:bands"]:
                 if band["name"] == key:
-                    value["eo:bands"] = [index]
+                    value["eo:bands"] = [band]
 
         if i.meta:
             if "platform" in i.meta:
@@ -542,13 +591,7 @@ def make_geojson(items, links, assets_kwargs=""):
         feature["properties"] = properties
         feature["assets"] = i.assets
 
-        feature["links"] = deepcopy(links)
-        feature["links"][0]["href"] += i.collection + "/items/" + i.item + assets_kwargs
-        feature["links"][1]["href"] += i.collection + assets_kwargs
-        feature["links"][2]["href"] += i.collection + assets_kwargs
-
         features.append(feature)
-
     return features
 
 
