@@ -168,6 +168,7 @@ def collections_id(collection_id, roles=None):
     """Describe the given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
+    :param roles: The OAuth 2 user roles
     """
     collection = get_collections(collection_id, roles=roles, assets_kwargs=request.assets_kwargs)
 
@@ -188,9 +189,11 @@ def collection_items(collection_id, roles=None):
 
     features = make_geojson(items.items, assets_kwargs=request.assets_kwargs)
 
+    extensions = ["checksum", "context"]
+
     item_collection = {
         "stac_version": BDC_STAC_API_VERSION,
-        "stac_extensions": ["checksum", "commons", "context", "eo"],
+        "stac_extensions": extensions,
         "type": "FeatureCollection",
         "links": [],
         "context": {"matched": items.total, "returned": len(items.items), "limit": items.per_page},
