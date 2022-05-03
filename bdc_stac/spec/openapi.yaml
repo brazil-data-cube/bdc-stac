@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: 'STAC API'
-  version: 1.0.0-beta.2
+  version: 1.0.0-rc.1
   description: This is an OpenAPI definition of the SpatioTemporal Asset Catalog API
     Item Search specification.
   contact:
@@ -54,12 +54,12 @@ paths:
                       $ref: '#/components/schemas/collections/properties/links'
                 - $ref: '#/components/responses/ConformanceDeclaration/content/application~1json/schema'
               example:
-                stac_version: 1.0.0-beta.1
+                stac_version: 1.0.0-rc.1
                 id: sentinel
                 title: Copernicus Sentinel Imagery
                 description: Catalog of Copernicus Sentinel 1 and 2 imagery.
                 conformsTo:
-                - https://api.stacspec.org/v1.0.0-beta.1/core
+                - https://api.stacspec.org/v1.0.0-rc.1/core
                 - http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core
                 - http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30
                 - http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson
@@ -130,6 +130,7 @@ paths:
       - $ref: '#/components/parameters/limit'
       - $ref: '#/components/parameters/ids'
       - $ref: '#/components/parameters/collectionsArray'
+      - $ref: '#/components/parameters/fields'
       - name: query
         x-stac-api-fragment: query
         in: query
@@ -337,7 +338,7 @@ paths:
                   stac_version:
                     title: STAC version
                     type: string
-                    example: 1.0.0-beta.2
+                    example: 1.0.0-rc.1
                   stac_extensions:
                     title: STAC extensions
                     type: array
@@ -654,7 +655,7 @@ components:
           stac_version:
             title: STAC version
             type: string
-            example: 1.0.0-beta.2
+            example: 1.0.0-rc.1
           stac_extensions:
             title: STAC extensions
             type: array
@@ -867,7 +868,7 @@ components:
                   - type: string
                   - type: number
       example:
-        stac_version: 1.0.0-beta.2
+        stac_version: 1.0.0-rc.1
         stac_extensions: []
         id: Sentinel-2
         title: 'Sentinel-2 MSI: MultiSpectral Instrument, Level-1C'
@@ -1262,7 +1263,7 @@ components:
     stac_version:
       title: STAC version
       type: string
-      example: 1.0.0-beta.2
+      example: 1.0.0-rc.1
     stac_extensions:
       title: STAC extensions
       type: array
@@ -1952,7 +1953,7 @@ components:
               stac_version:
                 title: STAC version
                 type: string
-                example: 1.0.0-beta.2
+                example: 1.0.0-rc.1
               stac_extensions:
                 title: STAC extensions
                 type: array
@@ -2206,7 +2207,7 @@ components:
                         - type: string
                         - type: number
             example:
-              stac_version: 1.0.0-beta.2
+              stac_version: 1.0.0-rc.1
               stac_extensions: []
               id: Sentinel-2
               title: 'Sentinel-2 MSI: MultiSpectral Instrument, Level-1C'
@@ -2341,12 +2342,12 @@ components:
           schema:
             $ref: '#/components/schemas/landingPage'
           example:
-            stac_version: 1.0.0-beta.1
+            stac_version: 1.0.0-rc.1
             id: sentinel
             title: Copernicus Sentinel Imagery
             description: Catalog of Copernicus Sentinel 1 and 2 imagery.
             conformsTo:
-            - https://api.stacspec.org/v1.0.0-beta.1/core
+            - https://api.stacspec.org/v1.0.0-rc.1/core
             links:
             - href: http://data.example.org/
               rel: self
@@ -2902,3 +2903,12 @@ components:
       required: true
       schema:
         type: string
+    fields:
+      name: fields
+      in: path
+      description: |-
+        The optional fields parameter provides a mechanism for clients to request that servers to explicitly 
+        include or exclude certain fields.
+        Follows the [STAC API Field Fragment](https://github.com/radiantearth/stac-api-spec/blob/v1.0.0-rc.1/fragments/fields/README.md).
+        As described in the spec, a Item object can have several information or complex geometries, which turns out in a large document output.
+        This parameters provides to the clients a way to restrict which information is essential.

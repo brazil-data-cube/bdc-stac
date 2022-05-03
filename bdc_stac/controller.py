@@ -3,10 +3,10 @@
 import warnings
 from datetime import datetime as dt
 from functools import lru_cache
+from typing import Optional
 
 import shapely.geometry
-from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, Item, Tile, Timeline, ItemsProcessors, \
-    CollectionsProviders
+from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, Item, Tile, Timeline, ItemsProcessors
 from flask import abort, current_app
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2.shape import to_shape
@@ -66,9 +66,13 @@ def get_collection_items(
     :type page: int, optional
     :param limit: The maximum number of results to return (page size), defaults to 10
     :type limit: int, optional
+    :param query: The STAC extra query internal properties
+    :type query: dict, optional
     :return: list of collectio items
     :rtype: list
     """
+    exclude = kwargs.get('exclude', [])
+
     columns = [
         func.concat(Collection.name, "-", Collection.version).label("collection"),
         Collection.collection_type,
@@ -79,7 +83,6 @@ def get_collection_items(
         Item.collection_id,
         Item.start_date.label("start"),
         Item.end_date.label("end"),
-        Item.assets,
         Item.created,
         Item.updated,
         cast(Item.cloud_cover, Float).label("cloud_cover"),
@@ -87,6 +90,10 @@ def get_collection_items(
         Item.bbox,
         Tile.name.label("tile"),
     ]
+
+    # For performance, only retrieve assets when required
+    if 'assets' not in exclude:
+        columns.append(Item.assets)
 
     if roles is None:
         roles = []
@@ -506,7 +513,7 @@ def get_catalog(roles=None):
     return collections
 
 
-def make_geojson(items, assets_kwargs=""):
+def make_geojson(items, assets_kwargs="", exclude=None):
     """Generate a list of STAC Items from a list of collection items.
 
     param items: collection items to be formated as GeoJSON Features
@@ -517,6 +524,7 @@ def make_geojson(items, assets_kwargs=""):
     rtype: list
     """
     features = list()
+    exclude = exclude or []
 
     for i in items:
         geom = i.footprint or i.bbox
@@ -565,16 +573,20 @@ def make_geojson(items, assets_kwargs=""):
             properties["eo:cloud_cover"] = i.cloud_cover
             bands = get_collection_eo(i.collection_id)
 
-        for key, value in i.assets.items():
-            value["href"] = BDC_STAC_FILE_ROOT + value["href"] + assets_kwargs
+        if hasattr(i, 'assets'):
+            for key, value in i.assets.items():
+                value["href"] = BDC_STAC_FILE_ROOT + value["href"] + assets_kwargs
 
-            if i.category == 'eo':
-                for band in bands["eo:bands"]:
-                    if band["name"] == key:
-                        value["eo:bands"] = [band]
+                if i.category == 'eo':
+                    for band in bands["eo:bands"]:
+                        if band["name"] == key:
+                            value["eo:bands"] = [band]
+            feature["assets"] = i.assets
 
         feature["properties"] = properties
-        feature["assets"] = i.assets
+
+        for key in exclude:
+            feature.pop(key, None)
 
         features.append(feature)
     return features
@@ -640,6 +652,29 @@ def create_query_filter(query):
             filters.append(f)
 
     return filters
+
+
+def parse_fields_parameter(fields: Optional[str] = None):
+    """Parses the string parameter `fields` to include/exclude certain fields in response.
+
+    Follow the `STAC API Fields Fragment <https://github.com/radiantearth/stac-api-spec/blob/v1.0.0-rc.1/fragments/fields/README.md>`.
+    """
+    if fields is None:
+        return [], []
+
+    include = []
+    exclude = []
+    fields = fields.split(',')
+
+    for field in fields:
+        if field.startswith('-'):
+            splitter = field.split('.')
+            left = splitter[0][1:]
+            exclude.append((left, splitter[1:]) if len(splitter) > 1 else left)
+        else:
+            include.append(field)
+
+    return include, exclude
 
 
 class InvalidBoundingBoxError(Exception):

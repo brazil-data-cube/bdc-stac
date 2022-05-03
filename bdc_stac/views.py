@@ -16,7 +16,7 @@ from werkzeug.exceptions import HTTPException, InternalServerError
 from werkzeug.urls import url_encode
 
 from .config import BDC_STAC_API_VERSION, BDC_STAC_ASSETS_ARGS, BDC_STAC_BASE_URL, BDC_STAC_ID, BDC_STAC_TITLE
-from .controller import get_catalog, get_collection_items, get_collections, make_geojson, session
+from .controller import get_catalog, get_collection_items, get_collections, make_geojson, parse_fields_parameter, session
 
 
 @current_app.teardown_appcontext
@@ -185,7 +185,11 @@ def collection_items(collection_id, roles=None):
 
     :param collection_id: identifier (name) of a specific collection
     """
-    items = get_collection_items(collection_id=collection_id, roles=roles, **request.args)
+    _, exclude = parse_fields_parameter(request.args.get('fields'))
+    options = request.args.to_dict()
+    options['exclude'] = exclude
+
+    items = get_collection_items(collection_id=collection_id, roles=roles, **options)
 
     features = make_geojson(items.items, assets_kwargs=request.assets_kwargs)
 
@@ -246,12 +250,14 @@ def stac_search_post(roles=None):
     """Search STAC items with simple filtering."""
     assets_kwargs = None
 
-    if request.is_json:
-        items = get_collection_items(**request.json, roles=roles)
-    else:
+    if not request.is_json:
         abort(400, "POST Request must be an application/json")
 
-    features = make_geojson(items.items, assets_kwargs=request.assets_kwargs)
+    _, exclude = parse_fields_parameter(request.args.get('fields'))
+    options = request.json
+    options['exclude'] = exclude
+    items = get_collection_items(**options, roles=roles)
+    features = make_geojson(items.items, exclude=exclude, assets_kwargs=request.assets_kwargs)
 
     response = {
         "type": "FeatureCollection",
@@ -292,9 +298,12 @@ def stac_search_post(roles=None):
 @oauth2(required=False, throw_exception=False)
 def stac_search_get(roles=None):
     """Search STAC items with simple filtering."""
+    _, exclude = parse_fields_parameter(request.args.get('fields'))
+    options = request.args.to_dict()
+    options['exclude'] = exclude
     items = get_collection_items(**request.args, roles=roles)
 
-    features = make_geojson(items.items, assets_kwargs=request.assets_kwargs)
+    features = make_geojson(items.items, exclude=exclude, assets_kwargs=request.assets_kwargs)
 
     response = {
         "type": "FeatureCollection",
