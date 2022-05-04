@@ -374,10 +374,8 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
         if r.Collection.collection_type == 'datacube':
             collection_extensions.append('datacube')
 
-        if category == 'sar':
-            collection_extensions.append('sar')
-        elif category == 'eo':
-            collection_extensions.append('eo')
+        if category == 'sar' or category == 'eo':
+            collection_extensions.append(category)
 
         tiles = get_collection_tiles(r.Collection.id)
 
