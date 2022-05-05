@@ -145,10 +145,10 @@ def get_collection_items(
                             bbox[1],
                             bbox[2],
                             bbox[3],
-                            # TODO: Use footprint to intersect or bbox?
-                            func.ST_SRID(Item.bbox),
+                            4326
                         ),
-                        Item.geom,
+                        # TODO: Use footprint to intersect or bbox?
+                        Item.bbox,
                     )
                 ]
             except (ValueError, InvalidBoundingBoxError) as e:
@@ -380,7 +380,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
         tiles = get_collection_tiles(r.Collection.id)
 
         collection = {
-            "id": r.Collection.name,
+            "id": f'{r.Collection.name}-{r.Collection.version}',
             "stac_version": BDC_STAC_API_VERSION,
             "stac_extensions": default_stac_extensions + collection_extensions,
             "title": r.Collection.title,
