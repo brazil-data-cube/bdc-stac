@@ -8,7 +8,7 @@ from typing import Optional
 import shapely.geometry
 from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, Item, Tile, Timeline, ItemsProcessors
 from flask import abort, current_app
-from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import Pagination, SQLAlchemy
 from geoalchemy2.shape import to_shape
 from sqlalchemy import Float, and_, cast, exc, func, or_
 
@@ -38,7 +38,7 @@ def get_collection_items(
     limit=10,
     query=None,
     **kwargs,
-):
+) -> Pagination:
     """Retrieve a list of collection items based on filters.
 
     :param collection_id: Single Collection ID to include in the search for items.
@@ -455,16 +455,16 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
 
         collection["links"] = [
             {
-                "href": f"{BDC_STAC_BASE_URL}/collections/{r.Collection.name}{assets_kwargs}",
+                "href": f"{BDC_STAC_BASE_URL}/collections/{r.Collection.identifier}{assets_kwargs}",
                 "rel": "self",
                 "type": "application/json",
                 "title": "Link to this document",
             },
             {
-                "href": f"{BDC_STAC_BASE_URL}/collections/{r.Collection.name}/items{assets_kwargs}",
+                "href": f"{BDC_STAC_BASE_URL}/collections/{r.Collection.identifier}/items{assets_kwargs}",
                 "rel": "items",
                 "type": "application/json",
-                "title": f"Items of the collection {r.Collection.name}",
+                "title": f"Items of the collection {r.Collection.identifier}",
             },
             {
                 "href": f"{BDC_STAC_BASE_URL}/collections{assets_kwargs}",
