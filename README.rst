@@ -1,6 +1,6 @@
 ..
     This file is part of Brazil Data Cube STAC Service.
-    Copyright (C) 2019-2020 INPE.
+    Copyright (C) 2019-2022 INPE.
 
     Brazil Data Cube STAC Service is free software; you can redistribute it and/or modify it
     under the terms of the MIT License; see LICENSE file for more details.
@@ -58,9 +58,9 @@ For more information on the catalog data model, please, refer to `BDC-Catalog <h
 
 For full compliant STAC client libraries, please, check the following repositories:
 
- - `stac.py <https://github.com/brazil-data-cube/stac.py>`_: Python Client Library for SpatioTemporal Asset Catalog.
-
  - `rstac <https://github.com/brazil-data-cube/rstac>`_: R Client Library for SpatioTemporal Asset Catalog.
+
+ - `PySTAC Client <https://pystac-client.readthedocs.io/>`_: Python Client Library for SpatioTemporal Asset Catalog.
 
 
 Installation
@@ -85,7 +85,7 @@ License
 =======
 
 .. admonition::
-    Copyright (C) 2019-2020 INPE.
+    Copyright (C) 2019-2022 INPE.
 
     Brazil Data Cube STAC is a free software; you can redistribute it and/or modify it
     under the terms of the MIT License; see LICENSE file for more details.
