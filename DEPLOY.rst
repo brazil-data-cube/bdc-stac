@@ -126,49 +126,49 @@ The output should be a JSON document similar to:
         "stac_version": "1.0.0-rc.1",
         "links": [
             {
-                "href": "http://localhost:5000/",
+                "href": "http://localhost:8080/",
                 "rel": "self",
                 "type": "application/json",
                 "title": "Link to this document"
             },
             {
-                "href": "http://localhost:5000/docs",
+                "href": "http://localhost:8080/docs",
                 "rel": "service-doc",
                 "type": "text/html",
                 "title": "API documentation in HTML"
             },
             {
-                "href": "http://localhost:5000/conformance",
+                "href": "http://localhost:8080/conformance",
                 "rel": "conformance",
                 "type": "application/json",
                 "title": "OGC API conformance classes implemented by the server"
             },
             {
-                "href": "http://localhost:5000/collections",
+                "href": "http://localhost:8080/collections",
                 "rel": "data",
                 "type": "application/json",
                 "title": "Information about image collections"
             },
             {
-                "href": "http://localhost:5000/search",
+                "href": "http://localhost:8080/search",
                 "rel": "search",
                 "type": "application/geo+json",
                 "title": "STAC-Search endpoint"
             },
             {
-                "href": "http://localhost:5000/collections/MOD13Q1-6",
+                "href": "http://localhost:8080/collections/MOD13Q1-6",
                 "rel": "child",
                 "type": "application/json",
                 "title": "TERRA - MODIS - MOD13Q1 - C6"
             },
             {
-                "href": "http://localhost:5000/collections/MYD13Q1-6",
+                "href": "http://localhost:8080/collections/MYD13Q1-6",
                 "rel": "child",
                 "type": "application/json",
                 "title": "AQUA - MODIS - MYD13Q1 - C6"
             },
             {
-                "href": "http://localhost:5000/collections/S2_L1C-1",
+                "href": "http://localhost:8080/collections/S2_L1C-1",
                 "rel": "child",
                 "type": "application/json",
                 "title": "Sentinel-2 - MSI - Level-1C"
