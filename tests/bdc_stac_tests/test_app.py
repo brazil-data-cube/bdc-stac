@@ -12,7 +12,7 @@ import pytest
 os.environ["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:postgres@database:5432/postgres"
 os.environ["FILE_ROOT"] = "http://brazildatacube.dpi.inpe.br"
 
-from bdc_stac import create_app
+from bdc_stac import config, create_app
 
 
 @pytest.fixture(scope="class")
@@ -47,7 +47,7 @@ class TestBDCStac:
         data = response.get_json()
 
         assert "collections" in data
-        assert data["collections"][0]["stac_version"] == "1.0.0-beta.2"
+        assert data["collections"][0]["stac_version"] == config.BDC_STAC_API_VERSION
         assert "links" in data
 
     def test_collection(self, client):
@@ -57,8 +57,9 @@ class TestBDCStac:
         data = response.get_json()
 
         assert data["id"] == "CB4_64_16D_STK-1"
-        assert data["stac_version"] == "1.0.0-beta.2"
+        assert data["stac_version"] == config.BDC_STAC_API_VERSION
         assert data["bdc:grs"] == "BDC_LG"
+        assert "eo" in data["stac_extensions"]
 
     def test_collection_items(self, client):
         response = client.get("/collections/CB4_64_16D_STK-1/items?limit=20")
@@ -71,7 +72,8 @@ class TestBDCStac:
 
         feature = data["features"][0]
         assert len(feature["assets"]) > 0
-        assert (data["context"]["matched"]) == 5774
+        assert (data["context"]["returned"]) == 20
+        assert (data["context"]["matched"]) > 0
 
     def test_collection_items_id(self, client):
         response = client.get("/collections/CB4_64_16D_STK-1/items/CB4_64_16D_STK_v001_017022_2021-02-02_2021-02-17")

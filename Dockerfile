@@ -8,6 +8,11 @@
 
 FROM python:3.7-slim-buster
 
+# Image metadata
+LABEL "org.repo.maintainer"="Brazil Data Cube <brazildatacube@inpe.br>"
+LABEL "org.repo.title"="Docker image for STAC Server"
+LABEL "org.repo.description"="Docker image for SpatioTemporal Asset Catalog (STAC) Server for Brazil Data Cube."
+
 RUN apt-get update -y \
     && apt-get install -y libpq-dev git \
     && rm -rf /var/lib/apt/lists/*

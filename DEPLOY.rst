@@ -1,6 +1,6 @@
 ..
     This file is part of Brazil Data Cube STAC Service.
-    Copyright (C) 2019-2020 INPE.
+    Copyright (C) 2019-2022 INPE.
 
     Brazil Data Cube STAC Service is free software; you can redistribute it and/or modify it
     under the terms of the MIT License; see LICENSE file for more details.
@@ -27,7 +27,7 @@ Building the Docker Image
 
 
 On the command line use the ``docker build`` command to create the docker image for the service::
-    docker build --no-cache -t bdc-stac:0.9.0-0 .
+    docker build --no-cache -t bdc-stac:1.0.0 .
 
 
 The above command will create a Docker image named ``bdc-stac`` and tag ``0.9.0-0`, as one can see with the ``docker images`` command::
@@ -35,7 +35,7 @@ The above command will create a Docker image named ``bdc-stac`` and tag ``0.9.0-
     docker images
 
     REPOSITORY                                          TAG                 IMAGE ID            CREATED             SIZE
-    bdc-stac                                            0.8.1-0             44651ac917e4        16 hours ago        333MB
+    bdc-stac                                            1.0.0             44651ac917e4        16 hours ago        333MB
 
 
 Preparing the Network for Containers
@@ -76,7 +76,7 @@ The ``docker run`` command can be used to launch a container from the image ``bd
                --env SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdc_catalog" \
                --env BDC_STAC_BASE_URL="http://localhost:8080" \
                --env BDC_STAC_FILE_ROOT="http://localhost:8081" \
-               bdc-stac:0.8.1-0
+               bdc-stac:1.0.0
 
 
 Let's take a look at each parameter in the above command:
@@ -95,7 +95,7 @@ Let's take a look at each parameter in the above command:
 
     - ``--env BDC_STAC_FILE_ROOT="http://localhost:8081"``: File root for the image ``assets``.
 
-    - ``bdc-stac:0.9.0-0``: the name of the base Docker image used to create the container.
+    - ``bdc-stac:1.0.0``: the name of the base Docker image used to create the container.
 
 
 If you have launched the container, you can check if the service has initialized::
@@ -120,65 +120,67 @@ The output should be a JSON document similar to:
 .. code-block:: json
 
     {
-      "description": "Brazil Data Cube Catalog",
-      "id": "bdc",
-      "stac_version": "0.9.0",
-      "links": [
-        {
-          "href": "http://localhost:5000/",
-          "rel": "self",
-          "type": "application/json",
-          "title": "Link to this document"
-        },
-        {
-          "href": "http://localhost:5000/docs",
-          "rel": "service-doc",
-          "type": "text/html",
-          "title": "API documentation in HTML"
-        },
-        {
-          "href": "http://localhost:5000/conformance",
-          "rel": "conformance",
-          "type": "application/json",
-          "title": "OGC API conformance classes implemented by the server"
-        },
-        {
-          "href": "http://localhost:5000/collections",
-          "rel": "data",
-          "type": "application/json",
-          "title": "Information about image collections"
-        },
-        {
-          "href": "http://localhost:5000/search",
-          "rel": "search",
-          "type": "application/json",
-          "title": "STAC-Search endpoint"
-        },
-        {
-          "href": "http://localhost:5000/collections/CB4_64_16D_STK-1",
-          "rel": "child",
-          "type": "application/json",
-          "title": "Cbers-4 WFI 16 days"
-        },
-        {
-          "href": "http://localhost:5000/collections/CB4_64-1",
-          "rel": "child",
-          "type": "application/json",
-          "title": "Cbers-4 WFI Irregular"
-        },
-        {
-          "href": "http://localhost:5000/collections/CB4-MUX-L4-SR-CMPAC-1",
-          "rel": "child",
-          "type": "application/json",
-          "title": "CBERS-4 MUX surface reflectance product (Level-5)"
-        },
-        {
-          "href": "http://localhost:5000/collections/RF_ANL-1",
-          "rel": "child",
-          "type": "application/json",
-          "title": "Risco de Fogo - Anual"
-        }
-      ]
+        "type": "Catalog",
+        "description": "Brazil Data Cube Catalog",
+        "id": "bdc",
+        "stac_version": "1.0.0-rc.1",
+        "links": [
+            {
+                "href": "http://localhost:8080/",
+                "rel": "self",
+                "type": "application/json",
+                "title": "Link to this document"
+            },
+            {
+                "href": "http://localhost:8080/docs",
+                "rel": "service-doc",
+                "type": "text/html",
+                "title": "API documentation in HTML"
+            },
+            {
+                "href": "http://localhost:8080/conformance",
+                "rel": "conformance",
+                "type": "application/json",
+                "title": "OGC API conformance classes implemented by the server"
+            },
+            {
+                "href": "http://localhost:8080/collections",
+                "rel": "data",
+                "type": "application/json",
+                "title": "Information about image collections"
+            },
+            {
+                "href": "http://localhost:8080/search",
+                "rel": "search",
+                "type": "application/geo+json",
+                "title": "STAC-Search endpoint"
+            },
+            {
+                "href": "http://localhost:8080/collections/MOD13Q1-6",
+                "rel": "child",
+                "type": "application/json",
+                "title": "TERRA - MODIS - MOD13Q1 - C6"
+            },
+            {
+                "href": "http://localhost:8080/collections/MYD13Q1-6",
+                "rel": "child",
+                "type": "application/json",
+                "title": "AQUA - MODIS - MYD13Q1 - C6"
+            },
+            {
+                "href": "http://localhost:8080/collections/S2_L1C-1",
+                "rel": "child",
+                "type": "application/json",
+                "title": "Sentinel-2 - MSI - Level-1C"
+            }
+        ],
+        "conformsTo": [
+            "https://api.stacspec.org/v1.0.0-beta.1/core",
+            "https://api.stacspec.org/v1.0.0-beta.1/item-search",
+            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
+            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
+            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson"
+        ]
     }
 
 

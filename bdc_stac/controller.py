@@ -1,13 +1,15 @@
 """Data module."""
-import json
+
 import warnings
 from datetime import datetime as dt
 from functools import lru_cache
+from typing import Optional
 
-from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, Item, Tile, Timeline
-from flask import abort
-from flask_sqlalchemy import SQLAlchemy
-from geoalchemy2.functions import GenericFunction
+import shapely.geometry
+from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, Item, Tile, Timeline, ItemsProcessors
+from flask import abort, current_app
+from flask_sqlalchemy import Pagination, SQLAlchemy
+from geoalchemy2.shape import to_shape
 from sqlalchemy import Float, and_, cast, exc, func, or_
 
 from .config import BDC_STAC_API_VERSION, BDC_STAC_BASE_URL, BDC_STAC_FILE_ROOT, BDC_STAC_MAX_LIMIT
@@ -23,13 +25,6 @@ session = db.create_scoped_session({"autocommit": True})
 DATETIME_RFC339 = "%Y-%m-%dT%H:%M:%SZ"
 
 
-class ST_Extent(GenericFunction):
-    """Postgis ST_Extent function."""
-
-    name = "ST_Extent"
-    type = None
-
-
 def get_collection_items(
     collection_id=None,
     roles=None,
@@ -43,7 +38,7 @@ def get_collection_items(
     limit=10,
     query=None,
     **kwargs,
-):
+) -> Pagination:
     """Retrieve a list of collection items based on filters.
 
     :param collection_id: Single Collection ID to include in the search for items.
@@ -71,34 +66,45 @@ def get_collection_items(
     :type page: int, optional
     :param limit: The maximum number of results to return (page size), defaults to 10
     :type limit: int, optional
+    :param query: The STAC extra query internal properties
+    :type query: dict, optional
     :return: list of collectio items
     :rtype: list
     """
+    exclude = kwargs.get('exclude', [])
+
     columns = [
         func.concat(Collection.name, "-", Collection.version).label("collection"),
         Collection.collection_type,
-        Collection._metadata.label("meta"),
-        Item._metadata.label("item_meta"),
+        Collection.category,
+        Item.metadata_.label("item_meta"),
         Item.name.label("item"),
         Item.id,
         Item.collection_id,
         Item.start_date.label("start"),
         Item.end_date.label("end"),
-        Item.assets,
         Item.created,
         Item.updated,
         cast(Item.cloud_cover, Float).label("cloud_cover"),
-        func.ST_AsGeoJSON(Item.geom).label("geom"),
-        func.Box2D(Item.geom).label("bbox"),
+        Item.footprint,
+        Item.bbox,
         Tile.name.label("tile"),
     ]
+
+    # For performance, only retrieve assets when required
+    if 'assets' not in exclude:
+        columns.append(Item.assets)
 
     if roles is None:
         roles = []
 
     where = [
         Collection.id == Item.collection_id,
-        or_(Collection.is_public.is_(True), Collection.id.in_([int(r.split(":")[0]) for r in roles])),
+        or_(Collection.is_public.is_(True),
+            Collection.is_available.is_(True),
+            Collection.id.in_([int(r.split(":")[0]) for r in roles])),
+        Item.is_available.is_(True),
+        Item.is_public.is_(True)
     ]
 
     if ids is not None:
@@ -118,11 +124,10 @@ def get_collection_items(
 
         if query:
             filters = create_query_filter(query)
-            if filters:
-                where += filters
+            where += filters
 
         if intersects is not None:
-            where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(str(intersects)), Item.geom)]
+            where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(str(intersects)), Item.bbox)]
         elif bbox is not None:
             try:
                 if isinstance(bbox, str):
@@ -140,16 +145,16 @@ def get_collection_items(
                             bbox[1],
                             bbox[2],
                             bbox[3],
-                            func.ST_SRID(Item.geom),
+                            4326
                         ),
-                        Item.geom,
+                        # TODO: Use footprint to intersect or bbox?
+                        Item.bbox,
                     )
                 ]
             except (ValueError, InvalidBoundingBoxError) as e:
                 abort(400, f"'{bbox}' is not a valid bbox.")
 
         if datetime is not None:
-            date_filter = None
             if "/" in datetime:
                 matches_open = ("..", "")
                 time_start, time_end = datetime.split("/")
@@ -185,43 +190,31 @@ def get_collection_eo(collection_id):
     Returns:
         eo_gsd, eo_bands (tuple(float, dict)):
     """
-    bands = (
-        session.query(
-            Band.name,
-            Band.common_name,
-            Band.description,
-            cast(Band.min_value, Float).label("min"),
-            cast(Band.max_value, Float).label("max"),
-            cast(Band.nodata, Float).label("nodata"),
-            cast(Band.scale, Float).label("scale"),
-            cast(Band.resolution_x, Float).label("gsd"),
-            Band.data_type,
-            cast(Band.center_wavelength, Float).label("center_wavelength"),
-            cast(Band.full_width_half_max, Float).label("full_width_half_max"),
-        )
-        .filter(Band.collection_id == collection_id)
-        .all()
-    )
+    bands = Band.query().filter(Band.collection_id == collection_id)
     eo_bands = list()
     eo_gsd = 0.0
 
     for band in bands:
-        eo_bands.append(
-            dict(
-                name=band.name,
-                common_name=band.common_name,
-                description=band.description,
-                min=band.min,
-                max=band.max,
-                nodata=band.nodata,
-                scale=band.scale,
-                center_wavelength=band.center_wavelength,
-                full_width_half_max=band.full_width_half_max,
-                data_type=band.data_type,
-            )
+        band_meta = dict(
+            name=band.name,
+            common_name=band.common_name,
+            description=band.description,
+            min=float(band.min_value) if band.min_value is not None else None,
+            max=float(band.max_value) if band.max_value is not None else None,
+            nodata=float(band.nodata) if band.nodata is not None else None,
+            scale=float(band.scale_mult) if band.scale_mult is not None else None,
+            scale_add=float(band.scale_add) if band.scale_add is not None else None,
+            data_type=band.data_type,
         )
-        if band.gsd > eo_gsd:
-            eo_gsd = band.gsd
+        band_meta.update(band.properties)
+        resolutions = band.eo_resolutions
+        if resolutions is None:
+            current_app.logger.warning(f'No resolution configured for {band.collection.name} - Band {band.name}')
+            continue
+
+        eo_bands.append(band_meta)
+        if resolutions[0] > eo_gsd:
+            eo_gsd = resolutions[0]
 
     return {"eo:gsd": eo_gsd, "eo:bands": eo_bands}
 
@@ -257,8 +250,9 @@ def get_collection_bands(collection_id):
     return bands_json
 
 
+@lru_cache()
 def get_collection_tiles(collection_id):
-    """Retrive a list of tiles for a given collection.
+    """Retrieve a list of tiles for a given collection.
 
     :param collection_id: collection identifier
     :type collection_id: str
@@ -311,27 +305,7 @@ def get_collection_timeline(collection_id):
     return [dt.fromisoformat(str(t.time_inst)).strftime("%Y-%m-%d") for t in timeline]
 
 
-def get_collection_extent(collection_id):
-    """Retrive the extent as a BBOX for a given collection.
-
-    :param collection_id: collection identifier
-    :type collection_id: str
-    :return: list of coordinates for the collection extent
-    :rtype: list
-    """
-    extent = (
-        session.query(func.ST_Extent(Item.geom).label("bbox"))
-        .filter(Collection.id == Item.collection_id, Collection.id == collection_id)
-        .first()
-    )
-
-    bbox = list()
-    if extent.bbox:
-        bbox = extent.bbox[extent.bbox.find("(") + 1 : extent.bbox.find(")")].replace(" ", ",")
-        bbox = [float(coord) for coord in bbox.split(",")]
-    return bbox
-
-
+@lru_cache()
 def get_collection_quicklook(collection_id):
     """Retrive a list of bands used to create the quicklooks for a given collection.
 
@@ -363,17 +337,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
     :rtype: list
     """
     columns = [
-        Collection.id,
-        Collection.is_public,
-        Collection.start_date.label("start"),
-        Collection.end_date.label("end"),
-        Collection.description,
-        Collection._metadata.label("meta"),
-        func.concat(Collection.name, "-", Collection.version).label("name"),
-        Collection.collection_type,
-        Collection.version,
-        Collection.title,
-        Collection.temporal_composition_schema,
+        Collection,
         CompositeFunction.name.label("composite_function"),
         GridRefSys.name.label("grid_ref_sys"),
     ]
@@ -382,6 +346,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
         roles = []
 
     where = [
+        Collection.is_available.is_(True),
         or_(Collection.is_public.is_(True), Collection.id.in_([int(r.split(":")[0]) for r in roles])),
     ]
 
@@ -397,85 +362,111 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
     )
 
     collections = list()
+    default_stac_extensions = ["bdc", "version", "processing", "item-assets"]
 
     for r in result:
+        category = r.Collection.category
+
+        providers = [
+            provider.to_dict()
+            for provider in r.Collection.providers
+        ]
+
+        collection_extensions = []
+        if r.Collection.collection_type == 'datacube':
+            collection_extensions.append('datacube')
+
+        if category == 'sar' or category == 'eo':
+            collection_extensions.append(category)
+
+        tiles = get_collection_tiles(r.Collection.id)
+
         collection = {
-            "id": r.name,
+            "id": f'{r.Collection.name}-{r.Collection.version}',
             "stac_version": BDC_STAC_API_VERSION,
-            "stac_extensions": ["bdc", "commons", "datacube", "version"],
-            "title": r.title,
-            "version": r.version,
+            "stac_extensions": default_stac_extensions + collection_extensions,
+            "title": r.Collection.title,
+            "version": r.Collection.version,
             "deprecated": False,
-            "description": r.description,
-            "properties": {},
-            "bdc:grs": r.grid_ref_sys,
-            "bdc:tiles": get_collection_tiles(r.id),
-            "bdc:composite_function": r.composite_function,
-            "bdc:type": r.collection_type,
+            "description": r.Collection.description,
+            "keywords": r.Collection.keywords,
+            "providers": providers,
+            "summaries": r.Collection.summaries,
+            "item_assets": r.Collection.item_assets,
+            "properties": r.Collection.properties or {},
+            "bdc:type": r.Collection.collection_type,
         }
 
-        if r.meta and ("rightsList" in r.meta) and (len(r.meta["rightsList"]) > 0):
+        if r.Collection.grs:
+            collection["bdc:grs"] = r.Collection.grs.name
+        if r.Collection.composite_function:
+            collection["bdc:composite_function"] = r.composite_function
+        if tiles:
+            collection["bdc:tiles"] = tiles
 
-            collection["license"] = r.meta["rightsList"][0].get("rights", "")
+        if r.Collection.metadata_ and ("rightsList" in r.Collection.metadata_) and (len(r.Collection.metadata_["rightsList"]) > 0):
+            collection["license"] = r.Collection.metadata_["rightsList"][0].get("rights", "")
         else:
             collection["license"] = ""
 
-        bbox = get_collection_extent(r.id)
+        bbox = to_shape(r.Collection.spatial_extent).bounds if r.Collection.spatial_extent else None
 
         start, end = None, None
 
-        if r.start:
-            start = r.start.strftime(DATETIME_RFC339)
-            if r.end:
-                end = r.end.strftime(DATETIME_RFC339)
+        if r.Collection.start_date:
+            start = r.Collection.start_date.strftime(DATETIME_RFC339)
+            if r.Collection.end_date:
+                end = r.Collection.end_date.strftime(DATETIME_RFC339)
 
         collection["extent"] = {
             "spatial": {"bbox": [bbox]},
             "temporal": {"interval": [[start, end]]},
         }
 
-        quicklooks = get_collection_quicklook(r.id)
+        quicklooks = get_collection_quicklook(r.Collection.id)
 
         if quicklooks is not None:
             collection["bdc:bands_quicklook"] = quicklooks
 
-        collection_eo = get_collection_eo(r.id)
-        collection["properties"].update(collection_eo)
+        if category == 'eo':
+            collection_eo = get_collection_eo(r.Collection.id)
+            collection["properties"].update(collection_eo)
 
-        if r.meta:
-            if "platform" in r.meta:
-                collection["properties"]["instruments"] = r.meta["platform"]["instruments"]
-                collection["properties"]["platform"] = r.meta["platform"]["code"]
+        if r.Collection.metadata_:
+            if "platform" in r.Collection.metadata_:
+                collection["properties"]["instruments"] = r.Collection.metadata_["platform"]["instruments"]
+                collection["properties"]["platform"] = r.Collection.metadata_["platform"]["code"]
 
-                r.meta.pop("platform")  # platform info is displayed on properties
-            collection["bdc:metadata"] = r.meta
+                r.Collection.metadata_.pop("platform")  # platform info is displayed on properties
+            collection["bdc:metadata"] = r.Collection.metadata_
 
-        if r.collection_type == "cube":
-            proj4text = get_collection_crs(r.id)
+        if r.Collection.collection_type == "cube":
+            proj4text = get_collection_crs(r.Collection.id)
 
             datacube = {
                 "x": dict(type="spatial", axis="x", extent=[bbox[0], bbox[2]], reference_system=proj4text),
                 "y": dict(type="spatial", axis="y", extent=[bbox[1], bbox[3]], reference_system=proj4text),
-                "temporal": dict(type="temporal", extent=[start, end], values=get_collection_timeline(r.id)),
-                "bands": dict(type="bands", values=[band["name"] for band in collection_eo["eo:bands"]]),
+                "temporal": dict(type="temporal", extent=[start, end], values=get_collection_timeline(r.Collection.id)),
             }
+            if category == 'eo':
+                datacube["bands"] = dict(type="bands", values=[band["name"] for band in collection_eo["eo:bands"]])
 
             collection["cube:dimensions"] = datacube
-            collection["bdc:crs"] = get_collection_crs(r.id)
-            collection["bdc:temporal_composition"] = r.temporal_composition_schema
+            collection["bdc:crs"] = get_collection_crs(r.Collection.id)
+            collection["bdc:temporal_composition"] = r.Collection.temporal_composition_schema
 
         collection["links"] = [
             {
-                "href": f"{BDC_STAC_BASE_URL}/collections/{r.name}{assets_kwargs}",
+                "href": f"{BDC_STAC_BASE_URL}/collections/{r.Collection.identifier}{assets_kwargs}",
                 "rel": "self",
                 "type": "application/json",
                 "title": "Link to this document",
             },
             {
-                "href": f"{BDC_STAC_BASE_URL}/collections/{r.name}/items{assets_kwargs}",
+                "href": f"{BDC_STAC_BASE_URL}/collections/{r.Collection.identifier}/items{assets_kwargs}",
                 "rel": "items",
                 "type": "application/json",
-                "title": f"Items of the collection {r.name}",
+                "title": f"Items of the collection {r.Collection.identifier}",
             },
             {
                 "href": f"{BDC_STAC_BASE_URL}/collections{assets_kwargs}",
@@ -497,7 +488,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
 
 
 def get_catalog(roles=None):
-    """Retrive all available collections.
+    """Retrieve all available collections.
 
     :return: a list of available collections
     :rtype: list
@@ -512,6 +503,7 @@ def get_catalog(roles=None):
             Collection.title,
         )
         .filter(
+            Collection.is_available.is_(True),
             or_(
                 Collection.is_public.is_(True),
                 Collection.id.in_([int(r.split(":")[0]) for r in roles]),
@@ -522,26 +514,29 @@ def get_catalog(roles=None):
     return collections
 
 
-def make_geojson(items, assets_kwargs=""):
+def make_geojson(items, assets_kwargs="", exclude=None):
     """Generate a list of STAC Items from a list of collection items.
 
-    :param items: collection items to be formated as GeoJSON Features
-    :type items: list
-    :param links: links for STAC navigation
-    :type links: list
-    :return: GeoJSON Features.
-    :rtype: list
+    param items: collection items to be formated as GeoJSON Features
+    type items: list
+    param extension: The STAC extension for Item Context (sar/eo/label).
+    type extension: str
+    return: GeoJSON Features.
+    rtype: list
     """
     features = list()
+    exclude = exclude or []
 
     for i in items:
+        geom = i.footprint or i.bbox
+        geom = shapely.geometry.mapping(to_shape(geom))
         feature = {
             "type": "Feature",
             "id": i.item,
             "collection": i.collection,
             "stac_version": BDC_STAC_API_VERSION,
-            "stac_extensions": ["bdc", "checksum", "commons", "eo"],
-            "geometry": json.loads(i.geom),
+            "stac_extensions": ["bdc", "checksum", i.category],
+            "geometry": geom,
             "links": [
                 {
                     "href": f"{BDC_STAC_BASE_URL}/collections/{i.collection}/items/{i.item}{assets_kwargs}",
@@ -553,53 +548,80 @@ def make_geojson(items, assets_kwargs=""):
             ],
         }
 
+        # Processors
+        processors = get_item_processors(i.id)
+
         bbox = list()
         if i.bbox:
-            bbox = i.bbox[i.bbox.find("(") + 1 : i.bbox.find(")")].replace(" ", ",")
-            bbox = [float(coord) for coord in bbox.split(",")]
+            bbox = to_shape(i.bbox).bounds
         feature["bbox"] = bbox
 
-        bands = get_collection_eo(i.collection_id)
-
         properties = {
-            "bdc:tiles": [i.tile],
             "datetime": i.start.strftime(DATETIME_RFC339),
             "start_datetime": i.start.strftime(DATETIME_RFC339),
             "end_datetime": i.end.strftime(DATETIME_RFC339),
             "created": i.created.strftime(DATETIME_RFC339),
-            "updated": i.updated.strftime(DATETIME_RFC339),
-            "eo:cloud_cover": i.cloud_cover,
+            "updated": i.updated.strftime(DATETIME_RFC339)
         }
+        properties.update(i.item_meta or {})
+        properties.update(processors)
 
-        for key, value in i.assets.items():
-            value["href"] = BDC_STAC_FILE_ROOT + value["href"] + assets_kwargs
+        bands = {}
+        if i.tile:
+            properties["bdc:tiles"] = [i.tile]
 
-            for band in bands["eo:bands"]:
-                if band["name"] == key:
-                    value["eo:bands"] = [band]
+        if i.category == 'eo':
+            properties["eo:cloud_cover"] = i.cloud_cover
+            bands = get_collection_eo(i.collection_id)
 
-        if i.meta:
-            if "platform" in i.meta:
-                properties["instruments"] = i.meta["platform"]["instruments"]
-                properties["platform"] = i.meta["platform"]["code"]
+        if hasattr(i, 'assets'):
+            for key, value in i.assets.items():
+                value["href"] = BDC_STAC_FILE_ROOT + value["href"] + assets_kwargs
 
-                i.meta.pop("platform")  # platform info is displayed on properties
-
-        if i.item_meta:
-            properties["bdc:metadata"] = i.item_meta
+                if i.category == 'eo':
+                    for band in bands["eo:bands"]:
+                        if band["name"] == key:
+                            value["eo:bands"] = [band]
+            feature["assets"] = i.assets
 
         feature["properties"] = properties
-        feature["assets"] = i.assets
+
+        for key in exclude:
+            feature.pop(key, None)
 
         features.append(feature)
     return features
+
+
+def get_item_processors(item_id: int) -> dict:
+    """List the Processors used to compose the given Item.
+
+    Note:
+         Follows the STAC Extension `processing <https://github.com/stac-extensions/processing>`_.
+    """
+    processors = ItemsProcessors.get_processors(item_id)
+    proc_root = None
+    processors_obj = {}
+    for proc in processors:
+        if proc_root is None or (proc_root is not None and proc.level > proc_root.level):
+            proc_root = proc
+        processors_obj[proc.facility] = proc.version
+
+    out = {}
+    if processors_obj:
+        out["processing:lineage"] = proc_root.name
+        out["processing:facility"] = proc_root.facility
+        out["processing:level"] = proc_root.level
+        out["processing:software"] = processors_obj
+
+    return out
 
 
 def create_query_filter(query):
     """Create STAC query filter for SQLAlchemy.
 
     Notes:
-        Queryable properties must be mapped in this functions.
+        Queryable properties must be mapped in these functions.
     """
     mapping = {
         "eq": "__eq__",
@@ -623,10 +645,37 @@ def create_query_filter(query):
 
     for column, _filters in query.items():
         for op, value in _filters.items():
-            f = getattr(bdc_properties[column], mapping[op])(value)
+            if bdc_properties.get(column):
+                f = getattr(bdc_properties[column], mapping[op])(value)
+            # TODO: Remove the hard-code for comparison on JSON fields (Only text comparisons)
+            else:
+                f = getattr(Item.metadata_[column].astext, mapping[op])(value)
             filters.append(f)
 
-    return filters if len(filters) > 0 else None
+    return filters
+
+
+def parse_fields_parameter(fields: Optional[str] = None):
+    """Parses the string parameter `fields` to include/exclude certain fields in response.
+
+    Follow the `STAC API Fields Fragment <https://github.com/radiantearth/stac-api-spec/blob/v1.0.0-rc.1/fragments/fields/README.md>`.
+    """
+    if fields is None:
+        return [], []
+
+    include = []
+    exclude = []
+    fields = fields.split(',')
+
+    for field in fields:
+        if field.startswith('-'):
+            splitter = field.split('.')
+            left = splitter[0][1:]
+            exclude.append((left, splitter[1:]) if len(splitter) > 1 else left)
+        else:
+            include.append(field)
+
+    return include, exclude
 
 
 class InvalidBoundingBoxError(Exception):
