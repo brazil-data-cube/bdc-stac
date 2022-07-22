@@ -250,6 +250,7 @@ def get_collection_bands(collection_id):
     return bands_json
 
 
+@lru_cache()
 def get_collection_tiles(collection_id):
     """Retrieve a list of tiles for a given collection.
 
@@ -304,6 +305,7 @@ def get_collection_timeline(collection_id):
     return [dt.fromisoformat(str(t.time_inst)).strftime("%Y-%m-%d") for t in timeline]
 
 
+@lru_cache()
 def get_collection_quicklook(collection_id):
     """Retrive a list of bands used to create the quicklooks for a given collection.
 
@@ -501,6 +503,7 @@ def get_catalog(roles=None):
             Collection.title,
         )
         .filter(
+            Collection.is_available.is_(True),
             or_(
                 Collection.is_public.is_(True),
                 Collection.id.in_([int(r.split(":")[0]) for r in roles]),

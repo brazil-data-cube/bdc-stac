@@ -124,6 +124,7 @@ def index(roles=None):
         )
 
     return {
+        "type": "Catalog",
         "description": config.BDC_STAC_TITLE,
         "id": config.BDC_STAC_ID,
         "stac_version": config.BDC_STAC_API_VERSION,

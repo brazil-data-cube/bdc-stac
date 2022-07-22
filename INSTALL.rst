@@ -106,7 +106,6 @@ In the source code folder, enter the following command:
           FLASK_ENV="development" \
           SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdc_catalog" \
           BDC_STAC_BASE_URL="http://localhost:5000" \
-          BDC_STAC_API_VERSION="0.8.1" \
           BDC_STAC_FILE_ROOT="http://localhost:5001" \
           flask run
 
@@ -116,8 +115,6 @@ You may need to replace the definition of some environment variables:
     - ``SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdc_catalog"``: set the database URI connection.
 
     - ``BDC_STAC_BASE_URL="http://localhost:8080"``: Base URI of the service.
-
-    - ``BDC_STAC_API_VERSION="0.8.1"``: STAC Version used in the service.
 
     - ``BDC_STAC_FILE_ROOT="http://localhost:8081"``: File root for the Assets.
 
