@@ -6,7 +6,8 @@ from functools import lru_cache
 from typing import Optional
 
 import shapely.geometry
-from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, Item, Tile, Timeline, ItemsProcessors
+from bdc_catalog.models import (Band, Collection, CollectionRole, CompositeFunction, GridRefSys,
+                                Item, ItemsProcessors, Tile, Timeline, Role)
 from flask import abort, current_app
 from flask_sqlalchemy import Pagination, SQLAlchemy
 from geoalchemy2.shape import to_shape
@@ -74,7 +75,7 @@ def get_collection_items(
     exclude = kwargs.get('exclude', [])
 
     columns = [
-        func.concat(Collection.name, "-", Collection.version).label("collection"),
+        Collection.identifier.label("collection"),
         Collection.collection_type,
         Collection.category,
         Item.metadata_.label("item_meta"),
@@ -100,11 +101,12 @@ def get_collection_items(
 
     where = [
         Collection.id == Item.collection_id,
-        or_(Collection.is_public.is_(True),
-            Collection.is_available.is_(True),
-            Collection.id.in_([int(r.split(":")[0]) for r in roles])),
+        Collection.is_available.is_(True),
         Item.is_available.is_(True),
-        Item.is_public.is_(True)
+        or_(
+            CollectionRole.role_id.is_(None),
+            Role.name.in_(roles) if len(roles) > 0 else False,
+        ),
     ]
 
     if ids is not None:
@@ -112,12 +114,17 @@ def get_collection_items(
             ids = ids.split(",")
         where += [Item.name.in_(ids)]
     else:
-        if collection_id is not None:
-            where += [func.concat(Collection.name, "-", Collection.version) == collection_id]
-        elif collections is not None:
-            if isinstance(collections, str):
-                collections = collections.split(",")
-            where += [func.concat(Collection.name, "-", Collection.version).in_(collections)]
+        if collection_id and collections:
+            abort(400, 'Invalid parameter. Use collection_id or collections.')
+
+        if collection_id:
+            collections = [collection_id]
+
+        if collections:
+            collections = collections.split(",") if isinstance(collections, str) else collections
+
+            rows = db.session.query(Collection.id).filter(Collection.identifier.in_(collections)).all()
+            where += [Collection.id.in_(c.id for c in rows)]
 
         if item_id is not None:
             where += [Item.name.like(item_id)]
@@ -165,6 +172,7 @@ def get_collection_items(
                 else:  # closed range
                     date_filter = [
                         or_(
+                            # TODO: Review this legacy date interval comparison
                             and_(Item.start_date >= time_start, Item.start_date <= time_end),
                             and_(Item.end_date >= time_start, Item.end_date <= time_end),
                             and_(Item.start_date < time_start, Item.end_date > time_end),
@@ -174,9 +182,16 @@ def get_collection_items(
                 date_filter = [and_(Item.start_date <= datetime, Item.end_date >= datetime)]
             where += date_filter
     outer = [Item.tile_id == Tile.id]
-    query = session.query(*columns).outerjoin(Tile, *outer).filter(*where).order_by(Item.start_date.desc(), Item.id)
+    query = (
+        session.query(*columns)
+        .outerjoin(Tile, *outer)
+        .outerjoin(CollectionRole, CollectionRole.collection_id == Item.collection_id)
+        .outerjoin(Role, CollectionRole.role_id == Role.id)
+        .filter(*where)
+        .order_by(Item.start_date.desc())
+    )
 
-    result = query.paginate(page=int(page), per_page=int(limit), error_out=False, max_per_page=BDC_STAC_MAX_LIMIT)
+    result: Pagination = query.paginate(page=int(page), per_page=int(limit), error_out=False, max_per_page=BDC_STAC_MAX_LIMIT)
 
     return result
 
@@ -347,19 +362,24 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
 
     where = [
         Collection.is_available.is_(True),
-        or_(Collection.is_public.is_(True), Collection.id.in_([int(r.split(":")[0]) for r in roles])),
+        or_(
+            CollectionRole.role_id.is_(None),
+            Role.name.in_(roles),
+        )
     ]
 
     if collection_id:
         where.append(func.concat(Collection.name, "-", Collection.version) == collection_id)
 
-    result = (
+    q = (
         session.query(*columns)
         .outerjoin(CompositeFunction, Collection.composite_function_id == CompositeFunction.id)
         .outerjoin(GridRefSys, Collection.grid_ref_sys_id == GridRefSys.id)
+        .outerjoin(CollectionRole, CollectionRole.collection_id == Collection.id)
+        .outerjoin(Role, Role.id == CollectionRole.role_id)
         .filter(*where)
-        .all()
     )
+    result = q.all()
 
     collections = list()
     default_stac_extensions = ["bdc", "version", "processing", "item-assets"]
@@ -382,12 +402,12 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
         tiles = get_collection_tiles(r.Collection.id)
 
         collection = {
-            "id": f'{r.Collection.name}-{r.Collection.version}',
+            "id": r.Collection.identifier,
             "stac_version": BDC_STAC_API_VERSION,
             "stac_extensions": default_stac_extensions + collection_extensions,
             "title": r.Collection.title,
             "version": r.Collection.version,
-            "deprecated": False,
+            "deprecated": False,  # TODO: Use CollectionSRC to detect collection deprecation
             "description": r.Collection.description,
             "keywords": r.Collection.keywords,
             "providers": providers,
@@ -494,24 +514,25 @@ def get_catalog(roles=None):
     :rtype: list
     """
     if not roles:
-        roles = []
+        roles = ['classification']
 
-    collections = (
+    q = (
         session.query(
             Collection.id,
             func.concat(Collection.name, "-", Collection.version).label("name"),
             Collection.title,
         )
+        .outerjoin(CollectionRole, CollectionRole.collection_id == Collection.id)
+        .outerjoin(Role, CollectionRole.role_id == Role.id)
         .filter(
             Collection.is_available.is_(True),
             or_(
-                Collection.is_public.is_(True),
-                Collection.id.in_([int(r.split(":")[0]) for r in roles]),
-            )
+                CollectionRole.role_id.is_(None),
+                Role.name.in_(roles),
+            ),
         )
-        .all()
     )
-    return collections
+    return q.all()
 
 
 def make_geojson(items, assets_kwargs="", exclude=None):
