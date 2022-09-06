@@ -1,4 +1,12 @@
-"""Data module."""
+"""STAC data management.
+
+This module describes the internal queries and utilities to retrieve STAC definitions
+collections items and artifacts from BDC-Catalog.
+
+.. versionadded:: 1.0
+
+    Integrate with BDC-Catalog v1.0+ and role system support.
+"""
 
 import warnings
 from datetime import datetime as dt
@@ -199,6 +207,10 @@ def get_collection_items(
 @lru_cache()
 def get_collection_eo(collection_id):
     """Get Collection Eletro-Optical properties.
+
+    .. note::
+
+        This method uses LRU Cache to improve response time.
 
     Args:
         collection_id (str): collection identifier
@@ -639,10 +651,28 @@ def get_item_processors(item_id: int) -> dict:
 
 
 def create_query_filter(query):
-    """Create STAC query filter for SQLAlchemy.
+    """Create SQLAlchemy statement filter for Item metadata.
 
-    Notes:
+    This function creates a SQLAlchemy filter mapping object to deal
+    with Item properties. With this, the user may filter any property from
+    STAC item `properties` context, according the spec.
+
+    Example:
+
+        >>> # Create a statement to filter items which has the cloud cover less than 50 percent.
+        >>> create_query_filter({"eo:cloud_cover": {"lte": 50}})
+        >>> # Create a statement to filter items which has the tile MGRS 23LLG
+        >>> create_query_filter({"bdc:tile": {"eq": "23LLG"}})
+
+    .. note::
+
         Queryable properties must be mapped in these functions.
+
+    .. tip::
+
+        You may face limitation when filtering for any non-indexed property.
+        See `PostgreSQL Indexes <https://www.postgresql.org/docs/current/indexes.html>`_
+        to improve any property you need.
     """
     mapping = {
         "eq": "__eq__",

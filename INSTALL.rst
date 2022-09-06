@@ -24,7 +24,7 @@ The Brazil Data Cube STAC implementation depends essentially on:
 
 - `Flask-SQLAlchemy <https://flask-sqlalchemy.palletsprojects.com/en/2.x/>`_: an extension for Flask that adds support of `SQLAlchemy <https://www.sqlalchemy.org/>`_.
 
-- `BDC-Catalog <https://bdc-catalog.readthedocs.io/en/latest/>`_: an image metadata storage module for Earth Observation imagery of Brazil Data Cube.
+- `BDC-Catalog <https://bdc-catalog.readthedocs.io/en/latest/>`_ (v1.0+): an image metadata storage module for Earth Observation imagery of Brazil Data Cube.
 
 - `Flask-Redoc <https://pypi.org/project/flask-redoc/>`_: a Flask extension for displaying OpenAPI/Swagger documentation using Redocs.
 

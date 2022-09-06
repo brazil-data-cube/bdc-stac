@@ -10,9 +10,30 @@
 import os
 
 SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/bdc")
-SQLALCHEMY_TRACK_MODIFICATIONS = os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS", False)
-SQLALCHEMY_ECHO = os.getenv("SQLALCHEMY_ECHO", False)
+"""The database URI that should be used for the database connection. 
+Defaults to ``'postgresql://postgres:postgres@localhost:5432/bdc'``."""
 
+SQLALCHEMY_TRACK_MODIFICATIONS = os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS", False)
+"""Enable (True) or disable (False) signals before and after changes are committed to the database. 
+Defaults to ``False``."""
+
+SQLALCHEMY_ECHO = os.getenv("SQLALCHEMY_ECHO", False)
+"""Enables or disable debug output of statements to ``stderr``. Defaults to ``False``."""
+
+SQLALCHEMY_ENGINE_OPTIONS = {
+    "pool_size": int(os.getenv("SQLALCHEMY_ENGINE_POOL_SIZE", 5)),
+    "max_overflow": int(os.getenv("SQLALCHEMY_ENGINE_MAX_OVERFLOW", 10)),
+    "poolclass": os.getenv("SQLALCHEMY_ENGINE_POOL_CLASS"),
+    "pool_recycle": int(os.getenv("SQLALCHEMY_ENGINE_POOL_RECYCLE", -1)),
+}
+"""Set SQLAlchemy engine options for pooling.
+You may set the following environment variables to customize pooling:
+
+- ``SQLALCHEMY_ENGINE_POOL_SIZE``: The pool size. Defaults to ``5``.
+- ``SQLALCHEMY_ENGINE_MAX_OVERFLOW``: Max pool overflow. Defaults to ``10``.
+- ``SQLALCHEMY_ENGINE_POOL_CLASS``: The pool type for management. Defaults to ``10``.
+- ``SQLALCHEMY_ENGINE_POOL_RECYCLE``: Define the given number of seconds to recycle pool. Defaults to ``-1``, or no timeout.
+"""
 
 BDC_STAC_API_VERSION = os.getenv("BDC_STAC_API_VERSION", "1.0.0-rc.1")
 BDC_STAC_BASE_URL = os.getenv("BDC_STAC_BASE_URL", "http://localhost:5000")

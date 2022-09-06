@@ -1,10 +1,11 @@
 ..
     This file is part of Brazil Data Cube STAC Service.
-    Copyright (C) 2019-2020 INPE.
+    Copyright (C) 2019-2022 INPE.
 
     Brazil Data Cube STAC Service is free software; you can redistribute it and/or modify it
     under the terms of the MIT License; see LICENSE file for more details.
 
+.. _conf:
 
 Service Configuration
 =====================
@@ -24,6 +25,16 @@ Service Configuration
 
    Enables or disable debug output of statements to ``stderr``. Defaults to ``False``.
 
+
+.. data:: SQLALCHEMY_ENGINE_OPTIONS
+
+    Set SQLAlchemy engine options for pooling and recycle.
+    You may set the following environment variables to customize pooling:
+
+    - ``SQLALCHEMY_ENGINE_POOL_SIZE``: The pool size. Defaults to ``5``.
+    - ``SQLALCHEMY_ENGINE_MAX_OVERFLOW``: Max pool overflow. Defaults to ``10``.
+    - ``SQLALCHEMY_ENGINE_POOL_CLASS``: The pool type for management. Defaults to ``10``.
+    - ``SQLALCHEMY_ENGINE_POOL_RECYCLE``: Define the given number of seconds to recycle pool. Defaults to ``-1``, or no timeout.
 
 .. data:: BDC_STAC_BASE_URL
 

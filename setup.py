@@ -55,7 +55,7 @@ install_requires = [
     "Shapely>=1.6",
     "packaging>=20.4",
     "psycopg2-binary>=2.8.4",
-    "bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog@v1.0.0-alpha2",
+    "bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog@v1.0.0-alpha3",
     "bdc-auth-client @ git+https://github.com/brazil-data-cube/bdc-auth-client@v0.4.0",
 ]
 

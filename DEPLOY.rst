@@ -19,7 +19,10 @@ Requirements
 
 
 Besides Docker, you will need an instance of a PostgreSQL DBMS with a database prepared using `Brazil Data Cube Catalog Module <https://github.com/brazil-data-cube/bdc-catalog>`_.
+Before prepare database instance, just take a look in support mapping of BDC-STAC:
 
+- STAC ``v0.9.0``  -> ``BDC-Catalog 0.8.x``
+- STAC ``v1.0.0+`` -> ``BDC-Catalog 1.0+``
 
 
 Building the Docker Image
@@ -27,6 +30,7 @@ Building the Docker Image
 
 
 On the command line use the ``docker build`` command to create the docker image for the service::
+
     docker build --no-cache -t bdc-stac:1.0.0 .
 
 

@@ -1,6 +1,6 @@
 #
 # This file is part of Brazil Data Cube STAC Service.
-# Copyright (C) 2019-2020 INPE.
+# Copyright (C) 2019-2022 INPE.
 #
 # Brazil Data Cube STAC Service is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -24,7 +24,7 @@ app = bdc_stac.create_app()
 # -- Project information -----------------------------------------------------
 
 project = 'BDC-STAC'
-copyright = '2020, INPE,'
+copyright = '2022, INPE,'
 author = 'Brazil Data Cube Team'
 release = bdc_stac.__version__
 
@@ -64,13 +64,11 @@ exclude_patterns = [
 html_theme = 'sphinx_rtd_theme'
 
 html_theme_options = {
-    'html_baseurl': 'https://brazil-data-cube.github.io/',
     'analytics_id': 'XXXXXXXXXX',
     'logo_only': False,
     'display_version': True,
     'prev_next_buttons_location': 'both',
     'style_external_links': True,
-    'github_url': 'https://github.com/brazil-data-cube/bdc-stac',
     'style_nav_header_background': '#2980B9',
     'collapse_navigation': True,
     'sticky_navigation': False,
