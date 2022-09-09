@@ -93,7 +93,12 @@ def index(roles=None, **kwargs):
     catalog = get_catalog(roles=roles)
 
     links = [
-        {"href": f"{config.BDC_STAC_BASE_URL}/", "rel": "self", "type": "application/json", "title": "Link to this document"},
+        {
+            "href": f"{config.BDC_STAC_BASE_URL}/",
+            "rel": "self",
+            "type": "application/json",
+            "title": "Link to this document",
+        },
         {
             "href": f"{config.BDC_STAC_BASE_URL}/docs",
             "rel": "service-doc",
@@ -193,9 +198,9 @@ def collection_items(collection_id, roles=None, **kwargs):
 
     :param collection_id: identifier (name) of a specific collection
     """
-    _, exclude = parse_fields_parameter(request.args.get('fields'))
+    _, exclude = parse_fields_parameter(request.args.get("fields"))
     options = request.args.to_dict()
-    options['exclude'] = exclude
+    options["exclude"] = exclude
 
     items = get_collection_items(collection_id=collection_id, roles=roles, **options)
 
@@ -261,9 +266,9 @@ def stac_search_post(roles=None, **kwargs):
     if not request.is_json:
         abort(400, "POST Request must be an application/json")
 
-    _, exclude = parse_fields_parameter(request.args.get('fields'))
+    _, exclude = parse_fields_parameter(request.args.get("fields"))
     options = request.json
-    options['exclude'] = exclude
+    options["exclude"] = exclude
     items = get_collection_items(**options, roles=roles)
     features = make_geojson(items.items, exclude=exclude, assets_kwargs=request.assets_kwargs)
 
@@ -306,9 +311,9 @@ def stac_search_post(roles=None, **kwargs):
 @oauth2(required=False, throw_exception=False)
 def stac_search_get(roles=None, **kwargs):
     """Search STAC items with simple filtering."""
-    _, exclude = parse_fields_parameter(request.args.get('fields'))
+    _, exclude = parse_fields_parameter(request.args.get("fields"))
     options = request.args.to_dict()
-    options['exclude'] = exclude
+    options["exclude"] = exclude
     items = get_collection_items(**request.args, roles=roles)
 
     features = make_geojson(items.items, exclude=exclude, assets_kwargs=request.assets_kwargs)

@@ -46,4 +46,4 @@ BDC_AUTH_CLIENT_SECRET = os.getenv("BDC_AUTH_CLIENT_SECRET", None)
 BDC_AUTH_CLIENT_ID = os.getenv("BDC_AUTH_CLIENT_ID", None)
 BDC_AUTH_ACCESS_TOKEN_URL = os.getenv("BDC_AUTH_ACCESS_TOKEN_URL", None)
 
-STAC_GEO_MEDIA_TYPE = 'application/geo+json'
+STAC_GEO_MEDIA_TYPE = "application/geo+json"

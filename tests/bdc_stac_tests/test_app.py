@@ -29,8 +29,8 @@ class TestBDCStac:
         assert response.status_code == 200
 
         data = response.get_json()
-        parsed = version.parse(data['stac_version'])
-        assert parsed.base_version == '1.0.0'
+        parsed = version.parse(data["stac_version"])
+        assert parsed.base_version == "1.0.0"
 
     def test_conformance(self, client):
         response = client.get("/conformance")
@@ -74,7 +74,7 @@ class TestBDCStac:
 
         assert len(data["features"]) == 20
         # Test extension "context"
-        assert data['context']['limit'] == 20 and data['context']['returned'] == 20
+        assert data["context"]["limit"] == 20 and data["context"]["returned"] == 20
 
         feature = data["features"][0]
         assert len(feature["assets"]) > 0
@@ -165,4 +165,4 @@ class TestBDCStac:
         response = client.post("/search", content_type="application/json", json=parameters)
 
         assert response.status_code == 400
-        assert response.get_json()['description'] == '\'[-180, -90, 180, \'a\']\' is not a valid bbox.'
+        assert response.get_json()["description"] == "[-180, -90, 180, 'a'] is not a valid bbox."

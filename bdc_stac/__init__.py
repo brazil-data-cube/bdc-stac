@@ -39,7 +39,7 @@ def create_app():
 
     with app.app_context():
         db.init_app(app)
-        Redoc(app, 'spec/openapi.yaml')
+        Redoc(app, "spec/openapi.yaml")
 
         from . import views
 
