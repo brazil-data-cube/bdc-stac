@@ -16,7 +16,14 @@ from werkzeug.exceptions import HTTPException, InternalServerError
 from werkzeug.urls import url_encode
 
 from . import config
-from .controller import get_catalog, get_collection_items, get_collections, make_geojson, parse_fields_parameter, session
+from .controller import (
+    get_catalog,
+    get_collection_items,
+    get_collections,
+    make_geojson,
+    parse_fields_parameter,
+    session,
+)
 
 
 @current_app.teardown_appcontext
@@ -81,7 +88,7 @@ def conformance():
 
 @current_app.route("/", methods=["GET"])
 @oauth2(required=False)
-def index(roles=None):
+def index(roles=None, **kwargs):
     """Landing page of this API."""
     catalog = get_catalog(roles=roles)
 
@@ -141,7 +148,7 @@ def index(roles=None):
 
 @current_app.route("/collections", methods=["GET"])
 @oauth2(required=False)
-def root(roles=None):
+def root(roles=None, **kwargs):
     """Object with a list of Collections contained in the catalog and links."""
     collections = get_collections(roles=roles, assets_kwargs=request.assets_kwargs)
 
@@ -165,7 +172,7 @@ def root(roles=None):
 
 @current_app.route("/collections/<collection_id>", methods=["GET"])
 @oauth2(required=False)
-def collections_id(collection_id, roles=None):
+def collections_id(collection_id, roles=None, **kwargs):
     """Describe the given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
@@ -181,7 +188,7 @@ def collections_id(collection_id, roles=None):
 
 @current_app.route("/collections/<collection_id>/items", methods=["GET"])
 @oauth2(required=False)
-def collection_items(collection_id, roles=None):
+def collection_items(collection_id, roles=None, **kwargs):
     """Retrieve features of the given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
@@ -229,7 +236,7 @@ def collection_items(collection_id, roles=None):
 
 @current_app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
 @oauth2(required=False)
-def items_id(collection_id, item_id, roles=None):
+def items_id(collection_id, item_id, roles=None, **kwargs):
     """Retrieve a given feature from a given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
@@ -247,7 +254,7 @@ def items_id(collection_id, item_id, roles=None):
 
 @current_app.route("/search", methods=["POST"])
 @oauth2(required=False)
-def stac_search_post(roles=None):
+def stac_search_post(roles=None, **kwargs):
     """Search STAC items with simple filtering."""
     assets_kwargs = None
 
@@ -297,7 +304,7 @@ def stac_search_post(roles=None):
 
 @current_app.route("/search", methods=["GET"])
 @oauth2(required=False, throw_exception=False)
-def stac_search_get(roles=None):
+def stac_search_get(roles=None, **kwargs):
     """Search STAC items with simple filtering."""
     _, exclude = parse_fields_parameter(request.args.get('fields'))
     options = request.args.to_dict()

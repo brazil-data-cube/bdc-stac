@@ -14,8 +14,18 @@ from functools import lru_cache
 from typing import Optional
 
 import shapely.geometry
-from bdc_catalog.models import (Band, Collection, CollectionRole, CompositeFunction, GridRefSys,
-                                Item, ItemsProcessors, Tile, Timeline, Role)
+from bdc_catalog.models import (
+    Band,
+    Collection,
+    CollectionRole,
+    CompositeFunction,
+    GridRefSys,
+    Item,
+    ItemsProcessors,
+    Role,
+    Tile,
+    Timeline,
+)
 from flask import abort, current_app
 from flask_sqlalchemy import Pagination, SQLAlchemy
 from geoalchemy2.shape import to_shape
@@ -80,7 +90,7 @@ def get_collection_items(
     :return: list of collectio items
     :rtype: list
     """
-    exclude = kwargs.get('exclude', [])
+    exclude = kwargs.get("exclude", [])
 
     columns = [
         Collection.identifier.label("collection"),
@@ -246,76 +256,20 @@ def get_collection_eo(collection_id):
     return {"eo:gsd": eo_gsd, "eo:bands": eo_bands}
 
 
-def get_collection_bands(collection_id):
-    """Retrive a dict of bands for a given collection.
-
-    :param collection_id: collection identifier
-    :type collection_id: str
-    :return: dict of bands for the collection
-    :rtype: dict
-    """
-    bands = (
-        session.query(
-            Band.name,
-            Band.common_name,
-            cast(Band.min, Float).label("min"),
-            cast(Band.max, Float).label("max"),
-            cast(Band.nodata, Float).label("nodata"),
-            cast(Band.scale, Float).label("scale"),
-            Band.data_type,
-        )
-        .filter(Band.collection_id == collection_id)
-        .all()
-    )
-    bands_json = dict()
-
-    for b in bands:
-        bands_json[b.common_name] = {
-            k: v for k, v in b._asdict().items() if k != "common_name" and not k.startswith("_")
-        }
-
-    return bands_json
-
-
 @lru_cache()
-def get_collection_tiles(collection_id):
-    """Retrieve a list of tiles for a given collection.
+def get_collection_crs(collection: Collection) -> str:
+    """Retrieve the CRS for a given collection.
 
-    :param collection_id: collection identifier
-    :type collection_id: str
-    :return: list of tiles for the collection
-    :rtype: list
-    """
-    tiles = (
-        session.query(Tile.name)
-        .filter(Item.collection_id == collection_id, Item.tile_id == Tile.id)
-        .group_by(Tile.name)
-        .all()
-    )
-
-    return [t.name for t in tiles]
-
-
-@lru_cache()
-def get_collection_crs(collection_id):
-    """Retrive the CRS for a given collection.
-
-    :param collection_id: collection identifier
-    :type collection_id: str
+    :param collection: The BDC Collection object
+    :type collection: Collection
     :return: CRS for the collection
     :rtype: str
     """
-    grs = (
-        session.query(GridRefSys)
-        .filter(Collection.id == collection_id, Collection.grid_ref_sys_id == GridRefSys.id)
-        .first()
-    )
-
-    return grs.crs
+    return collection.grs.crs if collection.grs is not None else None
 
 
 def get_collection_timeline(collection_id):
-    """Retrive a list of dates for a given collection.
+    """Retrieve a list of dates for a given collection.
 
     :param collection_id: collection identifier
     :type collection_id: str
@@ -334,7 +288,7 @@ def get_collection_timeline(collection_id):
 
 @lru_cache()
 def get_collection_quicklook(collection_id):
-    """Retrive a list of bands used to create the quicklooks for a given collection.
+    """Retrieve a list of bands used to create the quicklooks for a given collection.
 
     :param collection_id: collection identifier
     :type collection_id: str
@@ -376,7 +330,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
         Collection.is_available.is_(True),
         or_(
             CollectionRole.role_id.is_(None),
-            Role.name.in_(roles),
+            Role.name.in_(roles) if roles else False,
         )
     ]
 
@@ -411,8 +365,6 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
         if category == 'sar' or category == 'eo':
             collection_extensions.append(category)
 
-        tiles = get_collection_tiles(r.Collection.id)
-
         collection = {
             "id": r.Collection.identifier,
             "stac_version": BDC_STAC_API_VERSION,
@@ -433,8 +385,6 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
             collection["bdc:grs"] = r.Collection.grs.name
         if r.Collection.composite_function:
             collection["bdc:composite_function"] = r.composite_function
-        if tiles:
-            collection["bdc:tiles"] = tiles
 
         if r.Collection.metadata_ and ("rightsList" in r.Collection.metadata_) and (len(r.Collection.metadata_["rightsList"]) > 0):
             collection["license"] = r.Collection.metadata_["rightsList"][0].get("rights", "")
@@ -473,7 +423,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
             collection["bdc:metadata"] = r.Collection.metadata_
 
         if r.Collection.collection_type == "cube":
-            proj4text = get_collection_crs(r.Collection.id)
+            proj4text = get_collection_crs(r.Collection)
 
             datacube = {
                 "x": dict(type="spatial", axis="x", extent=[bbox[0], bbox[2]], reference_system=proj4text),
@@ -484,7 +434,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
                 datacube["bands"] = dict(type="bands", values=[band["name"] for band in collection_eo["eo:bands"]])
 
             collection["cube:dimensions"] = datacube
-            collection["bdc:crs"] = get_collection_crs(r.Collection.id)
+            collection["bdc:crs"] = proj4text
             collection["bdc:temporal_composition"] = r.Collection.temporal_composition_schema
 
         collection["links"] = [
@@ -658,7 +608,6 @@ def create_query_filter(query):
     STAC item `properties` context, according the spec.
 
     Example:
-
         >>> # Create a statement to filter items which has the cloud cover less than 50 percent.
         >>> create_query_filter({"eo:cloud_cover": {"lte": 50}})
         >>> # Create a statement to filter items which has the tile MGRS 23LLG
@@ -707,7 +656,7 @@ def create_query_filter(query):
 
 
 def parse_fields_parameter(fields: Optional[str] = None):
-    """Parses the string parameter `fields` to include/exclude certain fields in response.
+    """Parse the string parameter `fields` to include/exclude certain fields in response.
 
     Follow the `STAC API Fields Fragment <https://github.com/radiantearth/stac-api-spec/blob/v1.0.0-rc.1/fragments/fields/README.md>`.
     """

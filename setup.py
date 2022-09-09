@@ -56,7 +56,7 @@ install_requires = [
     "packaging>=20.4",
     "psycopg2-binary>=2.8.4",
     "bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog@v1.0.0-alpha3",
-    "bdc-auth-client @ git+https://github.com/brazil-data-cube/bdc-auth-client@v0.4.0",
+    "bdc-auth-client @ git+https://github.com/brazil-data-cube/bdc-auth-client@v0.4.1",
 ]
 
 packages = find_packages()
