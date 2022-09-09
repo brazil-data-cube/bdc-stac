@@ -1,6 +1,6 @@
 #
 # This file is part of bdc-stac.
-# Copyright (C) 2019 INPE.
+# Copyright (C) 2019-2022 INPE.
 #
 # bdc-stac is a free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -16,7 +16,14 @@ from werkzeug.exceptions import HTTPException, InternalServerError
 from werkzeug.urls import url_encode
 
 from . import config
-from .controller import get_catalog, get_collection_items, get_collections, make_geojson, parse_fields_parameter, session
+from .controller import (
+    get_catalog,
+    get_collection_items,
+    get_collections,
+    make_geojson,
+    parse_fields_parameter,
+    session,
+)
 
 
 @current_app.teardown_appcontext
@@ -81,12 +88,17 @@ def conformance():
 
 @current_app.route("/", methods=["GET"])
 @oauth2(required=False)
-def index(roles=None):
+def index(roles=None, **kwargs):
     """Landing page of this API."""
     catalog = get_catalog(roles=roles)
 
     links = [
-        {"href": f"{config.BDC_STAC_BASE_URL}/", "rel": "self", "type": "application/json", "title": "Link to this document"},
+        {
+            "href": f"{config.BDC_STAC_BASE_URL}/",
+            "rel": "self",
+            "type": "application/json",
+            "title": "Link to this document",
+        },
         {
             "href": f"{config.BDC_STAC_BASE_URL}/docs",
             "rel": "service-doc",
@@ -141,7 +153,7 @@ def index(roles=None):
 
 @current_app.route("/collections", methods=["GET"])
 @oauth2(required=False)
-def root(roles=None):
+def root(roles=None, **kwargs):
     """Object with a list of Collections contained in the catalog and links."""
     collections = get_collections(roles=roles, assets_kwargs=request.assets_kwargs)
 
@@ -165,7 +177,7 @@ def root(roles=None):
 
 @current_app.route("/collections/<collection_id>", methods=["GET"])
 @oauth2(required=False)
-def collections_id(collection_id, roles=None):
+def collections_id(collection_id, roles=None, **kwargs):
     """Describe the given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
@@ -181,14 +193,14 @@ def collections_id(collection_id, roles=None):
 
 @current_app.route("/collections/<collection_id>/items", methods=["GET"])
 @oauth2(required=False)
-def collection_items(collection_id, roles=None):
+def collection_items(collection_id, roles=None, **kwargs):
     """Retrieve features of the given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
     """
-    _, exclude = parse_fields_parameter(request.args.get('fields'))
+    _, exclude = parse_fields_parameter(request.args.get("fields"))
     options = request.args.to_dict()
-    options['exclude'] = exclude
+    options["exclude"] = exclude
 
     items = get_collection_items(collection_id=collection_id, roles=roles, **options)
 
@@ -229,7 +241,7 @@ def collection_items(collection_id, roles=None):
 
 @current_app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
 @oauth2(required=False)
-def items_id(collection_id, item_id, roles=None):
+def items_id(collection_id, item_id, roles=None, **kwargs):
     """Retrieve a given feature from a given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
@@ -247,16 +259,16 @@ def items_id(collection_id, item_id, roles=None):
 
 @current_app.route("/search", methods=["POST"])
 @oauth2(required=False)
-def stac_search_post(roles=None):
+def stac_search_post(roles=None, **kwargs):
     """Search STAC items with simple filtering."""
     assets_kwargs = None
 
     if not request.is_json:
         abort(400, "POST Request must be an application/json")
 
-    _, exclude = parse_fields_parameter(request.args.get('fields'))
+    _, exclude = parse_fields_parameter(request.args.get("fields"))
     options = request.json
-    options['exclude'] = exclude
+    options["exclude"] = exclude
     items = get_collection_items(**options, roles=roles)
     features = make_geojson(items.items, exclude=exclude, assets_kwargs=request.assets_kwargs)
 
@@ -297,11 +309,11 @@ def stac_search_post(roles=None):
 
 @current_app.route("/search", methods=["GET"])
 @oauth2(required=False, throw_exception=False)
-def stac_search_get(roles=None):
+def stac_search_get(roles=None, **kwargs):
     """Search STAC items with simple filtering."""
-    _, exclude = parse_fields_parameter(request.args.get('fields'))
+    _, exclude = parse_fields_parameter(request.args.get("fields"))
     options = request.args.to_dict()
-    options['exclude'] = exclude
+    options["exclude"] = exclude
     items = get_collection_items(**request.args, roles=roles)
 
     features = make_geojson(items.items, exclude=exclude, assets_kwargs=request.assets_kwargs)

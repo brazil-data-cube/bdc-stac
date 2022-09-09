@@ -33,7 +33,6 @@ tests_require = [
     "isort>4.3",
     "check-manifest>=0.40",
     "black>=19.10a",
-    "stac.py>=0.9.0",
 ]
 
 extras_require = {
@@ -48,15 +47,16 @@ setup_requires = [
 ]
 
 install_requires = [
-    "Flask>=1.1.1",
+    # Remove Flask 2.3 limitation due warnings related dependencies (flask-redoc)
+    "Flask>=1.1.1,<2.3",
     "flask-redoc>=0.2.0",
     "GeoAlchemy2>=0.6.3",
     "SQLAlchemy>=1.3,<1.5",
     "Shapely>=1.6",
     "packaging>=20.4",
     "psycopg2-binary>=2.8.4",
-    "bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog@v1.0.0-alpha1",
-    "bdc-auth-client @ git+https://github.com/brazil-data-cube/bdc-auth-client@v0.4.0",
+    "bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog@v1.0.0-alpha3",
+    "bdc-auth-client @ git+https://github.com/brazil-data-cube/bdc-auth-client@v0.4.1",
 ]
 
 packages = find_packages()

@@ -1,6 +1,6 @@
 #
 # This file is part of bdc-stac.
-# Copyright (C) 2019 INPE.
+# Copyright (C) 2019-2022 INPE.
 #
 # bdc-stac is a free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -29,8 +29,9 @@ def create_app():
     app.config["BDC_AUTH_CLIENT_ID"] = _config.BDC_AUTH_CLIENT_ID
     app.config["BDC_AUTH_ACCESS_TOKEN_URL"] = _config.BDC_AUTH_ACCESS_TOKEN_URL
 
-    app.config["JSONIFY_PRETTYPRINT_REGULAR"] = False
-    app.config["JSON_SORT_KEYS"] = False
+    # Disable JSON pretty serialization.
+    app.json.compact = True
+    app.json.sort_keys = False
     app.config["REDOC"] = {"title": "BDC-STAC"}
 
     if __debug__:
@@ -38,7 +39,7 @@ def create_app():
 
     with app.app_context():
         db.init_app(app)
-        Redoc(app, 'spec/openapi.yaml')
+        Redoc(app, "spec/openapi.yaml")
 
         from . import views
 

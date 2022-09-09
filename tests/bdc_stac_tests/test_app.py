@@ -8,9 +8,9 @@
 import os
 
 import pytest
+from packaging import version
 
-os.environ["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:postgres@database:5432/postgres"
-os.environ["FILE_ROOT"] = "http://brazildatacube.dpi.inpe.br"
+os.environ["FILE_ROOT"] = "https://brazildatacube.dpi.inpe.br"
 
 from bdc_stac import config, create_app
 
@@ -29,6 +29,8 @@ class TestBDCStac:
         assert response.status_code == 200
 
         data = response.get_json()
+        parsed = version.parse(data["stac_version"])
+        assert parsed.base_version == "1.0.0"
 
     def test_conformance(self, client):
         response = client.get("/conformance")
@@ -64,15 +66,18 @@ class TestBDCStac:
     def test_collection_items(self, client):
         response = client.get("/collections/CB4_64_16D_STK-1/items?limit=20")
 
+        # TODO: Use JSONSchema validation
+
         assert response.status_code == 200
 
         data = response.get_json()
 
         assert len(data["features"]) == 20
+        # Test extension "context"
+        assert data["context"]["limit"] == 20 and data["context"]["returned"] == 20
 
         feature = data["features"][0]
         assert len(feature["assets"]) > 0
-        assert (data["context"]["returned"]) == 20
         assert (data["context"]["matched"]) > 0
 
     def test_collection_items_id(self, client):
@@ -160,3 +165,4 @@ class TestBDCStac:
         response = client.post("/search", content_type="application/json", json=parameters)
 
         assert response.status_code == 400
+        assert response.get_json()["description"] == "[-180, -90, 180, 'a'] is not a valid bbox."

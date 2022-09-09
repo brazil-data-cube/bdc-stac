@@ -11,15 +11,30 @@ Changes
 =======
 
 
+Version 1.0.0a1 (2022-09-06)
+----------------------------
+
+- Implementation of STAC v1.0-rc.1 with the following extensions:
+
+   - `Electro-Optical (eo) <https://github.com/stac-extensions/eo>`_;
+   - `SAR <https://github.com/stac-extensions/sar>`_;
+   - `Item Assets <https://github.com/stac-extensions/item-assets>`_;
+   - `Datacube <https://github.com/stac-extensions/datacube>`_;
+   - `Processing <https://github.com/stac-extensions/processing>`_.
+
+- Review the database queries to improve performance
+- Improve documentation: Running and deploy `#163 <https://github.com/brazil-data-cube/bdc-stac/issues/163>`_.
+- Review unittests
+
 
 Version 0.9.0-14 (2021-04-01)
-----------------------------
+-----------------------------
 
 - Improve pagination when using POST in /search (`#141 <https://github.com/brazil-data-cube/bdc-stac/pull/141>`_)
 - remove the question mark if there are no args in the url (`#147 <https://github.com/brazil-data-cube/bdc-stac/pull/147>`_)
 
 Version 0.9.0-13 (2021-01-28)
-----------------------------
+-----------------------------
 
 - Add drone support (`#133 <https://github.com/brazil-data-cube/bdc-stac/issues/133>`_)
 - Remove collection metadata from item (`#136 <https://github.com/brazil-data-cube/bdc-stac/issues/136>`_)
@@ -28,7 +43,7 @@ Version 0.9.0-13 (2021-01-28)
 - Fix bug when access collection item id directly (`#140 <https://github.com/brazil-data-cube/bdc-stac/issues/140>`_)
 
 Version 0.9.0-12 (2021-01-14)
-----------------------------
+-----------------------------
 
 - Add configuration for catalog description and id. (`#129 <https://github.com/brazil-data-cube/bdc-stac/issues/129>`_)
 
