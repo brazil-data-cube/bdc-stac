@@ -11,7 +11,7 @@ collections items and artifacts from BDC-Catalog.
 import warnings
 from datetime import datetime as dt
 from functools import lru_cache
-from typing import Optional
+from typing import List, Optional
 
 import shapely.geometry
 from bdc_catalog.models import (
@@ -264,27 +264,22 @@ def get_collection_crs(collection: Collection) -> str:
     return collection.grs.crs if collection.grs is not None else None
 
 
-def get_collection_timeline(collection_id):
-    """Retrieve a list of dates for a given collection.
+def format_timeline(timeline: Optional[List[Timeline]] = None):
+    """Format the collection timeline values with Dateformat
 
-    :param collection_id: collection identifier
-    :type collection_id: str
+    :param timeline: The collection timeline instance
+    :type timeline: Optional[List[Timeline]]
     :return: list of dates for the collection
     :rtype: list
     """
-    timeline = (
-        session.query(Timeline.time_inst)
-        .filter(Timeline.collection_id == collection_id)
-        .order_by(Timeline.time_inst.asc())
-        .all()
-    )
-
+    if timeline is None:
+        return []
     return [dt.fromisoformat(str(t.time_inst)).strftime("%Y-%m-%d") for t in timeline]
 
 
 @lru_cache()
 def get_collection_quicklook(collection_id):
-    """Retrieve a list of bands used to create the quicklooks for a given collection.
+    """Retrieve a list of bands used to create the quicklook for a given collection.
 
     :param collection_id: collection identifier
     :type collection_id: str
@@ -425,7 +420,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
             datacube = {
                 "x": dict(type="spatial", axis="x", extent=[bbox[0], bbox[2]], reference_system=proj4text),
                 "y": dict(type="spatial", axis="y", extent=[bbox[1], bbox[3]], reference_system=proj4text),
-                "temporal": dict(type="temporal", extent=[start, end], values=get_collection_timeline(r.Collection.id)),
+                "temporal": dict(type="temporal", extent=[start, end], values=format_timeline(r.Collection.timeline)),
             }
             if category == "eo":
                 datacube["bands"] = dict(type="bands", values=[band["name"] for band in collection_eo["eo:bands"]])
