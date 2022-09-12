@@ -19,10 +19,17 @@ Requirements
 
 
 Besides Docker, you will need an instance of a PostgreSQL DBMS with a database prepared using `Brazil Data Cube Catalog Module <https://github.com/brazil-data-cube/bdc-catalog>`_.
-Before prepare database instance, just take a look in support mapping of BDC-STAC:
+Before prepare database instance, just take a look in support compatibility table:
 
-- STAC ``v0.9.0``  -> ``BDC-Catalog 0.8.x``
-- STAC ``v1.0.0+`` -> ``BDC-Catalog 1.0+``
++---------------------------+-----------+-------------+
+| STAC API Spec             | BDC-STAC  | BDC-Catalog |
++===========================+===========+=============+
+| 0.8.x                     | 0.8.x     | 0.4.x       |
++---------------------------+-----------+-------------+
+| 0.9.0        - 1.0.0-rc.1 | 0.9.x     | 0.8.x       |
++---------------------------+-----------+-------------+
+| 1.0.0-beta.1 - 1.0.0-rc.1 | 1.0.x     | 1.0.x       |
++---------------------------+-----------+-------------+
 
 
 Building the Docker Image
@@ -187,6 +194,11 @@ The output should be a JSON document similar to:
         ]
     }
 
+
+.. note::
+
+    Be aware that collections ``S2_L1C-1``, ``MYD13Q1-6`` and ``MOD13Q1-6`` described above are examples.
+    You should create a definition of Collection following `BDC-Catalog <https://github.com/brazil-data-cube/bdc-catalog>`_ module.
 
 .. rubric:: Footnotes
 

@@ -11,7 +11,7 @@ Changes
 =======
 
 
-Version 1.0.0a1 (2022-09-06)
+Version 1.0.0a1 (2022-09-12)
 ----------------------------
 
 - Implementation of STAC v1.0-rc.1 with the following extensions:

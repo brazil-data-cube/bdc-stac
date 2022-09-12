@@ -1,6 +1,6 @@
 ..
     This file is part of Brazil Data Cube STAC Service.
-    Copyright (C) 2019-2020 INPE.
+    Copyright (C) 2019-2022 INPE.
 
     Brazil Data Cube STAC Service is free software; you can redistribute it and/or modify it
     under the terms of the MIT License; see LICENSE file for more details.
@@ -27,6 +27,22 @@ The Brazil Data Cube STAC implementation depends essentially on:
 - `BDC-Catalog <https://bdc-catalog.readthedocs.io/en/latest/>`_ (v1.0+): an image metadata storage module for Earth Observation imagery of Brazil Data Cube.
 
 - `Flask-Redoc <https://pypi.org/project/flask-redoc/>`_: a Flask extension for displaying OpenAPI/Swagger documentation using Redocs.
+
+
+STAC Versions
++++++++++++++
+
+Before installing the ``BDC-STAC`` server, please, take a look into compatibility table:
+
++---------------------------+-----------+-------------+
+| STAC API Spec             | BDC-STAC  | BDC-Catalog |
++===========================+===========+=============+
+| 0.8.x                     | 0.8.x     | 0.4.x       |
++---------------------------+-----------+-------------+
+| 0.9.0        - 1.0.0-rc.1 | 0.9.x     | 0.8.x       |
++---------------------------+-----------+-------------+
+| 1.0.0-beta.1 - 1.0.0-rc.1 | 1.0.x     | 1.0.x       |
++---------------------------+-----------+-------------+
 
 
 Clone the software repository
