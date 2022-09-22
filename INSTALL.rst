@@ -1,9 +1,19 @@
 ..
-    This file is part of Brazil Data Cube STAC Service.
-    Copyright (C) 2019-2022 INPE.
+    This file is part of BDC-STAC.
+    Copyright (C) 2022 INPE.
 
-    Brazil Data Cube STAC Service is free software; you can redistribute it and/or modify it
-    under the terms of the MIT License; see LICENSE file for more details.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
 
 
 Installation
@@ -112,6 +122,30 @@ Running in Development Mode
 .. note::
 
         Make sure you have a database prepared using `Brazil Data Cube Catalog Module <https://github.com/brazil-data-cube/bdc-catalog>`_.
+        You can achieve a minimal database with ``Docker`` using the following steps::
+
+            docker run --name bdc_pg \
+                       --detach \
+                       --volume bdc_catalog_vol:/var/lib/postgresql/data \
+                       --env POSTGRES_PASSWORD=postgres \
+                       --publish 5432:5432 \
+                       postgis/postgis:12-3.0
+
+        Once container is up and running, initialize the database::
+
+            export SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdcdb"
+            bdc-db db init
+            bdc-db db create-namespaces
+            bdc-db db create-extension-postgis
+            lccs-db db create-extension-hstore
+            bdc-db db create-schema # For devmode
+            # bdc-db alembic upgrade  # For prod (recommended)
+
+        After that, you can download a minimal collection `sentinel-2.json <https://raw.githubusercontent.com/brazil-data-cube/bdc-catalog/master/examples/fixtures/sentinel-2.json>`_
+        JSON example and then load it with ``BDC-Catalog`` command line::
+
+            export SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdcdb"
+            bdc-catalog load-data --ifile /path/to/sentinel-2.json
 
 
 In the source code folder, enter the following command:
@@ -119,8 +153,7 @@ In the source code folder, enter the following command:
 .. code-block:: shell
 
         $ FLASK_APP="bdc_stac" \
-          FLASK_ENV="development" \
-          SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdc_catalog" \
+          SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdcdb" \
           BDC_STAC_BASE_URL="http://localhost:5000" \
           BDC_STAC_FILE_ROOT="http://localhost:5001" \
           flask run
@@ -128,11 +161,11 @@ In the source code folder, enter the following command:
 
 You may need to replace the definition of some environment variables:
 
-    - ``SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdc_catalog"``: set the database URI connection.
+    - ``SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdcdb"``: set the database URI connection.
 
-    - ``BDC_STAC_BASE_URL="http://localhost:8080"``: Base URI of the service.
+    - ``BDC_STAC_BASE_URL="http://localhost:5000"``: Base URI of the service.
 
-    - ``BDC_STAC_FILE_ROOT="http://localhost:8081"``: File root for the Assets.
+    - ``BDC_STAC_FILE_ROOT="http://localhost:5001"``: File root for the Assets.
 
     - ``BDC_STAC_MAX_LIMIT``: Set number of maximum items fetched per request. Default is ``1000``.
 

@@ -1,9 +1,19 @@
 ..
-    This file is part of Brazil Data Cube STAC Service.
-    Copyright (C) 2019-2022 INPE.
+    This file is part of BDC-STAC.
+    Copyright (C) 2022 INPE.
 
-    Brazil Data Cube STAC Service is free software; you can redistribute it and/or modify it
-    under the terms of the MIT License; see LICENSE file for more details.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
 
 
 Deploying
@@ -26,7 +36,7 @@ Before prepare database instance, just take a look in support compatibility tabl
 +===========================+===========+=============+
 | 0.8.x                     | 0.8.x     | 0.4.x       |
 +---------------------------+-----------+-------------+
-| 0.9.0        - 1.0.0-rc.1 | 0.9.x     | 0.8.x       |
+| 0.9.0 - 1.0.0-rc.1        | 0.9.x     | 0.8.x       |
 +---------------------------+-----------+-------------+
 | 1.0.0-beta.1 - 1.0.0-rc.1 | 1.0.x     | 1.0.x       |
 +---------------------------+-----------+-------------+
@@ -41,7 +51,7 @@ On the command line use the ``docker build`` command to create the docker image 
     docker build --no-cache -t bdc-stac:1.0.0 .
 
 
-The above command will create a Docker image named ``bdc-stac`` and tag ``0.9.0-0`, as one can see with the ``docker images`` command::
+The above command will create a Docker image named ``bdc-stac`` and tag ``1.0.0`, as one can see with the ``docker images`` command::
 
     docker images
 
@@ -59,6 +69,7 @@ If you have the PostgreSQL server running in a Docker container and you want to 
 .. note::
 
     If you have a valid address for the PostgreSQL DBMS you can skip this section.
+    We have prepared a minimal example how to deploy a database using Docker in :doc:`installation`.
 
 
 To create a new network, you ca use the ``docker network`` command::
@@ -78,7 +89,7 @@ Launching the Docker Container with the STAC Service
 ----------------------------------------------------
 
 
-The ``docker run`` command can be used to launch a container from the image ``bdc-stac:0.9.0-0``. The command below shows an example on how to accomplish the launch of a container::
+The ``docker run`` command can be used to launch a container from the image ``bdc-stac:1.0.0``. The command below shows an example on how to accomplish the launch of a container::
 
     docker run --detach \
                --name bdc-stac \
@@ -167,18 +178,6 @@ The output should be a JSON document similar to:
                 "title": "STAC-Search endpoint"
             },
             {
-                "href": "http://localhost:8080/collections/MOD13Q1-6",
-                "rel": "child",
-                "type": "application/json",
-                "title": "TERRA - MODIS - MOD13Q1 - C6"
-            },
-            {
-                "href": "http://localhost:8080/collections/MYD13Q1-6",
-                "rel": "child",
-                "type": "application/json",
-                "title": "AQUA - MODIS - MYD13Q1 - C6"
-            },
-            {
                 "href": "http://localhost:8080/collections/S2_L1C-1",
                 "rel": "child",
                 "type": "application/json",
@@ -197,7 +196,7 @@ The output should be a JSON document similar to:
 
 .. note::
 
-    Be aware that collections ``S2_L1C-1``, ``MYD13Q1-6`` and ``MOD13Q1-6`` described above are examples.
+    Be aware that collections ``S2_L1C-1`` described above is a example.
     You should create a definition of Collection following `BDC-Catalog <https://github.com/brazil-data-cube/bdc-catalog>`_ module.
 
 .. rubric:: Footnotes
