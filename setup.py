@@ -1,9 +1,19 @@
 #
-# This file is part of Brazil Data Cube STAC Service.
-# Copyright (C) 2019-2020 INPE.
+# This file is part of BDC-STAC.
+# Copyright (C) 2022 INPE.
 #
-# Brazil Data Cube STAC Service is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
 #
 
 """STAC Implementation for the Brazil Data Cube."""
@@ -55,8 +65,8 @@ install_requires = [
     "Shapely>=1.6",
     "packaging>=20.4",
     "psycopg2-binary>=2.8.4",
-    "bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog@v1.0.0-alpha3",
-    "bdc-auth-client @ git+https://github.com/brazil-data-cube/bdc-auth-client@v0.4.1",
+    "bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog@v1.0.0",
+    "bdc-auth-client @ git+https://github.com/brazil-data-cube/bdc-auth-client@v0.4.2",
 ]
 
 packages = find_packages()
@@ -72,7 +82,7 @@ setup(
     description=__doc__,
     long_description=readme + "\n\n" + history,
     keywords="STAC RESTful Web Service",
-    license="MIT",
+    license="GPLv3",
     author="Brazil Data Cube Team",
     author_email="brazildatacube@inpe.br",
     url="https://github.com/brazil-data-cube/bdc-stac",
@@ -90,7 +100,7 @@ setup(
         "Environment :: Web Environment",
         "Intended Audience :: Education",
         "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: GPL v3 License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3.7",
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
