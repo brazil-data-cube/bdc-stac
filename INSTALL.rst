@@ -92,9 +92,7 @@ Install in development mode::
 
     **3.** Update pip and setuptools::
 
-        pip3 install --upgrade pip
-
-        pip3 install --upgrade setuptools
+        pip3 install --upgrade pip setuptools wheel
 
 
 Build the Documentation
