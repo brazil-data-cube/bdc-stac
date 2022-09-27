@@ -72,7 +72,7 @@ def conformance():
 @oauth2(required=False, throw_exception=False)
 def index(roles=[], access_token=""):
     """Landing page of this API."""
-    assets_kwargs = None
+    assets_kwargs = ''
 
     if BDC_STAC_ASSETS_ARGS:
         assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
@@ -123,7 +123,7 @@ def index(roles=[], access_token=""):
 @oauth2(required=False, throw_exception=False)
 def root(roles=[], access_token=""):
     """Return the root catalog or collection."""
-    assets_kwargs = None
+    assets_kwargs = ''
 
     if BDC_STAC_ASSETS_ARGS:
         assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
@@ -175,7 +175,7 @@ def collections_id(collection_id, roles=[], access_token=""):
 
     :param collection_id: identifier (name) of a specific collection
     """
-    assets_kwargs = None
+    assets_kwargs = ''
 
     if BDC_STAC_ASSETS_ARGS:
         assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
@@ -258,7 +258,7 @@ def collection_items(collection_id, roles=[], access_token=""):
     gjson["stac_extensions"] = ["checksum", "commons", "context", "eo"]
     gjson["type"] = "FeatureCollection"
 
-    assets_kwargs = None
+    assets_kwargs = ''
 
     if BDC_STAC_ASSETS_ARGS:
         assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
@@ -315,7 +315,7 @@ def items_id(collection_id, item_id, roles=[], access_token=""):
         {"href": f"{BASE_URL}/", "rel": "root"},
     ]
 
-    assets_kwargs = None
+    assets_kwargs = ''
 
     if BDC_STAC_ASSETS_ARGS:
         assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}
@@ -391,7 +391,7 @@ def stac_search(roles=[], access_token=""):
     gjson = dict()
     gjson["type"] = "FeatureCollection"
 
-    assets_kwargs = None
+    assets_kwargs = ''
 
     if BDC_STAC_ASSETS_ARGS:
         assets_kwargs = {arg: request.args.get(arg) for arg in BDC_STAC_ASSETS_ARGS.split(",")}

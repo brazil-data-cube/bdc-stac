@@ -50,11 +50,11 @@ setup_requires = [
 install_requires = [
     "Flask>=1.1.1",
     "flask-redoc>=0.2.0",
-    "GeoAlchemy2>=0.6.3",
+    "GeoAlchemy2==0.8.5", # Fixed version for compatibility
     "SQLAlchemy>=1.3,<1.4",
     "psycopg2-binary>=2.8.4",
     "packaging>=20.4",
-    "bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog@v0.6.4",
+    "bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog@v0.8.2",
     "bdc-auth-client @ git+https://github.com/brazil-data-cube/bdc-auth-client@v0.2.1",
 ]
 

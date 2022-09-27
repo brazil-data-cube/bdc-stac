@@ -16,11 +16,6 @@ SpatioTemporal Asset Catalog for Brazil Data Cube
         :alt: Software License
 
 
-.. image:: https://drone.dpi.inpe.br/api/badges/brazil-data-cube/bdc-stac/status.svg
-        :target: https://drone.dpi.inpe.br/brazil-data-cube/bdc-stac
-        :alt: Build Status
-
-
 .. image:: https://coveralls.io/repos/github/brazil-data-cube/bdc-stac/badge.svg?branch=master
         :target: https://coveralls.io/github/brazil-data-cube/bdc-stac?branch=master
         :alt: Code Coverage Test
