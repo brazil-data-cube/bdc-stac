@@ -21,12 +21,18 @@ Changes
 =======
 
 
-Version 1.0.0 (2022-09-22)
+Version 1.0.0 (2022-09-27)
 --------------------------
 
 - Change LICENSE to GPL v3
 - Add integration with ``BDC-Catalog`` 1.0 and ``BDC-Auth-Client`` 0.4.2
 - Mark repository as ``stable``
+
+
+Version 0.9.0-15 (2022-09-27)
+----------------------------
+
+- Fix dependency version for GeoAlchemy2
 
 
 Version 1.0.0a1 (2022-09-12)
