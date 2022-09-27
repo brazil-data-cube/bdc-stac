@@ -45,7 +45,7 @@ def teardown_appcontext(exceptions=None):
 @current_app.before_request
 def before_request():
     """Handle for before request processing."""
-    request.assets_kwargs = None
+    request.assets_kwargs = ''
 
     if config.BDC_STAC_ASSETS_ARGS:
         assets_kwargs = {arg: request.args.get(arg) for arg in config.BDC_STAC_ASSETS_ARGS.split(",")}
