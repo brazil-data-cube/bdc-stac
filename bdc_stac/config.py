@@ -18,6 +18,7 @@
 """Config module."""
 
 import os
+from distutils.util import strtobool
 
 SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/bdc")
 """The database URI that should be used for the database connection. 
@@ -55,5 +56,8 @@ BDC_STAC_ASSETS_ARGS = os.getenv("BDC_STAC_ASSETS_ARGS", "access_token")
 BDC_AUTH_CLIENT_SECRET = os.getenv("BDC_AUTH_CLIENT_SECRET", None)
 BDC_AUTH_CLIENT_ID = os.getenv("BDC_AUTH_CLIENT_ID", None)
 BDC_AUTH_ACCESS_TOKEN_URL = os.getenv("BDC_AUTH_ACCESS_TOKEN_URL", None)
+BDC_STAC_USE_FOOTPRINT = strtobool(os.getenv('BDC_STAC_USE_FOOTPRINT', '0'))
+"""Flag to set if Item intersection should use ``Item.footprint``.
+Defaults to ``0``, which means to use ``Item.bbox``."""
 
 STAC_GEO_MEDIA_TYPE = "application/geo+json"
