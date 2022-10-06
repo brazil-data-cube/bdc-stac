@@ -75,3 +75,8 @@ Service Configuration
 .. data:: BDC_AUTH_ACCESS_TOKEN_URL
 
     Access token url used for retrieving user info in BDC-Auth. Defaults to ``None``, that means only public collections will be returned.
+
+
+.. data:: BDC_STAC_USE_FOOTPRINT
+
+    Flag to set if Item intersection should use ``Item.footprint``. Defaults to ``0``, which means to use ``Item.bbox``.
