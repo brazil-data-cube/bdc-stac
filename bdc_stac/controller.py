@@ -49,7 +49,8 @@ from flask_sqlalchemy import Pagination, SQLAlchemy
 from geoalchemy2.shape import to_shape
 from sqlalchemy import Float, and_, cast, exc, func, or_
 
-from .config import BDC_STAC_API_VERSION, BDC_STAC_BASE_URL, BDC_STAC_FILE_ROOT, BDC_STAC_MAX_LIMIT
+from .config import (BDC_STAC_API_VERSION, BDC_STAC_BASE_URL, BDC_STAC_FILE_ROOT, BDC_STAC_MAX_LIMIT,
+                     BDC_STAC_USE_FOOTPRINT)
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=exc.SAWarning)
@@ -144,6 +145,7 @@ def get_collection_items(
             Role.name.in_(roles) if len(roles) > 0 else False,
         ),
     ]
+    geom_field = Item.footprint if BDC_STAC_USE_FOOTPRINT else Item.bbox
 
     if ids is not None:
         if isinstance(ids, str):
@@ -170,7 +172,7 @@ def get_collection_items(
             where += filters
 
         if intersects is not None:
-            where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(str(intersects)), Item.bbox)]
+            where += [func.ST_Intersects(func.ST_GeomFromGeoJSON(str(intersects)), geom_field)]
         elif bbox is not None:
             try:
                 if isinstance(bbox, str):
@@ -185,7 +187,7 @@ def get_collection_items(
                     func.ST_Intersects(
                         func.ST_MakeEnvelope(bbox[0], bbox[1], bbox[2], bbox[3], 4326),
                         # TODO: Use footprint to intersect or bbox?
-                        Item.bbox,
+                        geom_field,
                     )
                 ]
             except (ValueError, InvalidBoundingBoxError) as e:
@@ -392,14 +394,8 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
         if r.Collection.composite_function:
             collection["bdc:composite_function"] = r.composite_function
 
-        if (
-            r.Collection.metadata_
-            and ("rightsList" in r.Collection.metadata_)
-            and (len(r.Collection.metadata_["rightsList"]) > 0)
-        ):
-            collection["license"] = r.Collection.metadata_["rightsList"][0].get("rights", "")
-        else:
-            collection["license"] = ""
+        collection["license"] = collection['properties'].pop('license', '')
+        extra_links = collection['properties'].pop('links', [])
 
         bbox = to_shape(r.Collection.spatial_extent).bounds if r.Collection.spatial_extent else None
 
@@ -472,6 +468,8 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
                 "type": "application/json",
                 "title": "API landing page (root catalog)",
             },
+            # Add extra links like license etc.
+            *extra_links
         ]
 
         collections.append(collection)

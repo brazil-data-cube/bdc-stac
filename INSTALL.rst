@@ -38,6 +38,8 @@ The Brazil Data Cube STAC implementation depends essentially on:
 
 - `Flask-Redoc <https://pypi.org/project/flask-redoc/>`_: a Flask extension for displaying OpenAPI/Swagger documentation using Redocs.
 
+All these libraries can be easily installed in the next steps.
+
 
 STAC Versions
 +++++++++++++
@@ -73,6 +75,7 @@ Go to the source code folder::
 
 Install in development mode::
 
+        $ pip3 install -U pip setuptools wheel
         $ pip3 install -e .[all]
 
 
@@ -178,3 +181,10 @@ To add authentication support with Brazil Data Cube OAuth 2.0, use the following
     - ``BDC_AUTH_CLIENT_SECRET``: The OAuth 2.0 client secret
 
     - ``BDC_AUTH_ACCESS_TOKEN_URL``: The URL domain of BDC-OAuth 2.0 provider.
+
+
+.. note::
+
+    The parameter ``BDC_STAC_FILE_ROOT`` is used to concat the ``Item asset`` and then generate a display URL
+    that will be served by a HTTP Server. In this case, you will need to have a HTTP Server like `NGINX <https://www.nginx.com/>`_
+    or `Apache HTTPD <https://httpd.apache.org/>`_.
