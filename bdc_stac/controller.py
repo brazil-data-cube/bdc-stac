@@ -30,6 +30,7 @@ import warnings
 from datetime import datetime as dt
 from functools import lru_cache
 from typing import List, Optional
+from urllib.parse import urljoin
 
 import shapely.geometry
 from bdc_catalog.models import (
@@ -44,7 +45,7 @@ from bdc_catalog.models import (
     Tile,
     Timeline,
 )
-from flask import abort, current_app
+from flask import abort, current_app, request
 from flask_sqlalchemy import Pagination, SQLAlchemy
 from geoalchemy2.shape import to_shape
 from sqlalchemy import Float, and_, cast, exc, func, or_
@@ -397,7 +398,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
         collection["license"] = collection['properties'].pop('license', '')
         extra_links = collection['properties'].pop('links', [])
 
-        bbox = to_shape(r.Collection.spatial_extent).bounds if r.Collection.spatial_extent else None
+        bbox = to_shape(r.Collection.spatial_extent).bounds if r.Collection.spatial_extent else [None] * 4
 
         start, end = None, None
 
@@ -567,7 +568,7 @@ def make_geojson(items, assets_kwargs="", exclude=None):
 
         if hasattr(i, "assets"):
             for key, value in i.assets.items():
-                value["href"] = BDC_STAC_FILE_ROOT + value["href"] + assets_kwargs
+                value["href"] = urljoin(resolve_base_file_root_url(), value["href"] + assets_kwargs)
 
                 if i.category == "eo":
                     for band in bands["eo:bands"]:
@@ -701,3 +702,13 @@ class InvalidBoundingBoxError(Exception):
     def __str__(self):
         """:return: str representation of the exception."""
         return str(self.description)
+
+
+def resolve_base_file_root_url() -> str:
+    """Retrieve base URL used as STAC BASE URL ROOT for items from HTTP header.
+
+    Note:
+        This method uses ``flask.request`` object to check for X-Script-Name in header.
+        Make sure you are inside flask app context.
+    """
+    return request.headers.get('X-Script-Name', BDC_STAC_FILE_ROOT)
