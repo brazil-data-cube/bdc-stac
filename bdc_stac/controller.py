@@ -36,12 +36,10 @@ import shapely.geometry
 from bdc_catalog.models import (
     Band,
     Collection,
-    CollectionRole,
     CompositeFunction,
     GridRefSys,
     Item,
     ItemsProcessors,
-    Role,
     Tile,
     Timeline,
 )
@@ -141,10 +139,7 @@ def get_collection_items(
         Collection.id == Item.collection_id,
         Collection.is_available.is_(True),
         Item.is_available.is_(True),
-        or_(
-            CollectionRole.role_id.is_(None),
-            Role.name.in_(roles) if len(roles) > 0 else False,
-        ),
+        _add_roles_constraint(roles)
     ]
     geom_field = Item.footprint if BDC_STAC_USE_FOOTPRINT else Item.bbox
 
@@ -218,8 +213,6 @@ def get_collection_items(
     query = (
         session.query(*columns)
         .outerjoin(Tile, *outer)
-        .outerjoin(CollectionRole, CollectionRole.collection_id == Item.collection_id)
-        .outerjoin(Role, CollectionRole.role_id == Role.id)
         .filter(*where)
         .order_by(Item.start_date.desc())
     )
@@ -340,10 +333,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
 
     where = [
         Collection.is_available.is_(True),
-        or_(
-            CollectionRole.role_id.is_(None),
-            Role.name.in_(roles) if roles else False,
-        ),
+        _add_roles_constraint(roles)
     ]
 
     if collection_id:
@@ -353,8 +343,6 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
         session.query(*columns)
         .outerjoin(CompositeFunction, Collection.composite_function_id == CompositeFunction.id)
         .outerjoin(GridRefSys, Collection.grid_ref_sys_id == GridRefSys.id)
-        .outerjoin(CollectionRole, CollectionRole.collection_id == Collection.id)
-        .outerjoin(Role, Role.id == CollectionRole.role_id)
         .filter(*where)
     )
     result = q.all()
@@ -485,7 +473,7 @@ def get_catalog(roles=None):
     :rtype: list
     """
     if not roles:
-        roles = ["classification"]
+        roles = []
 
     q = (
         session.query(
@@ -493,14 +481,9 @@ def get_catalog(roles=None):
             func.concat(Collection.name, "-", Collection.version).label("name"),
             Collection.title,
         )
-        .outerjoin(CollectionRole, CollectionRole.collection_id == Collection.id)
-        .outerjoin(Role, CollectionRole.role_id == Role.id)
         .filter(
             Collection.is_available.is_(True),
-            or_(
-                CollectionRole.role_id.is_(None),
-                Role.name.in_(roles),
-            ),
+            _add_roles_constraint(roles)
         )
     )
     return q.all()
@@ -566,7 +549,7 @@ def make_geojson(items, assets_kwargs="", exclude=None):
             properties["eo:cloud_cover"] = i.cloud_cover
             bands = get_collection_eo(i.collection_id)
 
-        if hasattr(i, "assets"):
+        if i.assets:
             for key, value in i.assets.items():
                 value["href"] = urljoin(resolve_base_file_root_url(), value["href"] + assets_kwargs)
 
@@ -712,3 +695,30 @@ def resolve_base_file_root_url() -> str:
         Make sure you are inside flask app context.
     """
     return request.headers.get('X-Script-Name', BDC_STAC_FILE_ROOT)
+
+
+def _add_roles_constraint(roles: List[str]):
+    """Add SQLAlchemy roles constraint for db queries.
+
+    .. versionadded: 1.0
+
+    Expand the given roles and generate SQLAlchemy query condition
+    to restrict access for internal collections on BDC-Catalog.
+    A role may have the following signature:
+
+    - ``Name-Version``: Give access for specific collections: ``S2_L2A-1``, ``S2-16D-2``.
+    - ``*``: Give free access to the all collections in database.
+
+    For special treatment, use `*` to specify free access to the resources.
+
+    Args:
+        roles
+    """
+    where = []
+    if '*' not in roles:
+        where.append(Collection.identifier.in_(roles))
+
+    return or_(
+        Collection.is_public.is_(True),
+        *where
+    )
