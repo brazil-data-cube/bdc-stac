@@ -138,7 +138,6 @@ Running in Development Mode
             bdc-db db init
             bdc-db db create-namespaces
             bdc-db db create-extension-postgis
-            lccs-db db create-extension-hstore
             bdc-db db create-schema # For devmode
             # bdc-db alembic upgrade  # For prod (recommended)
 

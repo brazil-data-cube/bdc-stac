@@ -214,7 +214,7 @@ def get_collection_items(
         session.query(*columns)
         .outerjoin(Tile, *outer)
         .filter(*where)
-        .order_by(Item.start_date.desc())
+        .order_by(Item.start_date.desc(), Item.id)
     )
 
     result: Pagination = query.paginate(
@@ -716,7 +716,7 @@ def _add_roles_constraint(roles: List[str]):
     """
     where = []
     if '*' not in roles:
-        where.append(Collection.identifier.in_(roles))
+        where.append(Collection.identifier.in_(roles) if len(roles) > 0 else False)
 
     return or_(
         Collection.is_public.is_(True),
