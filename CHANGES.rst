@@ -21,6 +21,15 @@ Changes
 =======
 
 
+Version 1.0.1 (2022-12-06)
+--------------------------
+
+- Add integration with ``BDC-Catalog`` 1.0.1 which improves item retrieval using PostgreSQL combined indexes.
+- Add support of extension `storage <https://github.com/stac-extensions/storage>`_ `#177 <https://github.com/brazil-data-cube/bdc-stac/issues/177>`_.
+- Fix bug related ``platform`` and ``instruments`` for collections/items `#178 <https://github.com/brazil-data-cube/bdc-stac/issues/178>`_.
+- Review Dockerfile install dir and build arguments.
+
+
 Version 1.0.0 (2022-10-06)
 --------------------------
 

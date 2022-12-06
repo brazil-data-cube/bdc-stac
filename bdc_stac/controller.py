@@ -410,11 +410,6 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
             collection["properties"].update(collection_eo)
 
         if r.Collection.metadata_:
-            if "platform" in r.Collection.metadata_:
-                collection["properties"]["instruments"] = r.Collection.metadata_["platform"]["instruments"]
-                collection["properties"]["platform"] = r.Collection.metadata_["platform"]["code"]
-
-                r.Collection.metadata_.pop("platform")  # platform info is displayed on properties
             collection["bdc:metadata"] = r.Collection.metadata_
 
         if r.Collection.collection_type == "cube":
@@ -526,6 +521,8 @@ def make_geojson(items, assets_kwargs="", exclude=None):
         # Processors
         processors = get_item_processors(i.id)
 
+        _item_url_resolver = _resolve_item_file_root(i)
+
         bbox = list()
         if i.bbox:
             bbox = to_shape(i.bbox).bounds
@@ -551,7 +548,7 @@ def make_geojson(items, assets_kwargs="", exclude=None):
 
         if i.assets:
             for key, value in i.assets.items():
-                value["href"] = urljoin(resolve_base_file_root_url(), value["href"] + assets_kwargs)
+                value["href"] = urljoin(_item_url_resolver(), value["href"] + assets_kwargs)
 
                 if i.category == "eo":
                     for band in bands["eo:bands"]:
@@ -560,6 +557,8 @@ def make_geojson(items, assets_kwargs="", exclude=None):
             feature["assets"] = i.assets
 
         feature["properties"] = properties
+        if feature['properties'].get('storage:platform'):
+            feature['stac_extensions'].append('storage')
 
         for key in exclude:
             feature.pop(key, None)
@@ -695,6 +694,19 @@ def resolve_base_file_root_url() -> str:
         Make sure you are inside flask app context.
     """
     return request.headers.get('X-Script-Name', BDC_STAC_FILE_ROOT)
+
+
+def _resolve_item_file_root(ctx):
+    _fn = resolve_base_file_root_url
+
+    if ctx.item_meta is not None:
+        for prop in ctx.item_meta.keys():
+            if prop.startswith('storage:'):
+                # Return Empty string since the asset[href] must be absolute
+                # s3://<bucket>/.../file.tif
+                _fn = lambda: ''
+                break
+    return _fn
 
 
 def _add_roles_constraint(roles: List[str]):

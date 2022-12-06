@@ -153,7 +153,9 @@ def index(roles=None, **kwargs):
         "links": links,
         "conformsTo": [
             "https://api.stacspec.org/v1.0.0-beta.1/core",
-            "https://api.stacspec.org/v1.0.0-beta.1/item-search",
+            "https://api.stacspec.org/v1.0.0-rc.1/collections/",
+            "https://api.stacspec.org/v1.0.0-rc.1/item-search",
+            "https://api.stacspec.org/v1.0.0-rc.1/item-search/#fields",
             "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
             "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
             "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
@@ -207,6 +209,7 @@ def collection_items(collection_id, roles=None, **kwargs):
     """Retrieve features of the given feature collection.
 
     :param collection_id: identifier (name) of a specific collection
+    :param roles: List of roles from context user
     """
     _, exclude = parse_fields_parameter(request.args.get("fields"))
     options = request.args.to_dict()
@@ -256,6 +259,7 @@ def items_id(collection_id, item_id, roles=None, **kwargs):
 
     :param collection_id: identifier (name) of a specific collection
     :param item_id: identifier (name) of a specific item
+    :param roles: List of roles from context user
     """
     item = get_collection_items(collection_id=collection_id, roles=roles, item_id=item_id)
 
@@ -292,10 +296,7 @@ def stac_search_post(roles=None, **kwargs):
         "features": features,
     }
     if items.has_next:
-        next_links = {
-            "href": f"{config.BDC_STAC_BASE_URL}/search{assets_kwargs}",
-            "rel": "next",
-        }
+        next_links = dict(href=f"{config.BDC_STAC_BASE_URL}/search{assets_kwargs}", rel="next")
 
         next_links["body"] = request.json.copy()
         next_links["body"]["page"] = items.next_num
@@ -303,10 +304,7 @@ def stac_search_post(roles=None, **kwargs):
         next_links["merge"] = True
 
     if items.has_prev:
-        prev_links = {
-            "href": f"{config.BDC_STAC_BASE_URL}/search{assets_kwargs}",
-            "rel": "prev",
-        }
+        prev_links = dict(href=f"{config.BDC_STAC_BASE_URL}/search{assets_kwargs}", rel="prev")
 
         prev_links["body"] = request.json.copy()
         prev_links["body"]["page"] = items.prev_num

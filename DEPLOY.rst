@@ -38,25 +38,32 @@ Before prepare database instance, just take a look in support compatibility tabl
 +---------------------------+-----------+-------------+
 | 0.9.0 - 1.0.0-rc.1        | 0.9.x     | 0.8.x       |
 +---------------------------+-----------+-------------+
-| 1.0.0-beta.1 - 1.0.0-rc.1 | 1.0.x     | 1.0.x       |
+| 1.0.0-beta.1 - 1.0.0-rc.1 | 1.0.0     | 1.0.0       |
++---------------------------+-----------+-------------+
+| 1.0.0-beta.1 - 1.0.0-rc.1 | 1.0.1     | 1.0.1       |
 +---------------------------+-----------+-------------+
 
 
 Building the Docker Image
 -------------------------
 
+.. note::
+
+    We strongly recommend you to pass the argument ``GIT_COMMIT`` while building Dockerimage
+    for ``BDC-STAC``. You can achieve this using the following entry ``--build-arg GIT_COMMIT=$(git rev-parse HEAD)``
+
 
 On the command line use the ``docker build`` command to create the docker image for the service::
 
-    docker build --no-cache -t bdc-stac:1.0.0 .
+    docker build --no-cache -t bdc-stac:1.0.1 --build-arg GIT_COMMIT=$(git rev-parse HEAD) .
 
 
-The above command will create a Docker image named ``bdc-stac`` and tag ``1.0.0`, as one can see with the ``docker images`` command::
+The above command will create a Docker image named ``bdc-stac`` and tag ``1.0.1`, as one can see with the ``docker images`` command::
 
     docker images
 
     REPOSITORY                                          TAG                 IMAGE ID            CREATED             SIZE
-    bdc-stac                                            1.0.0             44651ac917e4        16 hours ago        333MB
+    bdc-stac                                            1.0.1             44651ac917e4        16 hours ago        333MB
 
 
 Preparing the Network for Containers
@@ -98,7 +105,7 @@ The ``docker run`` command can be used to launch a container from the image ``bd
                --env SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdc_catalog" \
                --env BDC_STAC_BASE_URL="http://localhost:8080" \
                --env BDC_STAC_FILE_ROOT="http://localhost:8081" \
-               bdc-stac:1.0.0
+               bdc-stac:1.0.1
 
 
 Let's take a look at each parameter in the above command:
@@ -117,7 +124,7 @@ Let's take a look at each parameter in the above command:
 
     - ``--env BDC_STAC_FILE_ROOT="http://localhost:8081"``: File root for the image ``assets``.
 
-    - ``bdc-stac:1.0.0``: the name of the base Docker image used to create the container.
+    - ``bdc-stac:1.0.1``: the name of the base Docker image used to create the container.
 
 
 If you have launched the container, you can check if the service has initialized::

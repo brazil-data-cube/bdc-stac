@@ -55,6 +55,8 @@ Service Configuration
 
     The prefix for image ``assets``. Defaults to ``'http://localhost:5001'``.
 
+    This value is ignored if ``X-Script-Name`` is present in ``request.headers``.
+
 
 .. data:: BDC_STAC_MAX_LIMIT
 
@@ -80,3 +82,4 @@ Service Configuration
 .. data:: BDC_STAC_USE_FOOTPRINT
 
     Flag to set if Item intersection should use ``Item.footprint``. Defaults to ``0``, which means to use ``Item.bbox``.
+
