@@ -59,7 +59,7 @@ db = SQLAlchemy()
 
 session = db.create_scoped_session({"autocommit": True})
 
-DATETIME_RFC339 = "%Y-%m-%dT%H:%M:%SZ"
+DATETIME_RFC339 = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 def get_collection_items(
