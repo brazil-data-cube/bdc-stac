@@ -15,23 +15,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
 #
-
-FROM python:3.7-slim-buster
+ARG GIT_COMMIT
+ARG BASE_IMAGE=python:3.8-slim-buster
+FROM ${BASE_IMAGE}
 
 # Image metadata
 LABEL "org.repo.maintainer"="Brazil Data Cube <brazildatacube@inpe.br>"
 LABEL "org.repo.title"="Docker image for STAC Server"
 LABEL "org.repo.description"="Docker image for SpatioTemporal Asset Catalog (STAC) Server for Brazil Data Cube."
+LABEL "org.repo.git_commit"="${GIT_COMMIT}"
+
+# Build arguments
+ARG BDC_STAC_VERSION="1.0.1"
+ARG BDC_STAC_INSTALL_PATH="/opt/bdc-stac/${BDC_STAC_VERSION}"
 
 RUN apt-get update -y \
     && apt-get install -y libpq-dev git \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /bdc_stac
+COPY . ${BDC_STAC_INSTALL_PATH}
+WORKDIR ${BDC_STAC_INSTALL_PATH}
 
-WORKDIR /bdc_stac
-
-COPY . .
 RUN pip install -e .
 RUN pip install gunicorn
 

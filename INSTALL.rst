@@ -53,7 +53,9 @@ Before installing the ``BDC-STAC`` server, please, take a look into compatibilit
 +---------------------------+-----------+-------------+
 | 0.9.0        - 1.0.0-rc.1 | 0.9.x     | 0.8.x       |
 +---------------------------+-----------+-------------+
-| 1.0.0-beta.1 - 1.0.0-rc.1 | 1.0.x     | 1.0.x       |
+| 1.0.0-beta.1 - 1.0.0-rc.1 | 1.0.0     | 1.0.0       |
++---------------------------+-----------+-------------+
+| 1.0.0                     | 1.0.1     | 1.0.1       |
 +---------------------------+-----------+-------------+
 
 
@@ -138,7 +140,6 @@ Running in Development Mode
             bdc-db db init
             bdc-db db create-namespaces
             bdc-db db create-extension-postgis
-            lccs-db db create-extension-hstore
             bdc-db db create-schema # For devmode
             # bdc-db alembic upgrade  # For prod (recommended)
 

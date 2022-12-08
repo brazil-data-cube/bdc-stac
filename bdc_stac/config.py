@@ -46,7 +46,7 @@ You may set the following environment variables to customize pooling:
 - ``SQLALCHEMY_ENGINE_POOL_RECYCLE``: Define the given number of seconds to recycle pool. Defaults to ``-1``, or no timeout.
 """
 
-BDC_STAC_API_VERSION = os.getenv("BDC_STAC_API_VERSION", "1.0.0-rc.1")
+BDC_STAC_API_VERSION = os.getenv("BDC_STAC_API_VERSION", "1.0.0")
 BDC_STAC_BASE_URL = os.getenv("BDC_STAC_BASE_URL", "http://localhost:5000")
 BDC_STAC_FILE_ROOT = os.getenv("BDC_STAC_FILE_ROOT", "http://localhost:5001")
 BDC_STAC_MAX_LIMIT = int(os.getenv("BDC_STAC_MAX_LIMIT", "1000"))
@@ -56,8 +56,24 @@ BDC_STAC_ASSETS_ARGS = os.getenv("BDC_STAC_ASSETS_ARGS", "access_token")
 BDC_AUTH_CLIENT_SECRET = os.getenv("BDC_AUTH_CLIENT_SECRET", None)
 BDC_AUTH_CLIENT_ID = os.getenv("BDC_AUTH_CLIENT_ID", None)
 BDC_AUTH_ACCESS_TOKEN_URL = os.getenv("BDC_AUTH_ACCESS_TOKEN_URL", None)
-BDC_STAC_USE_FOOTPRINT = strtobool(os.getenv('BDC_STAC_USE_FOOTPRINT', '0'))
+BDC_STAC_USE_FOOTPRINT = strtobool(os.getenv("BDC_STAC_USE_FOOTPRINT", "0"))
 """Flag to set if Item intersection should use ``Item.footprint``.
 Defaults to ``0``, which means to use ``Item.bbox``."""
 
 STAC_GEO_MEDIA_TYPE = "application/geo+json"
+
+STAC_EXTENSION_MAP = {
+    "eo": f"https://stac-extensions.github.io/eo/v{BDC_STAC_API_VERSION}/schema.json",
+    "storage": f"https://stac-extensions.github.io/eo/v{BDC_STAC_API_VERSION}/schema.json",
+    "datacube": f"https://stac-extensions.github.io/datacube/v{BDC_STAC_API_VERSION}/schema.json",
+    "processing": f"https://stac-extensions.github.io/processing/v{BDC_STAC_API_VERSION}/schema.json",
+    "sar": f"https://stac-extensions.github.io/sar/v{BDC_STAC_API_VERSION}/schema.json",
+    "item-assets": f"https://stac-extensions.github.io/item-assets/v{BDC_STAC_API_VERSION}/schema.json",
+    "version": f"https://stac-extensions.github.io/version/v{BDC_STAC_API_VERSION}/schema.json",
+}
+
+
+def get_stac_extensions(*args):
+    """Retrieve a list of STAC Extension URL."""
+    out = [STAC_EXTENSION_MAP.get(ext) for ext in args]
+    return out

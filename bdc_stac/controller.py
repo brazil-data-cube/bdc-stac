@@ -33,25 +33,20 @@ from typing import List, Optional
 from urllib.parse import urljoin
 
 import shapely.geometry
-from bdc_catalog.models import (
-    Band,
-    Collection,
-    CollectionRole,
-    CompositeFunction,
-    GridRefSys,
-    Item,
-    ItemsProcessors,
-    Role,
-    Tile,
-    Timeline,
-)
+from bdc_catalog.models import Band, Collection, CompositeFunction, GridRefSys, Item, ItemsProcessors, Tile, Timeline
 from flask import abort, current_app, request
 from flask_sqlalchemy import Pagination, SQLAlchemy
 from geoalchemy2.shape import to_shape
 from sqlalchemy import Float, and_, cast, exc, func, or_
 
-from .config import (BDC_STAC_API_VERSION, BDC_STAC_BASE_URL, BDC_STAC_FILE_ROOT, BDC_STAC_MAX_LIMIT,
-                     BDC_STAC_USE_FOOTPRINT)
+from .config import (
+    BDC_STAC_API_VERSION,
+    BDC_STAC_BASE_URL,
+    BDC_STAC_FILE_ROOT,
+    BDC_STAC_MAX_LIMIT,
+    BDC_STAC_USE_FOOTPRINT,
+    get_stac_extensions,
+)
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=exc.SAWarning)
@@ -61,7 +56,7 @@ db = SQLAlchemy()
 
 session = db.create_scoped_session({"autocommit": True})
 
-DATETIME_RFC339 = "%Y-%m-%dT%H:%M:%SZ"
+DATETIME_RFC339 = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 def get_collection_items(
@@ -141,10 +136,7 @@ def get_collection_items(
         Collection.id == Item.collection_id,
         Collection.is_available.is_(True),
         Item.is_available.is_(True),
-        or_(
-            CollectionRole.role_id.is_(None),
-            Role.name.in_(roles) if len(roles) > 0 else False,
-        ),
+        _add_roles_constraint(roles),
     ]
     geom_field = Item.footprint if BDC_STAC_USE_FOOTPRINT else Item.bbox
 
@@ -215,14 +207,7 @@ def get_collection_items(
                 date_filter = [and_(Item.start_date <= datetime, Item.end_date >= datetime)]
             where += date_filter
     outer = [Item.tile_id == Tile.id]
-    query = (
-        session.query(*columns)
-        .outerjoin(Tile, *outer)
-        .outerjoin(CollectionRole, CollectionRole.collection_id == Item.collection_id)
-        .outerjoin(Role, CollectionRole.role_id == Role.id)
-        .filter(*where)
-        .order_by(Item.start_date.desc())
-    )
+    query = session.query(*columns).outerjoin(Tile, *outer).filter(*where).order_by(Item.start_date.desc(), Item.id)
 
     result: Pagination = query.paginate(
         page=int(page), per_page=int(limit), error_out=False, max_per_page=BDC_STAC_MAX_LIMIT
@@ -286,7 +271,7 @@ def get_collection_crs(collection: Collection) -> str:
 
 
 def format_timeline(timeline: Optional[List[Timeline]] = None):
-    """Format the collection timeline values with Dateformat
+    """Format the collection timeline values with Dateformat.
 
     :param timeline: The collection timeline instance
     :type timeline: Optional[List[Timeline]]
@@ -338,13 +323,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
     if roles is None:
         roles = []
 
-    where = [
-        Collection.is_available.is_(True),
-        or_(
-            CollectionRole.role_id.is_(None),
-            Role.name.in_(roles) if roles else False,
-        ),
-    ]
+    where = [Collection.is_available.is_(True), _add_roles_constraint(roles)]
 
     if collection_id:
         where.append(func.concat(Collection.name, "-", Collection.version) == collection_id)
@@ -353,14 +332,12 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
         session.query(*columns)
         .outerjoin(CompositeFunction, Collection.composite_function_id == CompositeFunction.id)
         .outerjoin(GridRefSys, Collection.grid_ref_sys_id == GridRefSys.id)
-        .outerjoin(CollectionRole, CollectionRole.collection_id == Collection.id)
-        .outerjoin(Role, Role.id == CollectionRole.role_id)
         .filter(*where)
     )
     result = q.all()
 
     collections = list()
-    default_stac_extensions = ["bdc", "version", "processing", "item-assets"]
+    default_stac_extensions = get_stac_extensions("version", "processing", "item-assets")
 
     for r in result:
         category = r.Collection.category
@@ -377,7 +354,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
         collection = {
             "id": r.Collection.identifier,
             "stac_version": BDC_STAC_API_VERSION,
-            "stac_extensions": default_stac_extensions + collection_extensions,
+            "stac_extensions": default_stac_extensions + get_stac_extensions(*collection_extensions),
             "title": r.Collection.title,
             "version": r.Collection.version,
             "deprecated": False,  # TODO: Use CollectionSRC to detect collection deprecation
@@ -395,8 +372,8 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
         if r.Collection.composite_function:
             collection["bdc:composite_function"] = r.composite_function
 
-        collection["license"] = collection['properties'].pop('license', '')
-        extra_links = collection['properties'].pop('links', [])
+        collection["license"] = collection["properties"].pop("license", "")
+        extra_links = collection["properties"].pop("links", [])
 
         bbox = to_shape(r.Collection.spatial_extent).bounds if r.Collection.spatial_extent else [None] * 4
 
@@ -422,11 +399,6 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
             collection["properties"].update(collection_eo)
 
         if r.Collection.metadata_:
-            if "platform" in r.Collection.metadata_:
-                collection["properties"]["instruments"] = r.Collection.metadata_["platform"]["instruments"]
-                collection["properties"]["platform"] = r.Collection.metadata_["platform"]["code"]
-
-                r.Collection.metadata_.pop("platform")  # platform info is displayed on properties
             collection["bdc:metadata"] = r.Collection.metadata_
 
         if r.Collection.collection_type == "cube":
@@ -470,7 +442,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
                 "title": "API landing page (root catalog)",
             },
             # Add extra links like license etc.
-            *extra_links
+            *extra_links,
         ]
 
         collections.append(collection)
@@ -485,24 +457,13 @@ def get_catalog(roles=None):
     :rtype: list
     """
     if not roles:
-        roles = ["classification"]
+        roles = []
 
-    q = (
-        session.query(
-            Collection.id,
-            func.concat(Collection.name, "-", Collection.version).label("name"),
-            Collection.title,
-        )
-        .outerjoin(CollectionRole, CollectionRole.collection_id == Collection.id)
-        .outerjoin(Role, CollectionRole.role_id == Role.id)
-        .filter(
-            Collection.is_available.is_(True),
-            or_(
-                CollectionRole.role_id.is_(None),
-                Role.name.in_(roles),
-            ),
-        )
-    )
+    q = session.query(
+        Collection.id,
+        func.concat(Collection.name, "-", Collection.version).label("name"),
+        Collection.title,
+    ).filter(Collection.is_available.is_(True), _add_roles_constraint(roles))
     return q.all()
 
 
@@ -527,7 +488,7 @@ def make_geojson(items, assets_kwargs="", exclude=None):
             "id": i.item,
             "collection": i.collection,
             "stac_version": BDC_STAC_API_VERSION,
-            "stac_extensions": ["bdc", "checksum", i.category],
+            "stac_extensions": get_stac_extensions(i.category),
             "geometry": geom,
             "links": [
                 {
@@ -542,6 +503,10 @@ def make_geojson(items, assets_kwargs="", exclude=None):
 
         # Processors
         processors = get_item_processors(i.id)
+        if processors:
+            feature["stac_extensions"].extend(get_stac_extensions("processing"))
+
+        _item_url_resolver = _resolve_item_file_root(i)
 
         bbox = list()
         if i.bbox:
@@ -566,9 +531,9 @@ def make_geojson(items, assets_kwargs="", exclude=None):
             properties["eo:cloud_cover"] = i.cloud_cover
             bands = get_collection_eo(i.collection_id)
 
-        if hasattr(i, "assets"):
+        if i.assets:
             for key, value in i.assets.items():
-                value["href"] = urljoin(resolve_base_file_root_url(), value["href"] + assets_kwargs)
+                value["href"] = urljoin(_item_url_resolver(), value["href"] + assets_kwargs)
 
                 if i.category == "eo":
                     for band in bands["eo:bands"]:
@@ -577,6 +542,8 @@ def make_geojson(items, assets_kwargs="", exclude=None):
             feature["assets"] = i.assets
 
         feature["properties"] = properties
+        if feature["properties"].get("storage:platform"):
+            feature["stac_extensions"].extend(get_stac_extensions("storage"))
 
         for key in exclude:
             feature.pop(key, None)
@@ -618,9 +585,9 @@ def create_query_filter(query):
 
     Example:
         >>> # Create a statement to filter items which has the cloud cover less than 50 percent.
-        >>> create_query_filter({"eo:cloud_cover": {"lte": 50}})
+        >>> create_query_filter({"eo:cloud_cover": {"lte": 50}})  # doctest: +SKIP
         >>> # Create a statement to filter items which has the tile MGRS 23LLG
-        >>> create_query_filter({"bdc:tile": {"eq": "23LLG"}})
+        >>> create_query_filter({"bdc:tile": {"eq": "23LLG"}})  # doctest: +SKIP
 
     .. note::
 
@@ -711,4 +678,41 @@ def resolve_base_file_root_url() -> str:
         This method uses ``flask.request`` object to check for X-Script-Name in header.
         Make sure you are inside flask app context.
     """
-    return request.headers.get('X-Script-Name', BDC_STAC_FILE_ROOT)
+    return request.headers.get("X-Script-Name", BDC_STAC_FILE_ROOT)
+
+
+def _resolve_item_file_root(ctx):
+    _fn = resolve_base_file_root_url
+
+    if ctx.item_meta is not None:
+        for prop in ctx.item_meta.keys():
+            if prop.startswith("storage:"):
+                # Return Empty string since the asset[href] must be absolute
+                # s3://<bucket>/.../file.tif
+                _fn = lambda: ""
+                break
+    return _fn
+
+
+def _add_roles_constraint(roles: List[str]):
+    """Add SQLAlchemy roles constraint for db queries.
+
+    .. versionadded: 1.0
+
+    Expand the given roles and generate SQLAlchemy query condition
+    to restrict access for internal collections on BDC-Catalog.
+    A role may have the following signature:
+
+    - ``Name-Version``: Give access for specific collections: ``S2_L2A-1``, ``S2-16D-2``.
+    - ``*``: Give free access to the all collections in database.
+
+    For special treatment, use `*` to specify free access to the resources.
+
+    Args:
+        roles
+    """
+    where = []
+    if "*" not in roles:
+        where.append(Collection.identifier.in_(roles) if len(roles) > 0 else False)
+
+    return or_(Collection.is_public.is_(True), *where)
