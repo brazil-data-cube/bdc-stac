@@ -366,6 +366,8 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
             "properties": r.Collection.properties or {},
             "bdc:type": r.Collection.collection_type,
         }
+        collection['properties']['created'] = r.Collection.created.strftime(DATETIME_RFC339)
+        collection['properties']['updated'] = r.Collection.updated.strftime(DATETIME_RFC339)
 
         if r.Collection.grs:
             collection["bdc:grs"] = r.Collection.grs.name
