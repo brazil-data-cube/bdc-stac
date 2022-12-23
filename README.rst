@@ -26,11 +26,6 @@ SpatioTemporal Asset Catalog for Brazil Data Cube
         :alt: Software License
 
 
-.. image:: https://coveralls.io/repos/github/brazil-data-cube/bdc-stac/badge.svg?branch=master
-        :target: https://coveralls.io/github/brazil-data-cube/bdc-stac?branch=master
-        :alt: Code Coverage Test
-
-
 .. image:: https://readthedocs.org/projects/bdc-stac/badge/?version=latest
         :target: https://bdc-stac.readthedocs.io/en/latest
         :alt: Documentation Status

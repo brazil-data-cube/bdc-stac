@@ -58,7 +58,7 @@ On the command line use the ``docker build`` command to create the docker image 
     docker build --no-cache -t bdc-stac:1.0.1 --build-arg GIT_COMMIT=$(git rev-parse HEAD) .
 
 
-The above command will create a Docker image named ``bdc-stac`` and tag ``1.0.1`, as one can see with the ``docker images`` command::
+The above command will create a Docker image named ``bdc-stac`` and tag ``1.0.1``, as one can see with the ``docker images`` command::
 
     docker images
 
