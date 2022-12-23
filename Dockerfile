@@ -24,6 +24,7 @@ LABEL "org.repo.maintainer"="Brazil Data Cube <brazildatacube@inpe.br>"
 LABEL "org.repo.title"="Docker image for STAC Server"
 LABEL "org.repo.description"="Docker image for SpatioTemporal Asset Catalog (STAC) Server for Brazil Data Cube."
 LABEL "org.repo.git_commit"="${GIT_COMMIT}"
+LABEL "org.repo.licenses"="GPLv3"
 
 # Build arguments
 ARG BDC_STAC_VERSION="1.0.1"
