@@ -353,6 +353,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
 
         collection = {
             "id": r.Collection.identifier,
+            "type": "Collection",
             "stac_version": BDC_STAC_API_VERSION,
             "stac_extensions": default_stac_extensions + get_stac_extensions(*collection_extensions),
             "title": r.Collection.title,
