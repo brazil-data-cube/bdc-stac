@@ -282,8 +282,10 @@ def stac_search_post(roles=None, **kwargs):
     if not request.is_json:
         abort(400, "POST Request must be an application/json")
 
-    _, exclude = parse_fields_parameter(request.args.get("fields"))
+    args = request.args.to_dict()
+    _, exclude = parse_fields_parameter(args.get("fields"))
     options = request.json
+    options.update(args)
     options["exclude"] = exclude
     items = get_collection_items(**options, roles=roles)
     features = make_geojson(items.items, exclude=exclude, assets_kwargs=request.assets_kwargs)
