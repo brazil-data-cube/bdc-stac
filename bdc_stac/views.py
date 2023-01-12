@@ -277,14 +277,14 @@ def items_id(collection_id, item_id, roles=None, **kwargs):
 @oauth2(required=False)
 def stac_search_post(roles=None, **kwargs):
     """Search STAC items with simple filtering."""
-    assets_kwargs = None
-
     if not request.is_json:
         abort(400, "POST Request must be an application/json")
 
     args = request.args.to_dict()
     _, exclude = parse_fields_parameter(args.get("fields"))
     options = request.json
+    if args.get('limit'):
+        args['limit'] = int(args['limit'])
     options.update(args)
     options["exclude"] = exclude
     items = get_collection_items(**options, roles=roles)
@@ -300,15 +300,16 @@ def stac_search_post(roles=None, **kwargs):
         "features": features,
     }
     if items.has_next:
-        next_links = dict(href=f"{config.BDC_STAC_BASE_URL}/search{assets_kwargs}", rel="next")
+        next_links = dict(href=f"{config.BDC_STAC_BASE_URL}/search{request.assets_kwargs}", rel="next")
 
         next_links["body"] = request.json.copy()
         next_links["body"]["page"] = items.next_num
         next_links["method"] = "POST"
         next_links["merge"] = True
+        response["links"].append(next_links)
 
     if items.has_prev:
-        prev_links = dict(href=f"{config.BDC_STAC_BASE_URL}/search{assets_kwargs}", rel="prev")
+        prev_links = dict(href=f"{config.BDC_STAC_BASE_URL}/search{request.assets_kwargs}", rel="prev")
 
         prev_links["body"] = request.json.copy()
         prev_links["body"]["page"] = items.prev_num

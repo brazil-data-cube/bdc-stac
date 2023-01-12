@@ -617,6 +617,7 @@ def create_query_filter(query):
 
     bdc_properties = {
         "bdc:tile": Tile.name,
+        "bdc:tiles": Tile.name,  # Legacy: for compatibility
         "eo:cloud_cover": Item.cloud_cover,
     }
 
