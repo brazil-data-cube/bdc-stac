@@ -283,8 +283,10 @@ def stac_search_post(roles=None, **kwargs):
     args = request.args.to_dict()
     _, exclude = parse_fields_parameter(args.get("fields"))
     options = request.json
-    if args.get('limit'):
-        args['limit'] = int(args['limit'])
+    for key in ['limit', 'page']:
+        if args.get(key):
+            args[key] = int(args[key])
+
     options.update(args)
     options["exclude"] = exclude
     items = get_collection_items(**options, roles=roles)
