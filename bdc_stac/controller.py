@@ -262,12 +262,20 @@ def get_collection_eo(collection_id):
 def get_collection_crs(collection: Collection) -> str:
     """Retrieve the CRS for a given collection.
 
+    By default, this method uses the grid reference system to retrieve collection crs.
+    When no grid is set, tries to seek for property ``bdc:crs`` in Collection.properties.
+
     :param collection: The BDC Collection object
     :type collection: Collection
     :return: CRS for the collection
     :rtype: str
     """
-    return collection.grs.crs if collection.grs is not None else None
+    crs = None
+    if collection.grs is not None:
+        crs = collection.grs.crs
+    elif collection.properties is not None:
+        crs = collection.properties.get('bdc:crs')
+    return crs
 
 
 def format_timeline(timeline: Optional[List[Timeline]] = None):
