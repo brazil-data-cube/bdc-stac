@@ -285,7 +285,7 @@ def stac_search_post(roles=None, **kwargs):
     args = request.args.to_dict()
     _, exclude = parse_fields_parameter(args.get("fields"))
     options = request.json
-    for key in ['limit', 'page']:
+    for key in ["limit", "page"]:
         if args.get(key):
             args[key] = int(args[key])
 

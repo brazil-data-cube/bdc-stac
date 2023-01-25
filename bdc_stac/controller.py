@@ -274,7 +274,7 @@ def get_collection_crs(collection: Collection) -> str:
     if collection.grs is not None:
         crs = collection.grs.crs
     elif collection.properties is not None:
-        crs = collection.properties.get('bdc:crs')
+        crs = collection.properties.get("bdc:crs")
     return crs
 
 
@@ -375,8 +375,8 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
             "properties": r.Collection.properties or {},
             "bdc:type": r.Collection.collection_type,
         }
-        collection['properties']['created'] = r.Collection.created.strftime(DATETIME_RFC339)
-        collection['properties']['updated'] = r.Collection.updated.strftime(DATETIME_RFC339)
+        collection["properties"]["created"] = r.Collection.created.strftime(DATETIME_RFC339)
+        collection["properties"]["updated"] = r.Collection.updated.strftime(DATETIME_RFC339)
 
         if r.Collection.grs:
             collection["bdc:grs"] = r.Collection.grs.name
@@ -700,7 +700,7 @@ def resolve_stac_url() -> str:
         This method uses ``flask.request`` object to check for X-Stac-Url in header.
         Make sure you are inside flask app context.
     """
-    return request.headers.get("X-Stac-Url", BDC_STAC_BASE_URL).rstrip('/')
+    return request.headers.get("X-Stac-Url", BDC_STAC_BASE_URL).rstrip("/")
 
 
 def _resolve_item_file_root(ctx):
