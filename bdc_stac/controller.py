@@ -429,25 +429,25 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
 
         collection["links"] = [
             {
-                "href": f"{BDC_STAC_BASE_URL}/collections/{r.Collection.identifier}{assets_kwargs}",
+                "href": f"{resolve_stac_url()}/collections/{r.Collection.identifier}{assets_kwargs}",
                 "rel": "self",
                 "type": "application/json",
                 "title": "Link to this document",
             },
             {
-                "href": f"{BDC_STAC_BASE_URL}/collections/{r.Collection.identifier}/items{assets_kwargs}",
+                "href": f"{resolve_stac_url()}/collections/{r.Collection.identifier}/items{assets_kwargs}",
                 "rel": "items",
                 "type": "application/json",
                 "title": f"Items of the collection {r.Collection.identifier}",
             },
             {
-                "href": f"{BDC_STAC_BASE_URL}/collections{assets_kwargs}",
+                "href": f"{resolve_stac_url()}/collections{assets_kwargs}",
                 "rel": "parent",
                 "type": "application/json",
                 "title": "Link to catalog collections",
             },
             {
-                "href": f"{BDC_STAC_BASE_URL}/{assets_kwargs}",
+                "href": f"{resolve_stac_url()}/{assets_kwargs}",
                 "rel": "root",
                 "type": "application/json",
                 "title": "API landing page (root catalog)",
@@ -503,12 +503,12 @@ def make_geojson(items, assets_kwargs="", exclude=None):
             "geometry": geom,
             "links": [
                 {
-                    "href": f"{BDC_STAC_BASE_URL}/collections/{i.collection}/items/{i.item}{assets_kwargs}",
+                    "href": f"{resolve_stac_url()}/collections/{i.collection}/items/{i.item}{assets_kwargs}",
                     "rel": "self",
                 },
-                {"href": f"{BDC_STAC_BASE_URL}/collections/{i.collection}{assets_kwargs}", "rel": "parent"},
-                {"href": f"{BDC_STAC_BASE_URL}/collections/{i.collection}{assets_kwargs}", "rel": "collection"},
-                {"href": f"{BDC_STAC_BASE_URL}/", "rel": "root"},
+                {"href": f"{resolve_stac_url()}/collections/{i.collection}{assets_kwargs}", "rel": "parent"},
+                {"href": f"{resolve_stac_url()}/collections/{i.collection}{assets_kwargs}", "rel": "collection"},
+                {"href": f"{resolve_stac_url()}/", "rel": "root"},
             ],
         }
 
@@ -691,6 +691,16 @@ def resolve_base_file_root_url() -> str:
         Make sure you are inside flask app context.
     """
     return request.headers.get("X-Script-Name", BDC_STAC_FILE_ROOT)
+
+
+def resolve_stac_url() -> str:
+    """Retrieve base URL used as STAC BASE URL ROOT for items from HTTP header.
+
+    Note:
+        This method uses ``flask.request`` object to check for X-Stac-Url in header.
+        Make sure you are inside flask app context.
+    """
+    return request.headers.get("X-Stac-Url", BDC_STAC_BASE_URL).rstrip('/')
 
 
 def _resolve_item_file_root(ctx):
