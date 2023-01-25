@@ -157,6 +157,7 @@ def index(roles=None, **kwargs):
             "https://api.stacspec.org/v1.0.0-rc.1/item-search",
             "https://api.stacspec.org/v1.0.0-rc.1/item-search#fields",
             "https://api.stacspec.org/v1.0.0-rc.1/item-search#query",
+            "https://api.stacspec.org/v1.0.0-rc.1/item-search#filter",
             "https://api.stacspec.org/v1.0.0-rc.1/ogcapi-features/"
             "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
             "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
