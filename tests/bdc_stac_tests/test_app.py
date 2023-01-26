@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
 #
+import gzip
+import json
 import os
 
 import pytest
@@ -68,10 +70,13 @@ class TestBDCStac:
 
         data = response.get_json()
 
+        assert data["type"] == "Collection"
         assert data["id"] == "CB4_64_16D_STK-1"
         assert data["stac_version"] == config.BDC_STAC_API_VERSION
         assert data["bdc:grs"] == "BDC_LG"
-        assert "eo" in data["stac_extensions"]
+
+        eo_uri = config.get_stac_extensions("eo")[0]
+        assert eo_uri in data["stac_extensions"]
 
     def test_collection_items(self, client):
         response = client.get("/collections/CB4_64_16D_STK-1/items?limit=20")
@@ -176,3 +181,42 @@ class TestBDCStac:
 
         assert response.status_code == 400
         assert response.get_json()["description"] == "[-180, -90, 180, 'a'] is not a valid bbox."
+
+    def test_compression_gzip_requests(self, client):
+        parameters = {"collections": ["S2-16D-2"]}
+        headers = {"Accept-Encoding": "gzip"}
+        response = client.post("/search", content_type="application/json", json=parameters, headers=headers)
+        assert response.status_code == 200
+        assert response.content_encoding == "gzip"
+
+        decompressed = gzip.decompress(response.data)
+        data = json.loads(decompressed)
+        assert data.get("type") == "FeatureCollection"
+        assert data.get("features")
+
+    def test_item_search_fields(self, client):
+        parameters = {
+            "collections": ["S2-16D-2"],
+            "page": 2,
+            "datetime": "2021-01-01T00:00:00Z/2021-12-31T23:59:00Z",
+            "query": {"bdc:tile": {"eq": "020020"}},
+        }
+        qstring = {"fields": "-properties,+assets"}
+        response = client.post("/search", content_type="application/json", json=parameters, query_string=qstring)
+        assert response.status_code == 200
+        features = response.json["features"]
+        assert len(features) > 0
+        for feature in features:
+            assert "properties" not in feature
+
+    def test_search_pagination_get(self, client):
+        parameters = {"collections": ["S2-16D-2"], "page": 2}
+        response = client.get("/search", content_type="application/json", query_string=parameters)
+        assert response.status_code == 200
+        data = response.json
+        assert data["context"]["returned"] > 0
+        for link in data["links"]:
+            if link["rel"] == "next":
+                assert "page=3" in link["href"]
+            elif link["rel"] == "prev":
+                assert "page=1" in link["href"]
