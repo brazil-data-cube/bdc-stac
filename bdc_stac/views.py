@@ -32,6 +32,7 @@ from .controller import (
     get_collections,
     make_geojson,
     parse_fields_parameter,
+    resolve_stac_url,
     session,
 )
 
@@ -104,31 +105,31 @@ def index(roles=None, **kwargs):
 
     links = [
         {
-            "href": f"{config.BDC_STAC_BASE_URL}/",
+            "href": f"{resolve_stac_url()}/",
             "rel": "self",
             "type": "application/json",
             "title": "Link to this document",
         },
         {
-            "href": f"{config.BDC_STAC_BASE_URL}/docs",
+            "href": f"{resolve_stac_url()}/docs",
             "rel": "service-doc",
             "type": "text/html",
             "title": "API documentation in HTML",
         },
         {
-            "href": f"{config.BDC_STAC_BASE_URL}/conformance",
+            "href": f"{resolve_stac_url()}/conformance",
             "rel": "conformance",
             "type": "application/json",
             "title": "OGC API conformance classes implemented by the server",
         },
         {
-            "href": f"{config.BDC_STAC_BASE_URL}/collections",
+            "href": f"{resolve_stac_url()}/collections",
             "rel": "data",
             "type": "application/json",
             "title": "Information about image collections",
         },
         {
-            "href": f"{config.BDC_STAC_BASE_URL}/search",
+            "href": f"{resolve_stac_url()}/search",
             "rel": "search",
             "type": config.STAC_GEO_MEDIA_TYPE,
             "title": "STAC-Search endpoint",
@@ -138,7 +139,7 @@ def index(roles=None, **kwargs):
     for collection in catalog:
         links.append(
             {
-                "href": f"{config.BDC_STAC_BASE_URL}/collections/{collection.name}{request.assets_kwargs}",
+                "href": f"{resolve_stac_url()}/collections/{collection.name}{request.assets_kwargs}",
                 "rel": "child",
                 "type": "application/json",
                 "title": collection.title,
@@ -157,6 +158,7 @@ def index(roles=None, **kwargs):
             "https://api.stacspec.org/v1.0.0-rc.1/item-search",
             "https://api.stacspec.org/v1.0.0-rc.1/item-search#fields",
             "https://api.stacspec.org/v1.0.0-rc.1/item-search#query",
+            "https://api.stacspec.org/v1.0.0-rc.1/item-search#filter",
             "https://api.stacspec.org/v1.0.0-rc.1/ogcapi-features/"
             "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
             "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
@@ -173,13 +175,13 @@ def root(roles=None, **kwargs):
 
     links = [
         {
-            "href": f"{config.BDC_STAC_BASE_URL}/",
+            "href": f"{resolve_stac_url()}/",
             "rel": "root",
             "type": "application/json",
             "title": "Link to the root catalog.",
         },
         {
-            "href": f"{config.BDC_STAC_BASE_URL}/collections",
+            "href": f"{resolve_stac_url()}/collections",
             "rel": "self",
             "type": "application/json",
             "title": "Link to this document",
@@ -238,7 +240,7 @@ def collection_items(collection_id, roles=None, **kwargs):
         args["page"] = items.next_num
         item_collection["links"].append(
             {
-                "href": f"{config.BDC_STAC_BASE_URL}/collections/{collection_id}/items{f'?{url_encode(args)}' if len(args) > 0 else ''}",
+                "href": f"{resolve_stac_url()}/collections/{collection_id}/items{f'?{url_encode(args)}' if len(args) > 0 else ''}",
                 "rel": "next",
             }
         )
@@ -246,7 +248,7 @@ def collection_items(collection_id, roles=None, **kwargs):
         args["page"] = items.prev_num
         item_collection["links"].append(
             {
-                "href": f"{config.BDC_STAC_BASE_URL}/collections/{collection_id}/items{f'?{url_encode(args)}' if len(args) > 0 else ''}",
+                "href": f"{resolve_stac_url()}/collections/{collection_id}/items{f'?{url_encode(args)}' if len(args) > 0 else ''}",
                 "rel": "prev",
             }
         )
@@ -277,13 +279,17 @@ def items_id(collection_id, item_id, roles=None, **kwargs):
 @oauth2(required=False)
 def stac_search_post(roles=None, **kwargs):
     """Search STAC items with simple filtering."""
-    assets_kwargs = None
-
     if not request.is_json:
         abort(400, "POST Request must be an application/json")
 
-    _, exclude = parse_fields_parameter(request.args.get("fields"))
+    args = request.args.to_dict()
+    _, exclude = parse_fields_parameter(args.get("fields"))
     options = request.json
+    for key in ["limit", "page"]:
+        if args.get(key):
+            args[key] = int(args[key])
+
+    options.update(args)
     options["exclude"] = exclude
     items = get_collection_items(**options, roles=roles)
     features = make_geojson(items.items, exclude=exclude, assets_kwargs=request.assets_kwargs)
@@ -298,15 +304,16 @@ def stac_search_post(roles=None, **kwargs):
         "features": features,
     }
     if items.has_next:
-        next_links = dict(href=f"{config.BDC_STAC_BASE_URL}/search{assets_kwargs}", rel="next")
+        next_links = dict(href=f"{resolve_stac_url()}/search{request.assets_kwargs}", rel="next")
 
         next_links["body"] = request.json.copy()
         next_links["body"]["page"] = items.next_num
         next_links["method"] = "POST"
         next_links["merge"] = True
+        response["links"].append(next_links)
 
     if items.has_prev:
-        prev_links = dict(href=f"{config.BDC_STAC_BASE_URL}/search{assets_kwargs}", rel="prev")
+        prev_links = dict(href=f"{resolve_stac_url()}/search{request.assets_kwargs}", rel="prev")
 
         prev_links["body"] = request.json.copy()
         prev_links["body"]["page"] = items.prev_num
@@ -345,7 +352,7 @@ def stac_search_get(roles=None, **kwargs):
 
         response["links"].append(
             {
-                "href": f"{config.BDC_STAC_BASE_URL}/search{f'?{url_encode(args)}' if len(args) > 0 else ''}",
+                "href": f"{resolve_stac_url()}/search{f'?{url_encode(args)}' if len(args) > 0 else ''}",
                 "rel": "next",
             }
         )
@@ -355,7 +362,7 @@ def stac_search_get(roles=None, **kwargs):
 
         response["links"].append(
             {
-                "href": f"{config.BDC_STAC_BASE_URL}/search{f'?{url_encode(args)}' if len(args) > 0 else ''}",
+                "href": f"{resolve_stac_url()}/search{f'?{url_encode(args)}' if len(args) > 0 else ''}",
                 "rel": "prev",
             }
         )
