@@ -19,23 +19,15 @@ import gzip
 import json
 import os
 
-import pytest
 from packaging import version
 
 os.environ["FILE_ROOT"] = "https://brazildatacube.dpi.inpe.br"
 
-from bdc_stac import config, create_app
-
-
-@pytest.fixture(scope="class")
-def client():
-    app = create_app()
-    with app.test_client() as client:
-        yield client
+from bdc_stac import config
 
 
 class TestBDCStac:
-    def test_landing_page(self, client):
+    def test_landing_page(self, client, load_fixture):
         response = client.get("/")
 
         assert response.status_code == 200
@@ -65,21 +57,21 @@ class TestBDCStac:
         assert "links" in data
 
     def test_collection(self, client):
-        response = client.get("/collections/CB4_64_16D_STK-1")
+        response = client.get("/collections/S2-16D-2")
         assert response.status_code == 200
 
         data = response.get_json()
 
         assert data["type"] == "Collection"
-        assert data["id"] == "CB4_64_16D_STK-1"
+        assert data["id"] == "S2-16D-2"
         assert data["stac_version"] == config.BDC_STAC_API_VERSION
-        assert data["bdc:grs"] == "BDC_LG"
+        assert data["bdc:grs"] == "BDC_SM_V2"
 
         eo_uri = config.get_stac_extensions("eo")[0]
         assert eo_uri in data["stac_extensions"]
 
     def test_collection_items(self, client):
-        response = client.get("/collections/CB4_64_16D_STK-1/items?limit=20")
+        response = client.get("/collections/S2-16D-2/items?limit=20")
 
         # TODO: Use JSONSchema validation
 
@@ -96,16 +88,17 @@ class TestBDCStac:
         assert (data["context"]["matched"]) > 0
 
     def test_collection_items_id(self, client):
-        response = client.get("/collections/CB4_64_16D_STK-1/items/CB4_64_16D_STK_v001_017022_2021-02-02_2021-02-17")
+        item_id = "S2-16D_V2_020020_20210525"
+        response = client.get(f"/collections/S2-16D-2/items/{item_id}")
 
         assert response.status_code == 200
 
         data = response.get_json()
 
-        assert data["id"] == "CB4_64_16D_STK_v001_017022_2021-02-02_2021-02-17"
+        assert data["id"] == item_id
 
     def test_collection_items_id_error(self, client):
-        response = client.get("/collections/CB4_64_16D_STK-1/items/wrong_item")
+        response = client.get("/collections/S2-16D-2/items/wrong_item")
 
         assert response.status_code == 404
 
@@ -123,10 +116,20 @@ class TestBDCStac:
 
         assert response.status_code == 200
 
+    def test_stac_duplicate_parameter(self, client):
+        response = client.post("/search", content_type="application/json", json=dict())
+
+        assert response.status_code == 200
+
     def test_stac_search_wrong_content_type(self, client):
-        response = client.post("/search", content_type="text/plain", json=dict())
+        parameters = {
+            "collection_id": "S2-16D-2",
+            "collections": ["S2-16D-2"],
+        }
+        response = client.post("/search", content_type="application/json", json=parameters)
 
         assert response.status_code == 400
+        assert response.json["description"] == "Invalid parameter. Use collection_id or collections."
 
     def test_stac_search_parameters(self, client):
         parameters = {
@@ -134,7 +137,7 @@ class TestBDCStac:
             "page": 1,
             "limit": 1,
             "bbox": [-180, -90, 180, 90],
-            "collections": ["CB4_64_16D_STK-1"],
+            "collections": ["S2-16D-2"],
         }
 
         response = client.post("/search", content_type="application/json", json=parameters)
@@ -142,7 +145,8 @@ class TestBDCStac:
         assert response.status_code == 200
 
     def test_stac_search_parameters_ids(self, client):
-        parameters = {"ids": ["CB4_64_16D_STK_v001_017022_2021-02-02_2021-02-17"]}
+        item_id = "S2-16D_V2_020020_20211101"
+        parameters = {"ids": [item_id]}
 
         response = client.post("/search", content_type="application/json", json=parameters)
 
@@ -150,7 +154,11 @@ class TestBDCStac:
 
         data = response.get_json()
 
-        assert data["features"][0]["id"] == "CB4_64_16D_STK_v001_017022_2021-02-02_2021-02-17"
+        assert data["features"][0]["id"] == item_id
+
+        response = client.get("/search", content_type="application/json", query_string={"ids": item_id})
+        assert response.status_code == 200
+        assert data["features"][0]["id"] == item_id
 
     def test_stac_search_parameters_intersects(self, client):
         parameters = {
@@ -173,14 +181,12 @@ class TestBDCStac:
         assert response.status_code == 200
 
     def test_stac_search_parameters_invalid_bbox(self, client):
-        parameters = {
-            "bbox": [-180, -90, 180, "a"],
-        }
+        parameters = {"bbox": "-180,-90,-180,-90"}
 
-        response = client.post("/search", content_type="application/json", json=parameters)
+        response = client.get("/search", content_type="application/json", query_string=parameters)
 
         assert response.status_code == 400
-        assert response.get_json()["description"] == "[-180, -90, 180, 'a'] is not a valid bbox."
+        assert response.get_json()["description"] == "[-180.0, -90.0, -180.0, -90.0] is not a valid bbox."
 
     def test_compression_gzip_requests(self, client):
         parameters = {"collections": ["S2-16D-2"]}
