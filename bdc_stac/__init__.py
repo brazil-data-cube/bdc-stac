@@ -19,6 +19,7 @@
 """Spatio Temporal Asset Catalog implementation for BDC."""
 import logging
 
+from bdc_catalog import BDCCatalog
 from flask import Flask
 from flask_redoc import Redoc
 
@@ -26,7 +27,7 @@ from . import config as _config
 from .controller import db
 from .version import __version__
 
-__all__ = ("__version__",)
+__all__ = ("__version__", "create_app")
 
 
 def create_app():
@@ -49,6 +50,7 @@ def create_app():
         app.logger.setLevel(logging.DEBUG)
 
     with app.app_context():
+        BDCCatalog(app)
         db.init_app(app)
         Redoc(app, "spec/openapi.yaml")
 
