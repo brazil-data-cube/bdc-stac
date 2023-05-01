@@ -58,7 +58,7 @@ setup_requires = [
 
 install_requires = [
     # Remove Flask 2.3 limitation due warnings related dependencies (flask-redoc)
-    "Flask>=1.1.1,<2.3",
+    "Flask>=1.1.1,<2.4",
     "flask-redoc>=0.2.0",
     "Flask-SQLAlchemy>=2.4,<3",
     "GeoAlchemy2>=0.6.3",
