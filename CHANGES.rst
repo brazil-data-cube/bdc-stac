@@ -20,6 +20,13 @@
 Changes
 =======
 
+Version 1.0.2
+-------------
+
+- Review way to represent deprecated collections and versioning (`#88 <https://github.com/brazil-data-cube/bdc-stac/issues/88>`_)
+- Add fixture for tests
+- Upgrade Docker base image for python:3.11
+
 
 Version 1.0.1 (2022-12-06)
 --------------------------

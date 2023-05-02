@@ -25,7 +25,6 @@ collections items and artifacts from BDC-Catalog.
 
     Integrate with BDC-Catalog v1.0+ and role system support.
 """
-
 import warnings
 from datetime import datetime as dt
 from functools import lru_cache
@@ -344,6 +343,13 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
     )
     result = q.all()
 
+    collection_map = {row.Collection.id: row.Collection for row in result}
+
+    if collection_id and result:  # shallow query property to generate traceability
+        where = [Collection.is_available.is_(True), _add_roles_constraint(roles)]
+        _collection_relation = db.session.query(Collection.id, Collection.identifier, Collection.title).filter(*where).all()
+        collection_map = {row.id: row for row in _collection_relation}
+
     collections = list()
     default_stac_extensions = get_stac_extensions("version", "processing", "item-assets")
 
@@ -359,6 +365,22 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
         if category == "sar" or category == "eo":
             collection_extensions.append(category)
 
+        successor: Optional[Collection] = None
+
+        extra_links = []
+        if r.Collection.version_successor is not None:
+            successor: Collection = collection_map.get(r.Collection.version_successor)
+            if successor:
+                extra_links.append(_collection_link(successor, rel="successor-version", qs=assets_kwargs))
+
+        if r.Collection.version_predecessor is not None:
+            predecessor: Collection = collection_map.get(r.Collection.version_predecessor)
+            if predecessor:
+                extra_links.append(_collection_link(predecessor, rel="predecessor-version", qs=assets_kwargs))
+
+        meta = r.Collection.metadata_
+        deprecated = successor is not None or (meta and meta.get("deprecated", False))
+
         collection = {
             "id": r.Collection.identifier,
             "type": "Collection",
@@ -366,7 +388,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
             "stac_extensions": default_stac_extensions + get_stac_extensions(*collection_extensions),
             "title": r.Collection.title,
             "version": r.Collection.version,
-            "deprecated": False,  # TODO: Use CollectionSRC to detect collection deprecation
+            "deprecated": deprecated,
             "description": r.Collection.description,
             "keywords": r.Collection.keywords,
             "providers": providers,
@@ -384,7 +406,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
             collection["bdc:composite_function"] = r.composite_function
 
         collection["license"] = collection["properties"].pop("license", "")
-        extra_links = collection["properties"].pop("links", [])
+        extra_links.extend(collection["properties"].pop("links", []))
 
         bbox = to_shape(r.Collection.spatial_extent).bounds if r.Collection.spatial_extent else [None] * 4
 
@@ -409,8 +431,8 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
             collection_eo = get_collection_eo(r.Collection.id)
             collection["properties"].update(collection_eo)
 
-        if r.Collection.metadata_:
-            collection["bdc:metadata"] = r.Collection.metadata_
+        if meta:
+            collection["bdc:metadata"] = meta
 
         if r.Collection.collection_type == "cube":
             proj4text = get_collection_crs(r.Collection)
@@ -426,6 +448,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
             collection["cube:dimensions"] = datacube
             collection["bdc:crs"] = proj4text
             collection["bdc:temporal_composition"] = r.Collection.temporal_composition_schema
+            collection["stac_extensions"].extend(get_stac_extensions("datacube"))
 
         collection["links"] = [
             {
@@ -738,3 +761,13 @@ def _add_roles_constraint(roles: List[str]):
         where.append(Collection.identifier.in_(roles) if len(roles) > 0 else False)
 
     return or_(Collection.is_public.is_(True), *where)
+
+
+def _collection_link(collection: Collection, rel: str, qs: str):
+    """Build STAC collection link for predecessor and successor."""
+    return {
+        "href": f"{resolve_stac_url()}/collections/{collection.identifier}{qs}",
+        "rel": rel,
+        "type": "application/json",
+        "title": collection.title,
+    }

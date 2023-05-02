@@ -16,7 +16,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
 #
 ARG GIT_COMMIT
-ARG BASE_IMAGE=python:3.8-slim-buster
+ARG BASE_IMAGE=python:3.11
 FROM ${BASE_IMAGE}
 
 # Image metadata
@@ -27,12 +27,8 @@ LABEL "org.repo.git_commit"="${GIT_COMMIT}"
 LABEL "org.repo.licenses"="GPLv3"
 
 # Build arguments
-ARG BDC_STAC_VERSION="1.0.1"
+ARG BDC_STAC_VERSION="1.0.2"
 ARG BDC_STAC_INSTALL_PATH="/opt/bdc-stac/${BDC_STAC_VERSION}"
-
-RUN apt-get update -y \
-    && apt-get install -y libpq-dev git \
-    && rm -rf /var/lib/apt/lists/*
 
 COPY . ${BDC_STAC_INSTALL_PATH}
 WORKDIR ${BDC_STAC_INSTALL_PATH}
