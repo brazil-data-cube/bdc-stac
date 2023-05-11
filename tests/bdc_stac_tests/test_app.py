@@ -57,10 +57,7 @@ class TestBDCStac:
         assert "links" in data
 
     def test_collection(self, client):
-        response = client.get("/collections/S2-16D-2")
-        assert response.status_code == 200
-
-        data = response.get_json()
+        data = self._get_collection("S2-16D-2", client)
 
         assert data["type"] == "Collection"
         assert data["id"] == "S2-16D-2"
@@ -69,6 +66,19 @@ class TestBDCStac:
 
         eo_uri = config.get_stac_extensions("eo")[0]
         assert eo_uri in data["stac_extensions"]
+
+    def test_collection_successor_predecessor(self, client):
+        def _assert_collection_versioning(collection_name, kind):
+            collection = self._get_collection(collection_name, client)
+            found = None
+            for link in collection["links"]:
+                if link["rel"] == kind:
+                    found = link
+
+            assert found is not None
+
+        _assert_collection_versioning("S2-16D-2", "predecessor-version")
+        _assert_collection_versioning("S2-16D-1", "successor-version")
 
     def test_collection_items(self, client):
         response = client.get("/collections/S2-16D-2/items?limit=20")
@@ -226,3 +236,10 @@ class TestBDCStac:
                 assert "page=3" in link["href"]
             elif link["rel"] == "prev":
                 assert "page=1" in link["href"]
+
+    def _get_collection(self, name, client):
+        response = client.get(f"/collections/{name}")
+        assert response.status_code == 200
+
+        data = response.get_json()
+        return data

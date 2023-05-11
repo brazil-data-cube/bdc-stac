@@ -49,7 +49,11 @@ def before_request():
     request.assets_kwargs = ""
 
     if config.BDC_STAC_ASSETS_ARGS:
-        assets_kwargs = {arg: request.args.get(arg) for arg in config.BDC_STAC_ASSETS_ARGS.split(",") if request.args.get(arg) is not None}
+        assets_kwargs = {
+            arg: request.args.get(arg)
+            for arg in config.BDC_STAC_ASSETS_ARGS.split(",")
+            if request.args.get(arg) is not None
+        }
         if "access_token" in request.args:
             assets_kwargs["access_token"] = request.args.get("access_token")
         assets_kwargs = "?" + urlencode(assets_kwargs) if urlencode(assets_kwargs) else ""

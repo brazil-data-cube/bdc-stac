@@ -347,7 +347,9 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
 
     if collection_id and result:  # shallow query property to generate traceability
         where = [Collection.is_available.is_(True), _add_roles_constraint(roles)]
-        _collection_relation = db.session.query(Collection.id, Collection.identifier, Collection.title).filter(*where).all()
+        _collection_relation = (
+            db.session.query(Collection.id, Collection.identifier, Collection.title).filter(*where).all()
+        )
         collection_map = {row.id: row for row in _collection_relation}
 
     collections = list()
