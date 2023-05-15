@@ -92,7 +92,9 @@ def _setup_collection(data) -> Collection:
                 item["footprint"] = shapely.geometry.shape(footprint)
             tile_id = tile_map.get(item.get("tile_id"))
             item["tile_id"] = tile_id
-            _ = create_item(collection_id=collection.id, **item)
+            item_obj = create_item(collection_id=collection.id, **item)
+            item_obj.metadata_ = item.get("metadata", {})
+            item_obj.save()
 
     return collection
 
