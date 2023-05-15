@@ -381,7 +381,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
                 extra_links.append(_collection_link(predecessor, rel="predecessor-version", qs=assets_kwargs))
 
         meta = r.Collection.metadata_
-        deprecated = successor is not None or (meta and meta.get("deprecated", False))
+        deprecated = successor is not None or bool(meta and meta.get("deprecated", False))
 
         collection = {
             "id": r.Collection.identifier,
@@ -398,6 +398,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
             "item_assets": r.Collection.item_assets,
             "properties": r.Collection.properties or {},
             "bdc:type": r.Collection.collection_type,
+            "bdc:public": r.Collection.is_public,
         }
         collection["properties"]["created"] = r.Collection.created.strftime(DATETIME_RFC339)
         collection["properties"]["updated"] = r.Collection.updated.strftime(DATETIME_RFC339)
