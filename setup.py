@@ -38,7 +38,7 @@ tests_require = [
     "coveralls>=1.8",
     "pytest>=5.2",
     "pytest-cov>=2.8",
-    "pytest-pep8>=1.0",
+    "pytest-pycodestyle>=2.3",
     "pydocstyle>=4.0",
     "isort>4.3",
     "check-manifest>=0.40",

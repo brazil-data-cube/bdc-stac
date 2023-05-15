@@ -18,6 +18,7 @@
 import gzip
 import json
 import os
+from unittest import mock
 
 from packaging import version
 
@@ -243,3 +244,10 @@ class TestBDCStac:
 
         data = response.get_json()
         return data
+
+    @mock.patch("bdc_stac.controller.session")
+    def test_internal_server_error(self, mock_db, client):
+        mock_db.query.side_effect = RuntimeError("Unknown error")
+
+        response = client.get(f"/collections/S2-16D-2")
+        assert response.status_code == 500
