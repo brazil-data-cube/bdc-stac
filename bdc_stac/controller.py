@@ -217,7 +217,7 @@ def get_collection_items(
 
 @lru_cache()
 def get_collection_eo(collection_id):
-    """Get Collection Eletro-Optical properties.
+    """Get Collection Electro-Optical properties.
 
     .. note::
 
@@ -671,7 +671,7 @@ def create_query_filter(query):
 def parse_fields_parameter(fields: Optional[str] = None):
     """Parse the string parameter `fields` to include/exclude certain fields in response.
 
-    Follow the `STAC API Fields Fragment <https://github.com/radiantearth/stac-api-spec/blob/v1.0.0-rc.1/fragments/fields/README.md>`.
+    Follow the `STAC API Fields Fragment <https://github.com/radiantearth/stac-api-spec/blob/v1.0.0-rc.1/fragments/fields/README.md>`_.
     """
     if fields is None:
         return [], []
@@ -712,17 +712,17 @@ def resolve_base_file_root_url() -> str:
     """Retrieve base URL used as STAC BASE URL ROOT for items from HTTP header.
 
     Note:
-        This method uses ``flask.request`` object to check for X-Script-Name in header.
+        This method uses ``flask.request`` object to check for ``X-Script-Name`` in header.
         Make sure you are inside flask app context.
     """
     return request.headers.get("X-Script-Name", BDC_STAC_FILE_ROOT)
 
 
 def resolve_stac_url() -> str:
-    """Retrieve base URL used as STAC BASE URL ROOT for items from HTTP header.
+    """Retrieve base URL used as STAC URL for items from HTTP header.
 
     Note:
-        This method uses ``flask.request`` object to check for X-Stac-Url in header.
+        This method uses ``flask.request`` object to check for ``X-Stac-Url`` in header.
         Make sure you are inside flask app context.
     """
     return request.headers.get("X-Stac-Url", BDC_STAC_BASE_URL).rstrip("/")
