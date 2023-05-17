@@ -57,6 +57,8 @@ Before installing the ``BDC-STAC`` server, please, take a look into compatibilit
 +---------------------------+-----------+-------------+
 | 1.0.0                     | 1.0.1     | 1.0.1       |
 +---------------------------+-----------+-------------+
+| 1.0.0                     | 1.0.2     | 1.0.2       |
++---------------------------+-----------+-------------+
 
 
 Clone the software repository
@@ -85,9 +87,9 @@ Install in development mode::
 
     If you want to create a new *Python Virtual Environment*, please, follow this instruction:
 
-    *1.* Create a new virtual environment linked to Python 3.7::
+    *1.* Create a new virtual environment linked to Python 3.8::
 
-        python3.7 -m venv venv
+        python3.8 -m venv venv
 
 
     **2.** Activate the new environment::
@@ -132,7 +134,7 @@ Running in Development Mode
                        --volume bdc_catalog_vol:/var/lib/postgresql/data \
                        --env POSTGRES_PASSWORD=postgres \
                        --publish 5432:5432 \
-                       postgis/postgis:12-3.0
+                       postgis/postgis:15-3.3
 
         Once container is up and running, initialize the database::
 

@@ -50,6 +50,8 @@ Service Configuration
 
     The base URI of the service. Defaults to ``'http://localhost:5000'``.
 
+    This value is ignored if ``X-Stac-Url`` is present in ``request.headers``.
+
 
 .. data:: BDC_STAC_FILE_ROOT
 
@@ -60,7 +62,7 @@ Service Configuration
 
 .. data:: BDC_STAC_MAX_LIMIT
 
-    The limit of items returned in a query. Defaults to `1000` (an integer value).
+    The limit of items returned in a query. Defaults to ``1000`` (an integer value).
 
 
 .. data:: BDC_AUTH_CLIENT_ID
