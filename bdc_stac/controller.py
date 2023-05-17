@@ -217,7 +217,7 @@ def get_collection_items(
 
 @lru_cache()
 def get_collection_eo(collection_id):
-    """Get Collection Eletro-Optical properties.
+    """Get Collection Electro-Optical properties.
 
     .. note::
 
@@ -347,7 +347,9 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
 
     if collection_id and result:  # shallow query property to generate traceability
         where = [Collection.is_available.is_(True), _add_roles_constraint(roles)]
-        _collection_relation = db.session.query(Collection.id, Collection.identifier, Collection.title).filter(*where).all()
+        _collection_relation = (
+            db.session.query(Collection.id, Collection.identifier, Collection.title).filter(*where).all()
+        )
         collection_map = {row.id: row for row in _collection_relation}
 
     collections = list()
@@ -379,7 +381,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
                 extra_links.append(_collection_link(predecessor, rel="predecessor-version", qs=assets_kwargs))
 
         meta = r.Collection.metadata_
-        deprecated = successor is not None or (meta and meta.get("deprecated", False))
+        deprecated = successor is not None or bool(meta and meta.get("deprecated", False))
 
         collection = {
             "id": r.Collection.identifier,
@@ -396,6 +398,7 @@ def get_collections(collection_id=None, roles=None, assets_kwargs=None):
             "item_assets": r.Collection.item_assets,
             "properties": r.Collection.properties or {},
             "bdc:type": r.Collection.collection_type,
+            "bdc:public": r.Collection.is_public,
         }
         collection["properties"]["created"] = r.Collection.created.strftime(DATETIME_RFC339)
         collection["properties"]["updated"] = r.Collection.updated.strftime(DATETIME_RFC339)
@@ -669,7 +672,7 @@ def create_query_filter(query):
 def parse_fields_parameter(fields: Optional[str] = None):
     """Parse the string parameter `fields` to include/exclude certain fields in response.
 
-    Follow the `STAC API Fields Fragment <https://github.com/radiantearth/stac-api-spec/blob/v1.0.0-rc.1/fragments/fields/README.md>`.
+    Follow the `STAC API Fields Fragment <https://github.com/radiantearth/stac-api-spec/blob/v1.0.0-rc.1/fragments/fields/README.md>`_.
     """
     if fields is None:
         return [], []
@@ -710,17 +713,17 @@ def resolve_base_file_root_url() -> str:
     """Retrieve base URL used as STAC BASE URL ROOT for items from HTTP header.
 
     Note:
-        This method uses ``flask.request`` object to check for X-Script-Name in header.
+        This method uses ``flask.request`` object to check for ``X-Script-Name`` in header.
         Make sure you are inside flask app context.
     """
     return request.headers.get("X-Script-Name", BDC_STAC_FILE_ROOT)
 
 
 def resolve_stac_url() -> str:
-    """Retrieve base URL used as STAC BASE URL ROOT for items from HTTP header.
+    """Retrieve base URL used as STAC URL for items from HTTP header.
 
     Note:
-        This method uses ``flask.request`` object to check for X-Stac-Url in header.
+        This method uses ``flask.request`` object to check for ``X-Stac-Url`` in header.
         Make sure you are inside flask app context.
     """
     return request.headers.get("X-Stac-Url", BDC_STAC_BASE_URL).rstrip("/")

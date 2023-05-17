@@ -18,9 +18,10 @@
 """Define the configuration for pytest and fixtures."""
 
 import json
+import os
 
 import shapely
-from bdc_catalog.models import GridRefSys, Item, Tile, db
+from bdc_catalog.models import Collection, GridRefSys, Item, Tile, db
 from bdc_catalog.utils import create_collection, create_item, geom_to_wkb
 from pytest import fixture
 
@@ -71,10 +72,7 @@ def _setup_grid():
         db.session.commit()
 
 
-def _setup_initial_data():
-    with open("tests/fixtures/S2-16D-2.json") as fd:
-        data = json.load(fd)
-
+def _setup_collection(data) -> Collection:
     items = data.pop("items", [])
     collection, _ = create_collection(**data)
     item_map = [i.name for i in db.session.query(Item.name).filter(Item.collection_id == collection.id).all()]
@@ -94,4 +92,27 @@ def _setup_initial_data():
                 item["footprint"] = shapely.geometry.shape(footprint)
             tile_id = tile_map.get(item.get("tile_id"))
             item["tile_id"] = tile_id
-            _ = create_item(collection_id=collection.id, **item)
+            item_obj = create_item(collection_id=collection.id, **item)
+            item_obj.metadata_ = item.get("metadata", {})
+            item_obj.save()
+
+    return collection
+
+
+def _setup_initial_data():
+    def _read(filename):
+        with open(filename) as fd:
+            data = json.load(fd)
+        return data
+
+    fixture_dir = "tests/fixtures"
+    json_files = {filename: _read(os.path.join(fixture_dir, filename)) for filename in os.listdir(fixture_dir)}
+
+    collection_v1 = _setup_collection(json_files["S2-16D-1.json"])
+    collection_v2 = _setup_collection(json_files["S2-16D-2.json"])
+
+    with db.session.begin_nested():
+        collection_v1.version_successor = collection_v2.id
+        collection_v2.version_predecessor = collection_v1.id
+
+    db.session.commit()
