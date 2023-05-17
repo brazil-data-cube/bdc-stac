@@ -20,8 +20,8 @@
 Changes
 =======
 
-Version 1.0.2
--------------
+Version 1.0.2 (2023-05-17)
+--------------------------
 
 - Review way to represent deprecated collections and versioning (`#88 <https://github.com/brazil-data-cube/bdc-stac/issues/88>`_)
 - Add fixture for tests and remove warnings PEP8
