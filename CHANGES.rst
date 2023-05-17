@@ -20,6 +20,15 @@
 Changes
 =======
 
+Version 1.0.2 (2023-05-17)
+--------------------------
+
+- Review way to represent deprecated collections and versioning (`#88 <https://github.com/brazil-data-cube/bdc-stac/issues/88>`_)
+- Add fixture for tests and remove warnings PEP8
+- Upgrade Docker base image for python:3.11
+- Upgrade bdc-catalog to 1.0.2 to improve test coverage related successor/predecessor
+- Add option ``bdc:public`` to display collection availability
+
 
 Version 1.0.1 (2022-12-06)
 --------------------------

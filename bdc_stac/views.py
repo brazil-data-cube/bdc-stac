@@ -19,11 +19,11 @@
 
 
 import gzip
+from urllib.parse import urlencode
 
 from bdc_auth_client.decorators import oauth2
 from flask import abort, current_app, request
 from werkzeug.exceptions import HTTPException, InternalServerError
-from werkzeug.urls import url_encode
 
 from . import config
 from .controller import (
@@ -49,10 +49,14 @@ def before_request():
     request.assets_kwargs = ""
 
     if config.BDC_STAC_ASSETS_ARGS:
-        assets_kwargs = {arg: request.args.get(arg) for arg in config.BDC_STAC_ASSETS_ARGS.split(",")}
+        assets_kwargs = {
+            arg: request.args.get(arg)
+            for arg in config.BDC_STAC_ASSETS_ARGS.split(",")
+            if request.args.get(arg) is not None
+        }
         if "access_token" in request.args:
             assets_kwargs["access_token"] = request.args.get("access_token")
-        assets_kwargs = "?" + url_encode(assets_kwargs) if url_encode(assets_kwargs) else ""
+        assets_kwargs = "?" + urlencode(assets_kwargs) if urlencode(assets_kwargs) else ""
         request.assets_kwargs = assets_kwargs
 
 
@@ -240,7 +244,7 @@ def collection_items(collection_id, roles=None, **kwargs):
         args["page"] = items.next_num
         item_collection["links"].append(
             {
-                "href": f"{resolve_stac_url()}/collections/{collection_id}/items{f'?{url_encode(args)}' if len(args) > 0 else ''}",
+                "href": f"{resolve_stac_url()}/collections/{collection_id}/items{f'?{urlencode(args)}' if len(args) > 0 else ''}",
                 "rel": "next",
             }
         )
@@ -248,7 +252,7 @@ def collection_items(collection_id, roles=None, **kwargs):
         args["page"] = items.prev_num
         item_collection["links"].append(
             {
-                "href": f"{resolve_stac_url()}/collections/{collection_id}/items{f'?{url_encode(args)}' if len(args) > 0 else ''}",
+                "href": f"{resolve_stac_url()}/collections/{collection_id}/items{f'?{urlencode(args)}' if len(args) > 0 else ''}",
                 "rel": "prev",
             }
         )
@@ -352,7 +356,7 @@ def stac_search_get(roles=None, **kwargs):
 
         response["links"].append(
             {
-                "href": f"{resolve_stac_url()}/search{f'?{url_encode(args)}' if len(args) > 0 else ''}",
+                "href": f"{resolve_stac_url()}/search{f'?{urlencode(args)}' if len(args) > 0 else ''}",
                 "rel": "next",
             }
         )
@@ -362,7 +366,7 @@ def stac_search_get(roles=None, **kwargs):
 
         response["links"].append(
             {
-                "href": f"{resolve_stac_url()}/search{f'?{url_encode(args)}' if len(args) > 0 else ''}",
+                "href": f"{resolve_stac_url()}/search{f'?{urlencode(args)}' if len(args) > 0 else ''}",
                 "rel": "prev",
             }
         )

@@ -38,7 +38,7 @@ tests_require = [
     "coveralls>=1.8",
     "pytest>=5.2",
     "pytest-cov>=2.8",
-    "pytest-pep8>=1.0",
+    "pytest-pycodestyle>=2.3",
     "pydocstyle>=4.0",
     "isort>4.3",
     "check-manifest>=0.40",
@@ -66,7 +66,7 @@ install_requires = [
     "Shapely>=1.6",
     "packaging>=20.4",
     "psycopg2-binary>=2.8.4",
-    "bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog@v1.0.1",
+    "bdc-catalog @ git+https://github.com/brazil-data-cube/bdc-catalog@v1.0.2",
     "bdc-auth-client @ git+https://github.com/brazil-data-cube/bdc-auth-client@v0.4.3",
 ]
 
@@ -103,7 +103,7 @@ setup(
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: GPL v3 License",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Scientific/Engineering :: GIS",

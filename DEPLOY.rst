@@ -42,6 +42,8 @@ Before prepare database instance, just take a look in support compatibility tabl
 +---------------------------+-----------+-------------+
 | 1.0.0                     | 1.0.1     | 1.0.1       |
 +---------------------------+-----------+-------------+
+| 1.0.0                     | 1.0.2     | 1.0.2       |
++---------------------------+-----------+-------------+
 
 
 Building the Docker Image
@@ -55,15 +57,15 @@ Building the Docker Image
 
 On the command line use the ``docker build`` command to create the docker image for the service::
 
-    docker build --no-cache -t bdc-stac:1.0.1 --build-arg GIT_COMMIT=$(git rev-parse HEAD) .
+    docker build --no-cache -t bdc-stac:1.0.2 --build-arg GIT_COMMIT=$(git rev-parse HEAD) .
 
 
-The above command will create a Docker image named ``bdc-stac`` and tag ``1.0.1``, as one can see with the ``docker images`` command::
+The above command will create a Docker image named ``bdc-stac`` and tag ``1.0.2``, as one can see with the ``docker images`` command::
 
     docker images
 
     REPOSITORY                                          TAG                 IMAGE ID            CREATED             SIZE
-    bdc-stac                                            1.0.1             44651ac917e4        16 hours ago        333MB
+    bdc-stac                                            1.0.2             c6bd7a678f02        7 minutes ago        1.11GB
 
 
 Preparing the Network for Containers
@@ -96,7 +98,7 @@ Launching the Docker Container with the STAC Service
 ----------------------------------------------------
 
 
-The ``docker run`` command can be used to launch a container from the image ``bdc-stac:1.0.0``. The command below shows an example on how to accomplish the launch of a container::
+The ``docker run`` command can be used to launch a container from the image ``bdc-stac:1.0.2``. The command below shows an example on how to accomplish the launch of a container::
 
     docker run --detach \
                --name bdc-stac \
@@ -105,7 +107,7 @@ The ``docker run`` command can be used to launch a container from the image ``bd
                --env SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/bdc_catalog" \
                --env BDC_STAC_BASE_URL="http://localhost:8080" \
                --env BDC_STAC_FILE_ROOT="http://localhost:8081" \
-               bdc-stac:1.0.1
+               bdc-stac:1.0.2
 
 
 Let's take a look at each parameter in the above command:
@@ -124,7 +126,7 @@ Let's take a look at each parameter in the above command:
 
     - ``--env BDC_STAC_FILE_ROOT="http://localhost:8081"``: File root for the image ``assets``.
 
-    - ``bdc-stac:1.0.1``: the name of the base Docker image used to create the container.
+    - ``bdc-stac:1.0.2``: the name of the base Docker image used to create the container.
 
 
 If you have launched the container, you can check if the service has initialized::
@@ -152,7 +154,7 @@ The output should be a JSON document similar to:
         "type": "Catalog",
         "description": "Brazil Data Cube Catalog",
         "id": "bdc",
-        "stac_version": "1.0.0-rc.1",
+        "stac_version": "1.0.0",
         "links": [
             {
                 "href": "http://localhost:8080/",
@@ -193,8 +195,12 @@ The output should be a JSON document similar to:
         ],
         "conformsTo": [
             "https://api.stacspec.org/v1.0.0-beta.1/core",
-            "https://api.stacspec.org/v1.0.0-beta.1/item-search",
-            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
+            "https://api.stacspec.org/v1.0.0-rc.1/collections",
+            "https://api.stacspec.org/v1.0.0-rc.1/item-search",
+            "https://api.stacspec.org/v1.0.0-rc.1/item-search#fields",
+            "https://api.stacspec.org/v1.0.0-rc.1/item-search#query",
+            "https://api.stacspec.org/v1.0.0-rc.1/item-search#filter",
+            "https://api.stacspec.org/v1.0.0-rc.1/ogcapi-features/http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
             "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
             "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson"
         ]
@@ -203,7 +209,7 @@ The output should be a JSON document similar to:
 
 .. note::
 
-    Be aware that collections ``S2_L1C-1`` described above is a example.
+    The collection ``S2_L1C-1`` described above is a example.
     You should create a definition of Collection following `BDC-Catalog <https://github.com/brazil-data-cube/bdc-catalog>`_ module.
 
 .. rubric:: Footnotes
